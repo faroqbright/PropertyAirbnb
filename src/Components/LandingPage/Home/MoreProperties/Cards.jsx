@@ -1,11 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import L from "leaflet";
-import {
-  MapContainer,
-  TileLayer,
-  useMap,
-} from "react-leaflet";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   ChevronDown,
@@ -23,6 +19,7 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState("Rating highest to lowest");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isClient, setIsClient] = useState(false);
   const totalPages = 10;
 
   const goToPage = (page) => {
@@ -30,6 +27,10 @@ export default function Header() {
       setCurrentPage(page);
     }
   };
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const properties = [
     {
@@ -294,23 +295,25 @@ export default function Header() {
           </div>
         </div>
         <div className="w-full lg:w-[50%] order-2 mt-8 lg:mt-16 rounded-xl overflow-hidden relative">
-          <MapContainer
-            center={[34.18223, -118.13191]}
-            zoom={10}
-            className="lg:h-[700px] h-[450px] w-full relative z-0"
-            style={{ zIndex: 0 }}
-            zoomControl={false}
-          >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            {tooltipData.map((tooltip, index) => (
-              <FloatingTooltip
-                key={index}
-                position={tooltip.position}
-                text={tooltip.text}
-              />
-            ))}{" "}
-            <AddZoomControl />
-          </MapContainer>
+          {isClient && (
+            <MapContainer
+              center={[34.18223, -118.13191]}
+              zoom={10}
+              className="lg:h-[700px] h-[450px] w-full relative z-0"
+              style={{ zIndex: 0 }}
+              zoomControl={false}
+            >
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              {tooltipData.map((tooltip, index) => (
+                <FloatingTooltip
+                  key={index}
+                  position={tooltip.position}
+                  text={tooltip.text}
+                />
+              ))}{" "}
+              <AddZoomControl />
+            </MapContainer>
+          )}
           <div className="absolute top-2 right-2 bg-white pt-1 pb-2 px-2 rounded-md shadow-lg text-left z-50 border border-gray-200">
             <button
               onClick={toggleFullScreen}
@@ -325,23 +328,24 @@ export default function Header() {
       {isFullScreen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center">
           <div className="relative w-full h-full">
-            <MapContainer
-              center={[34.18223, -118.13191]}
-              zoom={12}
-              className="w-full h-full"
-              style={{ zIndex: 1 }}
-            >
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <AddZoomControl />
-              {tooltipData.map((tooltip, index) => (
-                <FloatingTooltip
-                  key={index}
-                  position={tooltip.position}
-                  text={tooltip.text}
-                />
-              ))}
-            </MapContainer>
-
+            {isClient && (
+              <MapContainer
+                center={[34.18223, -118.13191]}
+                zoom={12}
+                className="w-full h-full"
+                style={{ zIndex: 1 }}
+              >
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <AddZoomControl />
+                {tooltipData.map((tooltip, index) => (
+                  <FloatingTooltip
+                    key={index}
+                    position={tooltip.position}
+                    text={tooltip.text}
+                  />
+                ))}
+              </MapContainer>
+            )}
             <button
               onClick={toggleFullScreen}
               className="absolute top-4 right-4 bg-white py-2 px-4 rounded-full text-gray-800 font-semibold shadow-md hover:bg-gray-100"
