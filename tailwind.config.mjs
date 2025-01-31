@@ -24,4 +24,5 @@ module.exports = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  safelist: ["bg-background", "text-textclr"],
 };
