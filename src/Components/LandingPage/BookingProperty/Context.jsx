@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Star } from "lucide-react";
 
@@ -8,6 +8,36 @@ export default function Context() {
   const [selectedRooms, setSelectedRooms] = useState("room1");
   const router = useRouter();
   const [selectedServices, setSelectedServices] = useState([]);
+  const [buttonText, setButtonText] = useState("Reserve");
+  const [fromProfile, setFromProfile] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("fromProfile")) {
+      setButtonText("Message");
+      setFromProfile(true);
+    }
+
+    const handleRouteChange = () => {
+      localStorage.removeItem("fromProfile");
+    };
+
+    window.addEventListener("beforeunload", handleRouteChange);
+    router.events?.on("routeChangeStart", handleRouteChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleRouteChange);
+      router.events?.off("routeChangeStart", handleRouteChange);
+    };
+  }, [router]);
+
+  const handleButtonClick = () => {
+    if (fromProfile) {
+      router.push("/Landing/Profile");
+    } else {
+      router.push("/Landing/Properties/PropertiesDetail/Payment");
+    }
+    localStorage.removeItem("fromProfile");
+  };
 
   const rooms = [
     { id: "room1", name: "Room 1", price: 555 },
@@ -132,12 +162,10 @@ export default function Context() {
         </div>
 
         <button
-          onClick={() =>
-            router.push("/Landing/Properties/PropertiesDetail/Payment")
-          }
+          onClick={handleButtonClick}
           className="w-full cursor-pointer bg-[#3EE0CF] text-white rounded-full py-2"
         >
-          Reserve
+          {buttonText}
         </button>
       </div>
     </div>

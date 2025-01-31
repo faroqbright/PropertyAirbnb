@@ -14,6 +14,7 @@ export default function Footer() {
     { name: "Properties", path: "/Landing/Properties" },
     { name: "About", path: "/Landing/About" },
     { name: "Contact", path: "/Landing/Contact" },
+    { name: "Reviews", path: "/Landing/AllReviews" },
     { name: "Terms & Conditions", path: "/Landing/Terms" },
     { name: "Privacy Policy", path: "/Landing/Privacy" },
   ];

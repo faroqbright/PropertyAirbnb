@@ -3,11 +3,18 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, User, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [login, setlogin] = useState(false);
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push('/Landing/Profile');
+  };
 
   const navItems = [
     { name: "Home", href: "/Landing/Home" },
@@ -58,18 +65,39 @@ export default function Navbar() {
               {item.name}
               <span
                 className={`absolute bottom-[-2px] left-0 h-[2px] bg-[#3CD8C8] rounded-full transition-all duration-300 ${
-                  pathname.startsWith(item.href) ? "w-full" : "w-0 group-hover:w-full"
+                  pathname.startsWith(item.href)
+                    ? "w-full"
+                    : "w-0 group-hover:w-full"
                 }`}
               ></span>
             </Link>
           ))}
         </div>
-
-        <div className="rounded-full border-[1px] border-gray-300 px-6 py-1">
-          <button variant="outline" className="inline-flex text-black">
-            Login
-          </button>
-        </div>
+        {login ? (
+          <div className="rounded-full border-[1.5px] border-bluebutton px-4 py-0.5">
+            <button
+              variant="outline"
+              onClick={handleClick}
+              className="inline-flex items-center font-medium text-bluebutton"
+            >
+              <div className="bg-slate-100 rounded-full text-sm p-1 mr-2 mt-1">
+                <User size={17} className="text-bluebutton" />
+              </div>
+              UnKnown
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => {
+              setlogin(true);
+            }}
+            className="rounded-full border-[1px] border-gray-300 px-6 py-1"
+          >
+            <button variant="outline" className="inline-flex text-black">
+              Login
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );

@@ -54,7 +54,7 @@ export default function Testimonial2() {
           <div key={index} className="relative flex items-center">
             <div className="flex flex-col justify-center items-end px-3 py-1">
               <div
-                className={`-rotate-90 md:ml-24 whitespace-nowrap text-[16px] w-40 transform px-4 py-2 rounded-r-xl rounded-l-xl text-white font-medium ${item.bgcolor} flex justify-center items-center`}
+                className={`-rotate-90 md:ml-24 whitespace-nowrap text-[15px] w-[163px] transform px-4 py-2 rounded-r-xl rounded-l-xl text-white font-medium ${item.bgcolor} flex justify-center items-center`}
               >
                 {item.label}
               </div>
