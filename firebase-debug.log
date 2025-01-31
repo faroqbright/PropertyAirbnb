@@ -1,0 +1,88 @@
+[debug] [2025-01-31T06:15:50.828Z] ----------------------------------------------------------------------
+[debug] [2025-01-31T06:15:50.830Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\PMLS\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-01-31T06:15:50.831Z] CLI Version:   13.29.3
+[debug] [2025-01-31T06:15:50.831Z] Platform:      win32
+[debug] [2025-01-31T06:15:50.831Z] Node Version:  v22.13.0
+[debug] [2025-01-31T06:15:50.831Z] Time:          Fri Jan 31 2025 11:15:50 GMT+0500 (Pakistan Standard Time)
+[debug] [2025-01-31T06:15:50.831Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-01-31T06:15:50.836Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-01-31T06:15:50.837Z] > authorizing via signed-in user (hbdeveloper.38@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\PMLS\Desktop\CoLiver_Latest\my-app
+
+[debug] [2025-01-31T06:16:22.828Z] ----------------------------------------------------------------------
+[debug] [2025-01-31T06:16:22.829Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\PMLS\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2025-01-31T06:16:22.830Z] CLI Version:   13.29.3
+[debug] [2025-01-31T06:16:22.830Z] Platform:      win32
+[debug] [2025-01-31T06:16:22.830Z] Node Version:  v22.13.0
+[debug] [2025-01-31T06:16:22.830Z] Time:          Fri Jan 31 2025 11:16:22 GMT+0500 (Pakistan Standard Time)
+[debug] [2025-01-31T06:16:22.830Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-01-31T06:16:22.836Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-01-31T06:16:22.836Z] > authorizing via signed-in user (hbdeveloper.38@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\PMLS\Desktop\CoLiver_Latest\my-app
+
+[debug] [2025-01-31T06:16:38.764Z] ----------------------------------------------------------------------
+[debug] [2025-01-31T06:16:38.766Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\PMLS\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init hosting
+[debug] [2025-01-31T06:16:38.767Z] CLI Version:   13.29.3
+[debug] [2025-01-31T06:16:38.767Z] Platform:      win32
+[debug] [2025-01-31T06:16:38.767Z] Node Version:  v22.13.0
+[debug] [2025-01-31T06:16:38.767Z] Time:          Fri Jan 31 2025 11:16:38 GMT+0500 (Pakistan Standard Time)
+[debug] [2025-01-31T06:16:38.767Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-01-31T06:16:38.773Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-01-31T06:16:38.773Z] > authorizing via signed-in user (hbdeveloper.38@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Users\PMLS\Desktop\CoLiver_Latest\my-app
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-01-31T06:16:50.631Z] Checked if tokens are valid: true, expires at: 1738307737943
+[debug] [2025-01-31T06:16:50.631Z] Checked if tokens are valid: true, expires at: 1738307737943
+[debug] [2025-01-31T06:16:50.634Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2025-01-31T06:16:51.657Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-01-31T06:16:51.657Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] i  Using project myapp-18982 (myapp) 
+[info] 
+=== Hosting Setup
+[debug] [2025-01-31T06:16:58.350Z] Checked if tokens are valid: true, expires at: 1738307737943
+[debug] [2025-01-31T06:16:58.350Z] Checked if tokens are valid: true, expires at: 1738307737943
+[debug] [2025-01-31T06:16:58.351Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/myapp-18982 [none]
+[debug] [2025-01-31T06:16:59.028Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/myapp-18982 200
+[debug] [2025-01-31T06:16:59.028Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/myapp-18982 {"projectId":"myapp-18982","projectNumber":"578547426515","displayName":"myapp","name":"projects/myapp-18982","resources":{"hostingSite":"myapp-18982"},"state":"ACTIVE","etag":"1_d2576b70-8ee6-4716-8720-997f41952f23"}
+[info] 
+[info] Your public directory is the folder (relative to your project directory) that
+[info] will contain Hosting assets to be uploaded with firebase deploy. If you
+[info] have a build process for your assets, use your build's output directory.
+[info] 
