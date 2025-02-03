@@ -74,7 +74,7 @@ export default function Navbar() {
           ))}
         </div>
         {login ? (
-          <div className="rounded-full border-[1.5px] border-bluebutton px-4 py-0.5">
+          <div className="rounded-full border-[1.5px] border-bluebutton px-3 py-[1px]">
             <button
               variant="outline"
               onClick={handleClick}
@@ -83,7 +83,7 @@ export default function Navbar() {
               <div className="bg-slate-100 rounded-full text-sm p-1 mr-2 mt-1">
                 <User size={17} className="text-bluebutton" />
               </div>
-              UnKnown
+              <span className="-mb-[3px]">UnKnown</span>
             </button>
           </div>
         ) : (
@@ -91,9 +91,9 @@ export default function Navbar() {
             onClick={() => {
               setlogin(true);
             }}
-            className="rounded-full border-[1px] border-gray-300 px-6 py-1"
+            className="rounded-full font-medium border-[1px] border-gray-300 px-8 py-1"
           >
-            <button variant="outline" className="inline-flex text-black">
+            <button variant="outline" className="inline-flex text-black pb-1">
               Login
             </button>
           </div>

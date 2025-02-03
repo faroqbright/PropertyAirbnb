@@ -110,8 +110,57 @@ export default function Header() {
   return (
     <div className="bg-white px-2.5 flex flex-col items-center lg:mb-4 lg:ml-16 lg:mr-4 sm:mx-20 lg:-mt-40">
       <div className="flex flex-col lg:flex-row items-center lg:items-start p-4 lg:py-6 lg:pl-16 gap-8 lg:gap-24 w-full max-w-screen-2xl mx-auto">
-        <div className="w-full lg:w-[50%] order-2">
+        <div className="w-full lg:w-[50%] md:space-x-4 lg:space-x-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 mx-auto lg:mr-10 order-2 mt-10 lg:mt-60">
+          <div className="2xl:max-w-xl xl:max-w-md max-w-sm p-8 bg-[#F5F5F5] rounded-2xl shadow-sm mx-auto">
+            <h2 className="text-2xl font-semibold mb-14">Client Review</h2>
+            <div className="flex items-center space-x-4">
+              <Image
+                src="/assets/Small.png"
+                alt="Shayna"
+                width={48}
+                height={48}
+                className="rounded-full"
+              />
+              <div>
+                <h3 className="text-base font-semibold">Shayna</h3>
+                <p className="text-sm text-gray-500">December 2021</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700 mt-3">
+              Wonderful neighborhood, easy access to restaurants and the subway,
+              cozy studio apartment with a super comfortable bed. Great host,
+              super helpful and responsive. Cool murphy bed...
+            </p>
+            <button className="text-sm font-medium text-black mt-4 underline flex items-center">
+              Show more <ChevronRight size={16} className="mt-[3px] ml-0.5" />
+            </button>
+          </div>
+          <div className="2xl:max-w-xl xl:max-w-md max-w-sm p-8 mt-14 md:mt-0 lg:mt-14 bg-[#F5F5F5] rounded-2xl shadow-sm mx-auto">
+            <h2 className="text-2xl font-semibold mb-14">Your Review</h2>
+            <div className="flex items-center space-x-4">
+              <Image
+                src="/assets/Small.png"
+                alt="Shayna"
+                width={48}
+                height={48}
+                className="rounded-full"
+              />
+              <div>
+                <h3 className="text-base font-semibold">Shayna</h3>
+                <p className="text-sm text-gray-500">December 2021</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700 mt-3">
+              Wonderful neighborhood, easy access to restaurants and the subway,
+              cozy studio apartment with a super comfortable bed. Great host,
+              super helpful and responsive. Cool murphy bed...
+            </p>
+            <button className="text-sm font-medium text-black mt-4 underline flex items-center">
+              Show more <ChevronRight size={16} className="mt-[3px] ml-0.5" />
+            </button>
+          </div>
         </div>
+
         <div className="w-full lg:w-[70%] order-1 rounded-xl overflow-hidden relative">
           <MapContainer
             center={[34.18223, -118.13191]}
@@ -156,7 +205,7 @@ export default function Header() {
                 </div>
               </div>
               <div className="flex items-center space-x-2 my-1.5">
-              <div className="sm:hidden flex items-center sm:text-[13px] text-[11px] text-gray-500">
+                <div className="sm:hidden flex items-center sm:text-[13px] text-[11px] text-gray-500">
                   <Star className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1 mb-0.5" />
                   12 Reviews
                 </div>
@@ -164,7 +213,7 @@ export default function Header() {
                   <ShieldCheck className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1" />
                   Identity verified
                 </div>
-                </div>
+              </div>
               <p className="text-sm text-gray-400 font-medium">
                 Joined May 2021
               </p>

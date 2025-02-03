@@ -96,7 +96,7 @@ export default function Footer() {
             </div>
 
             <div className="flex items-center justify-center">
-              <div className="lg:ml-6 -ml-14 mb-14 lg:mb-9 lg:-mt-6 mt-10">
+              <div className="lg:ml-6 -ml-14 mb-14 lg:mb-9 lg:-mt-14 mt-10">
                 <h3 className="mb-4 text-[17px] font-semibold text-white">
                   Social
                 </h3>
