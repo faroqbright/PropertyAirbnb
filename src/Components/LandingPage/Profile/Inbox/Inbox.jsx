@@ -32,6 +32,8 @@ export default function Inbox() {
     },
   ]);
   const [newMessage, setNewMessage] = useState("");
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const users = [
     {
@@ -125,20 +127,30 @@ export default function Inbox() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-[561px] bg-white border-[2px] rounded-2xl -mt-5 mb-20">
-      <div className="w-full md:w-80 md:border-r flex flex-col ">
+    <div className="flex flex-col md:flex-row h-[600px] md:h-[500px] lg:h-[570px] border-[2px] rounded-2xl mt-0 lg:-mt-5 mb-16 relative bg-white overflow-hidden">
+      <div
+        className={`absolute top-0 left-0 h-full w-64 bg-white transform ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } transition-transform duration-300 z-10 border-r md:static md:translate-x-0 md:w-80 flex flex-col`}
+      >
         <div className="p-4">
-          <div className="relative">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 rounded-full text-[#3CD9C8]" />
+          <div className="relative flex items-center w-[87%] md:w-full">
+            <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 rounded-full text-bluebutton" />
             <input
               type="text"
               placeholder="Search"
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 rounded-full placeholder:text-black text-black"
+              className="w-full pl-10 pr-10 py-2 bg-gray-50 rounded-full placeholder:text-black text-black"
             />
           </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="absolute right-4 top-6 -mr-1 lg:hidden md:hidden"
+          >
+            <Menu className="w-6 h-6 text-gray-500" />
+          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
           {users.map((user) => (
             <div
               key={user.id}
@@ -156,14 +168,18 @@ export default function Inbox() {
               </div>
               <div className="ml-3 flex-1">
                 <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-black">{user.name}</h3>
-                  <span className="text-xs text-black ">{user.time}</span>
+                  <h3 className="font-semibold text-black text-xs sm:text-xs">
+                    {user.name}
+                  </h3>
+                  <span className="text-xs sm:text-xs text-black">
+                    {user.time}
+                  </span>
                 </div>
                 <div className="flex justify-between items-start">
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="text-xs sm:text-xs text-gray-500 truncate">
                     {user.description}
                   </p>
-                  <span className="bg-[#B19BD9] text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                  <span className="bg-purplebutton text-white text-xs sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 mt-1 flex items-center justify-center">
                     {user.messagesNo}
                   </span>
                 </div>
@@ -173,11 +189,11 @@ export default function Inbox() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className="h-full md:flex-1 flex flex-col">
         <div className="flex items-center justify-between px-3 lg:px-6 rounded-tr-xl py-4 border-b bg-gray-200">
           <div className="flex items-center">
             <div className="lg:hidden block">
-              <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+              <button onClick={() => setSidebarOpen(!isSidebarOpen)}>
                 <Menu className="w-6 h-6 mr-3 text-black" />
               </button>
             </div>
@@ -195,17 +211,38 @@ export default function Inbox() {
               <p className="text-sm text-gray-500">Online</p>
             </div>
           </div>
-          <div className="flex justify-between gap-2">
-            <button className="bg-[#3CD9C8] rounded-full w-[135px] h-10">
-              View Property
-            </button>
-            <button className="p-2 text-[#B19BD9] hover:bg-gray-100 rounded-full">
-              <MoreVertical className="w-6 h-6 text-[#B19BD9]" />
-            </button>
+          <div className="relative">
+            <div className="hidden sm:flex justify-between gap-2">
+              <button className="bg-bluebutton text-white rounded-full w-[135px] h-10">
+                View Property
+              </button>
+              <button className="p-2 text-purplebutton hover:bg-gray-100 rounded-full">
+                <MoreVertical className="w-6 h-6 text-bluebutton" />
+              </button>
+            </div>
+
+            <div className="sm:hidden">
+              <button
+                className="p-2 text-purplebutton hover:bg-gray-100 rounded-full"
+                onClick={() => setShowDropdown(!showDropdown)}
+              >
+                <MoreVertical className="w-6 h-6 text-bluebutton" />
+              </button>
+
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-10">
+                  <ul className="py-1">
+                    <li className="px-4 py-2 text-gray-700 hover:text-white hover:bg-purplebutton cursor-pointer">
+                      View Property
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-rounded-full scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
+        <div className="flex-1 overflow-y-auto scrollbar-hide p-6">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -217,7 +254,7 @@ export default function Inbox() {
                 className={`max-w-[70%] ${
                   message.isSentByUser
                     ? "bg-slate-200 text-black"
-                    : "bg-[#B19BD9] text-white"
+                    : "bg-purplebutton text-white"
                 } rounded-t-2xl ${
                   message.isSentByUser ? "rounded-bl-2xl" : "rounded-br-2xl"
                 } p-4`}
@@ -232,14 +269,14 @@ export default function Inbox() {
         </div>
 
         <div className="p-4 border-t">
-          <div className="flex items-center bg-gray-100 rounded-full px-4 py-2">
+          <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 w-full">
             <button className="p-2 hover:bg-gray-100 rounded-full">
               <Paperclip className="w-5 h-5 text-gray-500" />
             </button>
             <input
               type="text"
               placeholder="Aa"
-              className="flex-1 mx-4 bg-[#F5F5F5] text-black focus:outline-none"
+              className="flex-1 bg-[#F5F5F5] text-black focus:outline-none sm:mx-6 md:mx-8 px-4 py-2 rounded-full w-full"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
             />
