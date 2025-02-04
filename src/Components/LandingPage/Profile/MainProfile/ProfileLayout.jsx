@@ -11,7 +11,11 @@ export default function Dashboard() {
   return (
     <div
       className={`w-full min-h-screen flex flex-col ${
-        activeTab === "Bookings" ? "pb-[1350px] sm:pb-[1280px]" : "!pb-[400px] md:!pb-[0px] lg:!pb-[400px]"
+        activeTab === "Bookings"
+          ? "pb-[1350px] sm:pb-[1280px]"
+          : activeTab === "Profile"
+          ? "!pb-[550px] sm:!pb-[450px] lg:!pb-[400px]"
+          : "!pb-[400px] md:!pb-[0px] lg:!pb-[400px]"
       } md:pb-0 md:mb-20 lg:mb-0 p-2 mt-4 lg:p-0 lg:mt-10`}
     >
       <div className="lg:hidden w-full bg-purplebutton p-4 rounded-xl flex justify-center min-[810]:space-x-20 lg:space-x-0 lg:justify-between items-center">

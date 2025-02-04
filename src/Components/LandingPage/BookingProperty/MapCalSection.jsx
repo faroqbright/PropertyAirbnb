@@ -12,7 +12,8 @@ import {
   isSameMonth,
 } from "date-fns";
 import L from "leaflet";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import CustomMarkerImg from "../../../../public/assets/Icon Button.png";
 import "leaflet/dist/leaflet.css";
 import {
   ChevronLeft,
@@ -107,6 +108,13 @@ export default function Header() {
     return null;
   };
 
+  const customIcon = L.icon({
+    iconUrl: "/assets/Icon Button.png",
+    iconSize: [33, 35],
+    iconAnchor: [19, 38],
+    popupAnchor: [0, -38],
+  });
+
   return (
     <div className="bg-white px-2.5 flex flex-col items-center lg:mb-4 lg:ml-16 lg:mr-4 sm:mx-20 lg:-mt-40">
       <div className="flex flex-col lg:flex-row items-center lg:items-start p-4 lg:py-6 lg:pl-16 gap-8 lg:gap-24 w-full max-w-screen-2xl mx-auto">
@@ -170,6 +178,15 @@ export default function Header() {
             zoomControl={false}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <Marker position={[34.18223, -118.13191]} icon={customIcon}>
+              <Popup>
+                <div className="rounded-lg flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    Exact location provided after booking
+                  </span>
+                </div>
+              </Popup>
+            </Marker>
             <AddZoomControl />
           </MapContainer>
           <div className="absolute top-2 right-2 bg-white pt-1 pb-2 px-2 rounded-md shadow-lg text-left z-50 border border-gray-200">
@@ -290,7 +307,7 @@ export default function Header() {
                   {days.map((day, index) => (
                     <div
                       key={index}
-                      className={`text-center py-2 text-sm ${
+                      className={`text-center hover:bg-bluebutton rounded-full hover:text-white cursor-pointer py-3 text-sm ${
                         isSameMonth(day, currentMonth)
                           ? "text-black"
                           : "text-gray-300"
@@ -319,6 +336,15 @@ export default function Header() {
               style={{ zIndex: 1 }}
             >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker position={[34.18223, -118.13191]} icon={customIcon}>
+                <Popup>
+                  <div className="rounded-lg flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      Exact location provided after booking
+                    </span>
+                  </div>
+                </Popup>
+              </Marker>
               <AddZoomControl />
             </MapContainer>
 
