@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search, Paperclip, Mic, Send, MoreVertical, Menu } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function Inbox() {
   const [messages, setMessages] = useState([
@@ -34,6 +35,7 @@ export default function Inbox() {
   const [newMessage, setNewMessage] = useState("");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const router = useRouter();
 
   const users = [
     {
@@ -126,6 +128,11 @@ export default function Inbox() {
     }
   };
 
+  const handleButtonClick = () => {
+    localStorage.setItem("fromProfile", "true");
+    router.push("/Landing/Properties/PropertiesDetail");
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-[600px] md:h-[500px] lg:h-[570px] border-[2px] rounded-2xl mt-0 lg:-mt-5 mb-16 relative bg-white overflow-hidden">
       <div
@@ -213,7 +220,9 @@ export default function Inbox() {
           </div>
           <div className="relative">
             <div className="hidden sm:flex justify-between gap-2">
-              <button className="bg-bluebutton text-white rounded-full w-[135px] h-10">
+              <button 
+              onClick={handleButtonClick}
+              className="bg-bluebutton text-white rounded-full w-[135px] h-10">
                 View Property
               </button>
               <button className="p-2 text-purplebutton hover:bg-gray-100 rounded-full">

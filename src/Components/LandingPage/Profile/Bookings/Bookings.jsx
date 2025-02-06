@@ -3,7 +3,58 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import Image from "next/image";
 
-const bookings = [
+const adminBookings = [
+  {
+    id: 1,
+    adminName: "Hasaan Saleem",
+    rooms: "3 rooms",
+    period: "Feb 19, 2022 - Feb 26, 2022",
+    price: "$120",
+    status: "ongoing",
+  },
+  {
+    id: 2,
+    adminName: "Ali Raza",
+    rooms: "2 rooms",
+    period: "Mar 01, 2022 - Mar 10, 2022",
+    price: "$200",
+    status: "ongoing",
+  },
+  {
+    id: 3,
+    adminName: "Sara Khan",
+    rooms: "4 rooms",
+    period: "Apr 15, 2022 - Apr 22, 2022",
+    price: "$300",
+    status: "ongoing",
+  },
+  {
+    id: 4,
+    adminName: "Zara Ahmed",
+    rooms: "5 rooms",
+    period: "Jan 10, 2022 - Jan 17, 2022",
+    price: "$500",
+    status: "previous",
+  },
+  {
+    id: 5,
+    adminName: "Usman Ali",
+    rooms: "1 room",
+    period: "Dec 01, 2021 - Dec 07, 2021",
+    price: "$150",
+    status: "previous",
+  },
+  {
+    id: 6,
+    adminName: "Ayesha Khan",
+    rooms: "3 rooms",
+    period: "Nov 20, 2021 - Nov 27, 2021",
+    price: "$250",
+    status: "previous",
+  },
+];
+
+const userBookings = [
   {
     id: 1,
     image: "/assets/Container1.png",
@@ -19,14 +70,14 @@ const bookings = [
     title: "Entire loft in Florence, Italy",
     details: "2 rooms for 4 Months",
     price: "$120",
-    status: "previous",
-    btntext: "Write Review",
+    status: "ongoing",
+    btntext: "Message",
   },
   {
     id: 3,
     image: "/assets/Container2.png",
     title: "Entire loft in Florence, Italy",
-    details: "1 rooms for 4 Months",
+    details: "1 room for 4 Months",
     price: "$150",
     status: "ongoing",
     btntext: "Message",
@@ -46,8 +97,8 @@ const bookings = [
     title: "Entire loft in Florence, Italy",
     details: "1 room for 2 Months",
     price: "$250",
-    status: "ongoing",
-    btntext: "Requested",
+    status: "previous",
+    btntext: "Write Review",
   },
   {
     id: 6,
@@ -62,6 +113,7 @@ const bookings = [
 
 export default function Bookings() {
   const [status, setStatus] = useState("ongoing");
+  const [isAdmin, setIsAdmin] = useState(true);
   const router = useRouter();
 
   const handleToggle = (newStatus) => {
@@ -77,9 +129,15 @@ export default function Bookings() {
     }
   };
 
-  const filteredBookings = bookings.filter(
-    (booking) => booking.status === status
-  );
+  const filteredBookings = isAdmin
+    ? adminBookings.filter((booking) => booking.status === status)
+    : userBookings.filter((booking) => booking.status === status);
+
+  const navigate = () => {
+    if (isAdmin === true) {
+      router.push("/Landing/Profile/Details");
+    }
+  };
 
   return (
     <>
@@ -115,19 +173,37 @@ export default function Bookings() {
           filteredBookings.map((booking) => (
             <div
               key={booking.id}
+              onClick={navigate}
               className="flex flex-col md:flex-row items-start md:items-center md:justify-between border-b-[1.5px] last:border-b-0 py-4"
             >
               <div className="flex flex-col md:flex-row items-start gap-4 w-full">
-                <Image
-                  src={booking.image}
-                  alt={booking.title}
-                  width={150}
-                  height={50}
-                  className="rounded-2xl w-full md:h-[105px] h-[250px] object-cover"
-                />
+                {isAdmin ? (
+                  <Image
+                    src="/assets/admin.jpeg"
+                    alt="Admin picture"
+                    width={150}
+                    height={50}
+                    className="rounded-2xl w-full md:h-[105px] h-[250px] object-cover"
+                  />
+                ) : (
+                  <Image
+                    src={booking.image}
+                    alt={booking.title}
+                    width={150}
+                    height={50}
+                    className="rounded-2xl w-full md:h-[105px] h-[250px] object-cover"
+                  />
+                )}
                 <div className="flex flex-col gap-2 w-full">
-                  <h3 className="text-lg font-semibold">{booking.title}</h3>
-                  <p className="text-gray-500 text-sm">{booking.details}</p>
+                  <h3 className="text-lg font-semibold">
+                    {isAdmin ? booking.adminName : booking.title}
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {isAdmin ? booking.rooms : booking.details}
+                  </p>
+                  <span className="text-gray-600 font-normal text-sm">
+                    {isAdmin ? booking.period : ""}
+                  </span>
                   <div className="border-b-[1px] md:hidden border-gray-300 w-full"></div>
                   <span className="text-lg md:hidden font-semibold">
                     {booking.price}
@@ -142,16 +218,40 @@ export default function Bookings() {
               </div>
 
               <div className="flex justify-center md:justify-end w-full mt-4 md:mt-0">
-                <button
-                  className={`px-4 py-2 md:w-32 w-52 text-sm font-medium rounded-full ${
-                    booking.btntext === "Requested"
-                      ? "bg-purplebutton text-white"
-                      : "bg-bluebutton text-white"
-                  }`}
-                  onClick={() => handleButtonClick(booking.btntext)}
-                >
-                  {booking.btntext}
-                </button>
+                {isAdmin && status === "previous" ? (
+                  <button
+                    className="px-4 py-2 md:w-44 w-44 text-sm font-medium rounded-full bg-bluebutton text-white"
+                    onClick={() => handleButtonClick("Give User Review")}
+                  >
+                    Give User Review
+                  </button>
+                ) : isAdmin ? (
+                  <div className="flex flex-col w-[125px] gap-2 px-4 py-2 md:w-32 text-sm font-medium rounded-full">
+                    <button
+                      className="px-4 py-2 md:w-32 w-52 text-sm font-medium rounded-full bg-bluebutton text-white"
+                      onClick={() => handleButtonClick("Accept")}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      className="px-4 py-2 md:w-32 w-52 text-sm font-medium rounded-full bg-black text-white"
+                      onClick={() => handleButtonClick("Reject")}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className={`px-4 py-2 md:w-32 w-52 text-sm font-medium rounded-full ${
+                      booking.btntext === "Requested"
+                        ? "bg-purplebutton text-white"
+                        : "bg-bluebutton text-white"
+                    }`}
+                    onClick={() => handleButtonClick(booking.btntext)}
+                  >
+                    {booking.btntext}
+                  </button>
+                )}
               </div>
             </div>
           ))
