@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Star } from "lucide-react";
+import { ChevronRight, Star, Check } from "lucide-react";
 
 export default function Context() {
   const [selectedRooms, setSelectedRooms] = useState("room1");
@@ -113,17 +113,31 @@ export default function Context() {
               className="flex items-center justify-between cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={selectedRooms.includes(room.id)}
-                  onChange={(e) => {
-                    setSelectedRooms(
-                      e.target.checked
-                        ? [...selectedRooms, room.id]
-                        : selectedRooms.filter((id) => id !== room.id)
-                    );
-                  }}
-                />
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedRooms.includes(room.id)}
+                    onChange={(e) => {
+                      setSelectedRooms(
+                        e.target.checked
+                          ? [...selectedRooms, room.id]
+                          : selectedRooms.filter((id) => id !== room.id)
+                      );
+                    }}
+                    className="hidden"
+                  />
+                  <span
+                    className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ease-in-out ${
+                      selectedRooms.includes(room.id)
+                        ? "bg-white text-[#3CD9C8]"
+                        : "bg-[#B19BD9]"
+                    }`}
+                  >
+                    {selectedRooms.includes(room.id) && (
+                      <Check className="w-5 h-5" />
+                    )}
+                  </span>
+                </label>
                 <span className="text-[15px] font-medium">{room.name}</span>
               </div>
               <span className="text-[15px] font-medium">${room.price}</span>
@@ -131,27 +145,41 @@ export default function Context() {
           ))}
         </div>
 
-        <div className="space-y-2 rounded-lg bg-[#C1AFE1] px-4 py-3 my-5">
+        <div className="space-y-2 rounded-lg bg-purple-300 px-4 py-3 my-5">
           {services.map((service) => (
             <label
               key={service.id}
-              className="flex items-center justify-between cursor-pointer"
+              className="relative flex items-center cursor-pointer"
             >
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={selectedServices.includes(service.id)}
-                  onChange={(e) => {
-                    setSelectedServices(
-                      e.target.checked
-                        ? [...selectedServices, service.id]
-                        : selectedServices.filter((id) => id !== service.id)
-                    );
-                  }}
-                />
+              <input
+                type="checkbox"
+                checked={selectedServices.includes(service.id)}
+                onChange={(e) => {
+                  setSelectedServices(
+                    e.target.checked
+                      ? [...selectedServices, service.id]
+                      : selectedServices.filter((id) => id !== service.id)
+                  );
+                }}
+                className="hidden"
+              />
+              <span
+                className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ease-in-out ${
+                  selectedServices.includes(service.id)
+                    ? "bg-white text-[#3CD9C8]"
+                    : "bg-[#B19BD9]"
+                }`}
+              >
+                {selectedServices.includes(service.id) && (
+                  <Check className="w-5 h-5" />
+                )}
+              </span>
+              <div className="flex items-center gap-2 ml-3">
                 <span className="text-[15px] font-medium">{service.name}</span>
+                <span className="text-[15px] font-medium">
+                  ${service.price}
+                </span>
               </div>
-              <span className="text-[15px] font-medium">${service.price}</span>
             </label>
           ))}
         </div>
@@ -163,7 +191,7 @@ export default function Context() {
 
         <button
           onClick={handleButtonClick}
-          className="w-full cursor-pointer bg-[#3EE0CF] text-white rounded-full py-2"
+          className="w-full cursor-pointer bg-bluebutton text-white rounded-full py-2"
         >
           {buttonText}
         </button>

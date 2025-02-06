@@ -11,7 +11,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className="bg-white font-plus-jakarta"
+        className="bg-white font-plus-jakarta text-black"
       >
         <Navbar />
         {children}
