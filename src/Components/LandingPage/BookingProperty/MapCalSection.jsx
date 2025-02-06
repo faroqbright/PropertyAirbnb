@@ -170,85 +170,7 @@ export default function Header() {
         </div>
 
         <div className="w-full lg:w-[70%] order-1 rounded-xl overflow-hidden relative">
-          <MapContainer
-            center={[34.18223, -118.13191]}
-            zoom={10}
-            className="h-[400px] w-full relative z-0"
-            style={{ zIndex: 0 }}
-            zoomControl={false}
-          >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <Marker position={[34.18223, -118.13191]} icon={customIcon}>
-              <Popup>
-                <div className="rounded-lg flex items-center gap-2">
-                  <span className="text-sm font-medium">
-                    Exact location provided after booking
-                  </span>
-                </div>
-              </Popup>
-            </Marker>
-            <AddZoomControl />
-          </MapContainer>
-          <div className="absolute top-2 right-2 bg-white pt-1 pb-2 px-2 rounded-md shadow-lg text-left z-50 border border-gray-200">
-            <button
-              onClick={toggleFullScreen}
-              className="mt-1 hover:underline text-xs text-gray-500 flex items-center space-x-2"
-            >
-              <Maximize className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="flex items-start space-x-4 py-6 border-b">
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14">
-              <Image
-                src="/assets/Small.png"
-                alt="Host Profile"
-                width={56}
-                height={56}
-                className="rounded-full"
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <h2 className="sm:text-[20px] text-[16px] font-semibold sm:mr-4">
-                  Hosted by Ghazal
-                </h2>
-                <div className="sm:flex hidden items-center sm:text-[13px] text-[11px] text-gray-500">
-                  <Star className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1 mb-0.5" />
-                  12 Reviews
-                </div>
-                <div className="sm:flex hidden items-center sm:text-[13px] text-[11px] text-gray-500">
-                  <ShieldCheck className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1" />
-                  Identity verified
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 my-1.5">
-                <div className="sm:hidden flex items-center sm:text-[13px] text-[11px] text-gray-500">
-                  <Star className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1 mb-0.5" />
-                  12 Reviews
-                </div>
-                <div className="sm:hidden flex items-center sm:text-[13px] text-[11px] text-gray-500">
-                  <ShieldCheck className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1" />
-                  Identity verified
-                </div>
-              </div>
-              <p className="text-sm text-gray-400 font-medium">
-                Joined May 2021
-              </p>
-              <div className="flex -ml-8 sm:-ml-0 space-x-4 text-xs sm:text-sm text-gray-500 mt-3 mb-4">
-                <span>Response rate: 100%</span>
-                <span>Response time: within an hour</span>
-              </div>
-              <div className="flex space-x-2 mt-2 -ml-12 sm:-ml-0">
-                <button className="px-8 py-1.5 border rounded-full text-gray-500">
-                  Gym
-                </button>
-                <button className="px-6 py-1.5 border rounded-full text-gray-500">
-                  Running
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="my-8">
+          <div className="mb-20">
             <div className="flex items-left space-x-2">
               <h2 className="text-[20px] font-semibold mr-4">
                 2 months in New York
@@ -320,6 +242,84 @@ export default function Header() {
                 <p className="text-center text-sm text-gray-400 font-medium mt-4 underline cursor-pointer">
                   Clear dates
                 </p>
+              </div>
+            </div>
+          </div>
+          <MapContainer
+            center={[34.18223, -118.13191]}
+            zoom={10}
+            className="h-[400px] w-full relative z-0 rounded-xl"
+            style={{ zIndex: 0 }}
+            zoomControl={false}
+          >
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <Marker position={[34.18223, -118.13191]} icon={customIcon}>
+              <Popup>
+                <div className="rounded-lg flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    Exact location provided after booking
+                  </span>
+                </div>
+              </Popup>
+            </Marker>
+            <AddZoomControl />
+          </MapContainer>
+          <div className="absolute bottom-[550px] right-2 bg-white pt-1 pb-2 px-2 rounded-md shadow-lg text-left z-50 border border-gray-200">
+            <button
+              onClick={toggleFullScreen}
+              className="mt-1 hover:underline text-xs text-gray-500 flex items-center space-x-2"
+            >
+              <Maximize className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex items-start space-x-4 py-6 border-b">
+            <div className="relative w-12 h-12 sm:w-14 sm:h-14">
+              <Image
+                src="/assets/Small.png"
+                alt="Host Profile"
+                width={56}
+                height={56}
+                className="rounded-full"
+              />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <h2 className="sm:text-[20px] text-[16px] font-semibold sm:mr-4">
+                  Hosted by Ghazal
+                </h2>
+                <div className="sm:flex hidden items-center sm:text-[13px] text-[11px] text-gray-500">
+                  <Star className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1 mb-0.5" />
+                  12 Reviews
+                </div>
+                <div className="sm:flex hidden items-center sm:text-[13px] text-[11px] text-gray-500">
+                  <ShieldCheck className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1" />
+                  Identity verified
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 my-1.5">
+                <div className="sm:hidden flex items-center sm:text-[13px] text-[11px] text-gray-500">
+                  <Star className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1 mb-0.5" />
+                  12 Reviews
+                </div>
+                <div className="sm:hidden flex items-center sm:text-[13px] text-[11px] text-gray-500">
+                  <ShieldCheck className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1" />
+                  Identity verified
+                </div>
+              </div>
+              <p className="text-sm text-gray-400 font-medium">
+                Joined May 2021
+              </p>
+              <div className="flex -ml-8 sm:-ml-0 space-x-4 text-xs sm:text-sm text-gray-500 mt-3 mb-4">
+                <span>Response rate: 100%</span>
+                <span>Response time: within an hour</span>
+              </div>
+              <div className="flex space-x-2 mt-2 -ml-12 sm:-ml-0">
+                <button className="px-8 py-1.5 border rounded-full text-gray-500">
+                  Gym
+                </button>
+                <button className="px-6 py-1.5 border rounded-full text-gray-500">
+                  Running
+                </button>
               </div>
             </div>
           </div>

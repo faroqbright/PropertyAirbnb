@@ -132,7 +132,7 @@ export default function Footer() {
         <div className="mt-16 flex justify-center">
           <div className="rounded-full bg-white py-3 w-[850px]">
             <p className="text-center text-[12px] font-medium text-[#3BD5C5]">
-              © 2023 CoLivers. All rights reserved.
+              © 2025 CoLivers. All rights reserved.
             </p>
           </div>
         </div>
