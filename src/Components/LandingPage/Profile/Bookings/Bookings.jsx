@@ -46,7 +46,7 @@ const adminBookings = [
   },
   {
     id: 6,
-    adminName: "Ayesha Khan",
+    adminName: "Ayaz Khan",
     rooms: "3 rooms",
     period: "Nov 20, 2021 - Nov 27, 2021",
     price: "$250",
@@ -126,6 +126,8 @@ export default function Bookings() {
       router.push("/Landing/Properties/PropertiesDetail");
     } else if (btntext === "Write Review") {
       router.push("/Landing/Reviews");
+    } else if (isAdmin && btntext === "Give User Review") {
+      router.push("/Landing/Profile/Details/Reviews");
     }
   };
 
@@ -133,8 +135,8 @@ export default function Bookings() {
     ? adminBookings.filter((booking) => booking.status === status)
     : userBookings.filter((booking) => booking.status === status);
 
-  const navigate = () => {
-    if (isAdmin === true) {
+  const navigate = (booking) => {
+    if (isAdmin && booking.status === "ongoing") {
       router.push("/Landing/Profile/Details");
     }
   };
@@ -173,13 +175,16 @@ export default function Bookings() {
           filteredBookings.map((booking) => (
             <div
               key={booking.id}
-              onClick={navigate}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(booking);
+              }}
               className="flex flex-col md:flex-row items-start md:items-center md:justify-between border-b-[1.5px] last:border-b-0 py-4"
             >
               <div className="flex flex-col md:flex-row items-start gap-4 w-full">
                 {isAdmin ? (
                   <Image
-                    src="/assets/admin.jpeg"
+                    src="/assets/admin.png"
                     alt="Admin picture"
                     width={150}
                     height={50}

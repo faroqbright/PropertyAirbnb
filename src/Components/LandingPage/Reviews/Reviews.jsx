@@ -16,7 +16,7 @@ export default function WriteReview() {
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 lg:p-16 mb-10">
       <div className="flex flex-col justify-center items-center w-full max-w-[600px] space-y-6 p-4 sm:px-8 sm:py-12 bg-white border-[1.5px] rounded-2xl shadow-sm">
         <h1 className="font-semibold text-black text-xl sm:text-2xl mb-6 text-center">
-          Write a Review for coLiver
+          Write review for coLiver
         </h1>
 
         {reviewTitles.map((title, index) => (
