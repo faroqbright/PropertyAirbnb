@@ -14,10 +14,17 @@ import React, { useEffect, useState } from "react";
 
 export default function Page() {
   const [fromProfile, setFromProfile] = useState(false);
+  const [fromProperties, setFromProperties] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("fromProfile")) {
       setFromProfile(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (localStorage.getItem("FromProperties")) {
+      setFromProperties(true);
     }
   }, []);
 
@@ -27,7 +34,7 @@ export default function Page() {
       <Context />
       <MapCalSection />
       <Testimonial />
-      {fromProfile ? <Testimonial3 /> : <Testimonial2 />}
+      {fromProfile || fromProperties ? <Testimonial3 /> : <Testimonial2 />}
     </>
   );
 }

@@ -150,6 +150,8 @@ export default function Header() {
             )}
           </div>
 
+          <div className="block border-r border-gray-300 h-8"></div>
+
           <div className="flex-1 min-w-0 relative">
             <label
               className="block text-white font-semibold text-[15px]"

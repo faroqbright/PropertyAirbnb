@@ -54,7 +54,7 @@ export default function Bookings() {
             </div>
             <div className="right w-full md:w-40 flex items-center justify-center mt-4">
               <div className="flex flex-col items-center gap-y-4">
-                <button className="bg-bluebutton w-32 px-9 py-1 rounded-2xl">
+                <button className="bg-bluebutton text-white w-32 px-9 py-1 rounded-2xl">
                   Accept
                 </button>
                 <button className="px-9 py-1 w-32 text-white rounded-2xl bg-black">

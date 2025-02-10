@@ -1,10 +1,20 @@
 "use client";
 import { LayoutGrid } from "lucide-react";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const [activeButton, setActiveButton] = useState(1);
+  const [fromProperties, setFromProperties] = useState(false);
+  const router = useRouter();
+
+
+  const headerButtons = [
+    { id: 1, label: "Edit Room", bgColor: "bg-bluebutton" },
+    { id: 2, label: "Inactive Room", bgColor: "bg-purplebutton" },
+    { id: 3, label: "Delete Room", bgColor: "bg-red-500" },
+  ];
 
   const buttons = [
     { id: 1, label: "Property" },
@@ -12,8 +22,32 @@ export default function Header() {
     { id: 3, label: "Room2" },
   ];
 
+  useEffect(() => {
+    if (localStorage.getItem("FromProperties")) {
+      setFromProperties(true);
+    }
+  }, []);
+
+  const handleHeaderButtonClick = (id) => {
+    localStorage.removeItem("FromProperties");
+    router.push("/Landing/Home"); 
+  };
+
   return (
     <>
+      {fromProperties && (
+        <div className="flex flex-wrap justify-center px-4 gap-4 my-9 max-w-full">
+          {headerButtons.map((button) => (
+            <button
+              key={button.id}
+              onClick={() => handleHeaderButtonClick(button.id)}
+              className={`h-10 min-w-[140px] w-full sm:w-[170px] text-white font-medium rounded-full ${button.bgColor} transition`}
+            >
+              {button.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="container mx-auto px-4 md:px-10 lg:px-36 flex flex-col md:flex-row gap-4 relative mt-6">
         <Image
           src="/assets/head1.png"

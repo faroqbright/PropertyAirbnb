@@ -184,11 +184,11 @@ export default function Bookings() {
               <div className="flex flex-col md:flex-row items-start gap-4 w-full">
                 {isAdmin ? (
                   <Image
-                    src="/assets/admin.png"
+                    src="/assets/admin.jpeg"
                     alt="Admin picture"
                     width={150}
                     height={50}
-                    className="rounded-2xl w-full md:h-[105px] h-[250px] object-cover"
+                    className="rounded-2xl w-full md:h-[105px] h-[200px] object-cover"
                   />
                 ) : (
                   <Image
@@ -231,15 +231,15 @@ export default function Bookings() {
                     Give User Review
                   </button>
                 ) : isAdmin ? (
-                  <div className="flex flex-col w-[125px] gap-2 px-4 py-2 md:w-32 text-sm font-medium rounded-full">
+                  <div className="flex flex-col items-center gap-2 px-4 py-2 text-sm font-medium rounded-full">
                     <button
-                      className="px-4 py-2 md:w-32 w-52 text-sm font-medium rounded-full bg-bluebutton text-white"
+                      className="w-32 px-4 py-2 text-sm font-medium rounded-full bg-bluebutton text-white"
                       onClick={() => handleButtonClick("Accept")}
                     >
                       Accept
                     </button>
                     <button
-                      className="px-4 py-2 md:w-32 w-52 text-sm font-medium rounded-full bg-black text-white"
+                      className="w-32 px-4 py-2 text-sm font-medium rounded-full bg-black text-white"
                       onClick={() => handleButtonClick("Reject")}
                     >
                       Reject
