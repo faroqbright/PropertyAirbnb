@@ -4,6 +4,7 @@ import Testimonial from "@/Components/LandingPage/Home/Testimonial";
 import Testimonial2 from "@/Components/LandingPage/Home/Testimonial2";
 import Testimonial3 from "@/Components/LandingPage/Home/Testimonial3";
 import React from "react";
+import Testimonial4 from "@/Components/LandingPage/Home/Testimonial4";
 
 export default function page() {
   return (
@@ -12,6 +13,7 @@ export default function page() {
       <Card />
       <Testimonial />
       <Testimonial2 />
+      <Testimonial4 />
       <Testimonial3 />
     </>
   );
