@@ -1,11 +1,31 @@
-"use client"
+"use client";
 
-import { Trash2 } from "lucide-react";
+import {
+  Bath,
+  BedDouble,
+  BicepsFlexed,
+  Bolt,
+  Cat,
+  ChartArea,
+  CircleParking,
+  Dog,
+  Dumbbell,
+  Flower2,
+  HeartHandshake,
+  House,
+  Settings,
+  Shield,
+  Trash2,
+  WashingMachine,
+  WavesLadder,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const Properties = () => {
   const [step, setstep] = useState(1);
+  const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(null);
 
   const handleImageChange = (event) => {
@@ -42,6 +62,7 @@ const Properties = () => {
 
   const [additionalRoomPrice, setAdditionalRoomPrice] = useState([]);
   const [roomInput, setRoomInput] = useState({ img: "", price: "" });
+  const fileInputRef = useRef(null);
 
   const handleRoomChange = (e) => {
     setRoomInput({ ...roomInput, [e.target.name]: e.target.value });
@@ -56,6 +77,7 @@ const Properties = () => {
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = "";
   };
 
   const handleAddRoom = (e) => {
@@ -74,6 +96,55 @@ const Properties = () => {
   const handleDeleteRoom = (index) => {
     const updatedRoom = additionalRoomPrice.filter((_, i) => i !== index);
     setAdditionalRoomPrice(updatedRoom);
+  };
+
+  const namesArray = [
+    "Primary Services",
+    "Swimming Pool",
+    "Vigilance",
+    "Maintenance",
+    "House Keeping",
+    "Parking",
+    "Own Bathroom",
+    "Roof Garden",
+    "Cat Friendly",
+    "Laundry",
+    "Common Areas",
+    "Gym",
+    "Co Working",
+    "Dog",
+    "LGBT+coLivers",
+    "Double Bed",
+  ];
+
+  const iconsArray = [
+    <Settings size={18} />,
+    <WavesLadder size={18} />,
+    <Shield size={18} />,
+    <Bolt size={18} />,
+    <House size={18} />,
+    <CircleParking size={18} />,
+    <Bath size={18} />,
+    <Flower2 size={18} />,
+    <Cat size={18} />,
+    <WashingMachine size={18} />,
+    <ChartArea size={18} />,
+    <Dumbbell size={18} />,
+    <BicepsFlexed size={18} />,
+    <Dog size={18} />,
+    <HeartHandshake size={18} />,
+    <BedDouble size={18} />,
+  ];
+
+  const [clickedButtons, setClickedButtons] = useState([]);
+
+  const handleButtonClick = (index) => {
+    setClickedButtons(
+      (prev) =>
+        prev.includes(index)
+          ? prev.filter((i) => i !== index) // Remove index if already clicked
+          : [...prev, index] // Add index if not clicked
+    );
   };
 
   return (
@@ -105,7 +176,9 @@ const Properties = () => {
         </button>
         <button
           onClick={() => setstep(4)}
-          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${step === 4 ? "bg-purplebutton text-white" : ""}`}
+          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${
+            step === 4 ? "bg-purplebutton text-white" : ""
+          }`}
         >
           Room
         </button>
@@ -197,7 +270,10 @@ const Properties = () => {
               <br />
 
               <div className="w-full flex justify-center mt-6 mb-7">
-                <button className="text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full">
+                <button
+                  onClick={() => setstep(2)}
+                  className="text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full"
+                >
                   Next
                 </button>
               </div>
@@ -282,7 +358,10 @@ const Properties = () => {
               </div>
 
               <div className="w-full flex justify-center mb-5">
-                <button className="mt-10 text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full">
+                <button
+                  onClick={() => setstep(3)}
+                  className="mt-10 text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full"
+                >
                   Next
                 </button>
               </div>
@@ -291,85 +370,53 @@ const Properties = () => {
         </>
       ) : step === 3 ? (
         <>
-          {/* <div>
+          <div className="overflow-y-auto scrollbar-hide h-[800px] lg:h-auto">
             <h1 className="text-textclr font-semibold mb-3">
               Select the Amenities
             </h1>
             <div className="grid lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-5 my-4 px-7 mb-9">
-              <button className="border rounded-3xl py-2 px- w-full text-gray-400 my-2">
-                Primary Services
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full bg-purple-100 text-purple-400 my-2">
-                Swimming Pool
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full my-2 text-gray-400">
-                Vigilance
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full bg-purple-100 text-purple-400 my-2">
-                Maintainence
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full my-2 text-gray-400">
-                House Keeping
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full bg-purple-100 text-purple-400 my-2">
-                Parking Lot
-              </button>
-
-              <button className="border rounded-3xl py-2 px- w-full my-2 text-gray-400">
-                Own Bathroom
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full my-2 text-gray-400">
-                Roof Garden
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full bg-purple-100 text-purple-400 my-2">
-                Cat Friendly
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full my-2 text-gray-400">
-                Laundry Room
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full bg-purple-100 text-purple-400 my-2">
-                Common Areas Only
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full bg-purple-100 text-purple-700 my-2">
-                Gym
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full my-2 bg-purple-100 text-purple-400">
-                CoWorking
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full my-2 text-gray-400">
-                Dog Friendly
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full bg-purple-100 text-purple-400 my-2">
-                LGBT+ coLivers
-              </button>
-              <button className="border rounded-3xl py-2 px- w-full my-2 text-gray-400">
-                Bedroom Services
-              </button>
+              {iconsArray.map((icon, index) => (
+                <button
+                  key={index}
+                  className={`border rounded-3xl py-2 w-full my-2 transition-all duration-300 ${
+                    clickedButtons.includes(index)
+                      ? "bg-[#B19BD91A] text-[#B19BD9]" // Pink background and text when clicked
+                      : "bg-white text-[#828282]"
+                  }`}
+                  onClick={() => handleButtonClick(index)}
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    <div>{icon}</div>
+                    <p>{namesArray[index]}</p>
+                  </div>
+                </button>
+              ))}
             </div>
 
             <div className="w-full flex justify-center mb-5">
-              <button className="mt-10 text-center items-center bg-bluebutton px-16 py-2 rounded-full">
+              <button
+                onClick={() => setstep(4)}
+                className="mt-10 text-center items-center bg-bluebutton px-16 py-2 rounded-full text-white"
+              >
                 Next
               </button>
             </div>
-          </div> */}
+          </div>
         </>
       ) : step === 4 ? (
         <>
-          {/* <div>
+          <div>
             <div className="bg-purple-50 mb-20 rounded-xl">
               <div className="pictures lg:flex gap-10 md:flex-wrap py-3 px-7 mb-5 pt-5">
                 <div className="flex lg:flex-row flex-col gap-3 mt-5 mb-10">
                   <div
                     className="flex flex-col items-center justify-center border-[1.5px] rounded-xl cursor-pointer bg-white"
-                    onClick={() =>
-                      document.getElementById("image-upload-room").click()
-                    }
+                    onClick={() => fileInputRef.current.click()} // Trigger file input using ref
                   >
                     <p className="pt-5 px-16 text-textclr">+</p>
                     <p className="pb-8 px-16 text-textclr">Upload Photos</p>
                     <input
-                      id="image-upload-room"
+                      ref={fileInputRef} // Attach ref here
                       type="file"
                       accept="image/*"
                       className="hidden"
@@ -409,7 +456,7 @@ const Properties = () => {
                 </div>
                 <div className="flex justify-center lg:justify-start mt-5 lg:mt-0">
                   <button
-                    className="bg-purplebutton text-white px-8 py-3 rounded-full hover:bg-purple-700 transition-all duration-300 shadow-lg transform hover:scale-105 lg:mt-7"
+                    className="bg-purplebutton text-white px-8 py-3 rounded-full lg:mt-7"
                     onClick={handleAddRoom}
                   >
                     Add
@@ -443,12 +490,15 @@ const Properties = () => {
                 </div>
               ))}
               <div className="w-full flex justify-center">
-                <button className="text-center items-center bg-bluebutton px-20 mt-24 py-3 rounded-full text-white">
+                <button
+                  onClick={() => router.push("/Landing/Home")}
+                  className="text-center items-center bg-bluebutton px-20 mt-24 py-3 rounded-full text-white"
+                >
                   Save
                 </button>
               </div>
             </div>
-          </div> */}
+          </div>
         </>
       ) : null}
     </div>
