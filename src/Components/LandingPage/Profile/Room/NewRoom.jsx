@@ -64,6 +64,12 @@ const Properties = () => {
   const [roomInput, setRoomInput] = useState({ img: "", price: "" });
   const fileInputRef = useRef(null);
 
+  const handleClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   const handleRoomChange = (e) => {
     setRoomInput({ ...roomInput, [e.target.name]: e.target.value });
   };
@@ -139,11 +145,8 @@ const Properties = () => {
   const [clickedButtons, setClickedButtons] = useState([]);
 
   const handleButtonClick = (index) => {
-    setClickedButtons(
-      (prev) =>
-        prev.includes(index)
-          ? prev.filter((i) => i !== index) // Remove index if already clicked
-          : [...prev, index] // Add index if not clicked
+    setClickedButtons((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
     );
   };
 
@@ -186,37 +189,41 @@ const Properties = () => {
 
       {step === 1 ? (
         <div>
-          <div className="flex lg:flex-row flex-col gap-3 mt-10 mb-5">
-            <div
-              className="flex flex-col items-center justify-center border-[1.5px] rounded-xl cursor-pointer"
-              onClick={() => document.getElementById("image-upload").click()}
-            >
-              <p className="pt-5 px-16 text-textclr">+</p>
-              <p className="pb-8 px-16 text-textclr">Upload Photos</p>
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-            </div>
-
-            {selectedImage && (
-              <div className="relative items-center">
-                <img
-                  src={selectedImage}
-                  alt="Image Preview"
-                  className="h-28 rounded-xl sm:min-w-full object-cover md:w-full"
-                />
-                <button
-                  onClick={handleRemoveImage}
-                  className="absolute top-[-15px] lg:right-[-10px] bg-slate-500 text-white rounded-full px-2.5 sm:right-[-10px]"
+          <div className="flex lg:flex-row flex-col gap-3 my-5">
+            <div className="lg:flex gap-10 md:flex-wrap py-3 px-7 pt-5">
+              <div className="flex lg:flex-row flex-col gap-3 mt-5">
+                <div
+                  className="flex flex-col items-center justify-center border-[1.5px] rounded-xl cursor-pointer bg-white"
+                  onClick={handleClick}
                 >
-                  <p className="mb-1">x</p>
-                </button>
+                  <p className="pt-5 px-16 text-textclr">+</p>
+                  <p className="pb-8 px-16 text-textclr">Upload Photos</p>
+                  <input
+                    ref={fileInputRef}
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChangeRoom}
+                  />
+                </div>
+                {roomInput.img && (
+                  <div className="relative items-center">
+                    <img
+                      src={roomInput.img}
+                      alt="Room Preview"
+                      className="h-28 rounded-xl sm:min-w-full object-cover md:w-full"
+                    />
+                    <button
+                      onClick={handleRemoveImageRoom}
+                      className="absolute top-[-15px] right-[-10px] bg-slate-500 text-white rounded-full px-2.5"
+                    >
+                      <p className="mb-1">x</p>
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
           <div className="flex flex-col lg:mt-[-100px] mt-10">
             <form>
@@ -407,16 +414,17 @@ const Properties = () => {
         <>
           <div>
             <div className="bg-purple-50 mb-20 rounded-xl">
-              <div className="pictures lg:flex gap-10 md:flex-wrap py-3 px-7 mb-5 pt-5">
+              <div className="lg:flex gap-10 md:flex-wrap py-3 px-7 mb-5 pt-5">
                 <div className="flex lg:flex-row flex-col gap-3 mt-5 mb-10">
                   <div
                     className="flex flex-col items-center justify-center border-[1.5px] rounded-xl cursor-pointer bg-white"
-                    onClick={() => fileInputRef.current.click()} // Trigger file input using ref
+                    onClick={handleClick}
                   >
                     <p className="pt-5 px-16 text-textclr">+</p>
                     <p className="pb-8 px-16 text-textclr">Upload Photos</p>
                     <input
-                      ref={fileInputRef} // Attach ref here
+                      ref={fileInputRef}
+                      id="image-upload"
                       type="file"
                       accept="image/*"
                       className="hidden"
