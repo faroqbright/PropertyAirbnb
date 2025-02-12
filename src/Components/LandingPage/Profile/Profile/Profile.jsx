@@ -2,10 +2,12 @@
 import { CameraIcon, Plus, Star, X } from "lucide-react";
 import Image from "next/image";
 import React, { useState } from "react";
+import { useRouter } from 'next/navigation'
 
 export default function Bookings() {
   const [status, setStatus] = useState("Info");
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedOtherImage, setOtherUploadedImage] = useState(null);
 
   const handleToggle = (newStatus) => {
     setStatus(newStatus);
@@ -23,6 +25,26 @@ export default function Bookings() {
   const handleRemoveImage = () => {
     setUploadedImage(null);
   };
+
+  const handleOtherImageUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setOtherUploadedImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  const handleOtherRemoveImage = () => {
+    setOtherUploadedImage(null);
+  };
+
+  const router = useRouter()
+
+  const handleNagigate = () => {
+    router.push('/Auth/ChangePassword')
+  }
 
   return (
     <>
@@ -130,7 +152,7 @@ export default function Bookings() {
                   <span className="text-lg font-semibold">5.0</span>
                 </div>
               </div>
-              <button className="text-white bg-bluebutton py-2 px-4 rounded-full">
+              <button className="text-white bg-bluebutton py-2 px-4 rounded-full" onClick={handleNagigate}>
                 Change Password
               </button>
             </div>
@@ -185,6 +207,35 @@ export default function Bookings() {
                   />
                   <button
                     onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 bg-white p-1 rounded-full shadow-md hover:bg-gray-100"
+                  >
+                    <X className="w-5 h-5 text-gray-700" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex space-x-4">
+              <label className="border-[1px] w-[200px] rounded-lg p-4 flex flex-col items-center justify-center gap-2 cursor-pointer">
+                <Plus className="w-6 h-6 text-gray-400" />
+                <span className="text-sm font-medium">Upload Other Doc</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleOtherImageUpload}
+                />
+              </label>
+              {uploadedOtherImage && (
+                <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden">
+                  <Image
+                    src={uploadedOtherImage}
+                    alt="CNIC Preview"
+                    fill
+                    className="object-cover"
+                  />
+                  <button
+                    onClick={handleOtherRemoveImage}
                     className="absolute top-2 right-2 bg-white p-1 rounded-full shadow-md hover:bg-gray-100"
                   >
                     <X className="w-5 h-5 text-gray-700" />
