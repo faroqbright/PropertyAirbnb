@@ -144,7 +144,7 @@ export default function Bookings() {
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-                    <CameraIcon className="w-8 h-8 text-gray-400" />
+                    <CameraIcon className="w-8 h-8 text-gray-600" />
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

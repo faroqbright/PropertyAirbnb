@@ -27,7 +27,7 @@ export default function PaymentForm() {
       {!paymentSubmitted ? (
         <div className="flex gap-6 p-6 min-h-screen items-center justify-center flex-col lg:flex-row">
           <div className="bg-white p-10 rounded-2xl w-full h-auto lg:h-[400px] border">
-            <h2 className="text-[20px] font-semibold mb-8 lg:mb-4">
+            <h2 className="text-2xl font-semibold mb-8 lg:mb-4">
               Select Payment Method
             </h2>
             <div className="flex flex-wrap justify-center gap-4 md:gap-2 mb-6 text-[13px] mx-auto lg:text-[14px] w-full max-w-4xl">

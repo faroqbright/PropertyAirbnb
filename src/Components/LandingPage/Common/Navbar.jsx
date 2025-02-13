@@ -1,19 +1,38 @@
 "use client";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, User, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [login, setlogin] = useState(false);
   const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isLogin, setIsLogin] = useState(false);
+
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const loginStatus = localStorage.getItem("isLogin");
+      setIsLogin(loginStatus === "true");
+    };
+    checkLoginStatus();
+    window.addEventListener("storage", checkLoginStatus);
+    return () => window.removeEventListener("storage", checkLoginStatus);
+  }, []);  
+
+  useEffect(() => {
+    console.log("isLogin state updated:", isLogin); // Debug log
+  }, [isLogin]);
+
+  const handleNavigate = () => {
+    console.log("Navigating to Login");
+    router.push("/Auth/Login");
+  };
 
   const handleClick = () => {
-    router.push('/Landing/Profile');
+    console.log("Navigating to Profile");
+    router.push("/Landing/Profile");
   };
 
   const navItems = [
@@ -23,7 +42,10 @@ export default function Navbar() {
     { name: "Contact", href: "/Landing/Contact" },
   ];
 
-  const toggleMenu = () => setMenuOpen(!menuOpen);
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+    console.log("Menu toggled:", menuOpen);
+  };
 
   return (
     <nav className="w-full p-6 bg-white border-b">
@@ -73,29 +95,25 @@ export default function Navbar() {
             </Link>
           ))}
         </div>
-        {login ? (
+
+        {isLogin ? (
           <div className="rounded-full border-[1.5px] border-bluebutton px-3 py-[1px]">
             <button
-              variant="outline"
               onClick={handleClick}
               className="inline-flex items-center font-medium text-bluebutton"
             >
               <div className="bg-slate-100 rounded-full text-sm p-1 mr-2 mt-1">
                 <User size={17} className="text-bluebutton" />
               </div>
-              <span className="-mb-[3px]">UnKnown</span>
+              <span className="-mb-[3px]">Profile</span>
             </button>
           </div>
         ) : (
           <div
-            onClick={() => {
-              setlogin(true);
-            }}
-            className="rounded-full font-medium border-[1px] border-gray-300 px-8 py-1"
+            onClick={handleNavigate}
+            className="rounded-full font-medium border-[1px] border-gray-300 px-8 py-1 cursor-pointer"
           >
-            <button variant="outline" className="inline-flex text-black pb-1">
-              Login
-            </button>
+            <span className="inline-flex text-black pb-1">Login</span>
           </div>
         )}
       </div>

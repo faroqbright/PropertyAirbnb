@@ -268,7 +268,7 @@ export default function Header() {
                     </div>
                   ))}
                 </div>
-                <p className="text-center text-sm text-gray-400 font-medium mt-4 underline cursor-pointer">
+                <p className="text-center text-sm text-gray-400 font-medium mt-4 underline cursor-pointer pb-10">
                   Clear dates
                 </p>
               </div>

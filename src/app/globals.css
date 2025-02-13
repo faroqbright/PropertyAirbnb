@@ -105,3 +105,14 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
+
+.no-scrollbar {
+  overflow-x: scroll;
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Webkit browsers (Chrome, Safari) */
+}
+

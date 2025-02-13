@@ -3,6 +3,10 @@ import React, { useState } from "react";
 import { ArrowRightLeft, CreditCard, Info } from "lucide-react";
 import { FaPaypal } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { FaRegCalendarAlt } from "react-icons/fa";
+
 
 const Payment = () => {
   const [selectedMethod, setSelectedMethod] = useState("Credit");
@@ -15,6 +19,12 @@ const Payment = () => {
 
   const handleClick = () => {
     router.push("/Landing/Home");
+  };
+
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
   };
 
   return (
@@ -89,19 +99,24 @@ const Payment = () => {
           </div>
 
           <div className="flex flex-wrap gap-6 mt-10">
-            <div className="flex-1 min-w-[120px]">
-              <label className="text-textclr block mb-2">Month</label>
-              <select className="border-2 py-2 rounded-full w-full pl-4">
-                <option>Select Month</option>
-              </select>
+            <div className="flex-1 min-w-[190px]">
+              <label className="text-textclr block mb-2">Month / Year (MM/YY)</label>
+              <div className="flex items-center border-2 border-gray-300 rounded-full justify-between pl-2 py-2">
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={handleDateChange}
+                  dateFormat="MM/yy"
+                  placeholderText="MM/YY"
+                  showMonthYearPicker
+                  minDate={new Date()}
+                  className="w-full outline-none bg-white text-gray-700 pl-2"
+                  calendarClassName="custom-calendar-size"
+                />
+                <FaRegCalendarAlt size={20} className="text-gray-500 pr-2" />
+              </div>
             </div>
-            <div className="flex-1 min-w-[120px]">
-              <label className="text-textclr block mb-2">Year</label>
-              <select className="border-2 py-2 rounded-full w-full pl-4">
-                <option>Select Year</option>
-              </select>
-            </div>
-            <div className="flex-1 min-w-[120px]">
+
+            <div className="flex-1 min-w-[170px]">
               <label className="text-textclr block mb-2">CVV</label>
               <div className="relative">
                 <input
@@ -111,7 +126,7 @@ const Payment = () => {
                 />
                 <Info
                   className="absolute right-3 top-3.5 text-gray-500"
-                  size={16}
+                  size={20}
                 />
               </div>
             </div>
@@ -123,14 +138,14 @@ const Payment = () => {
             Booking Summary
           </h1>
           <div className="bg-white h-[0.5px] mb-12"></div>
-          <div className="mb-16">
+          <div className="mb-16 text-white">
             <label className="block text-lg font-medium mb-2 text-white">
               Withdraw Amount
             </label>
             <input
               type="text"
               placeholder="Write here"
-              className="w-full py-2 text-white px-4 rounded-full bg-[#B19BD9] border-[1.5px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full py-2 text-white px-4 rounded-full bg-[#B19BD9] border-[1.5px] placeholder-white focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
           <div className="bg-white h-[0.5px] mb-16"></div>

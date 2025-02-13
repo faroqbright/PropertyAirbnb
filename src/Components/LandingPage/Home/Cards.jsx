@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import Image from "next/image";
 import { Heart, Star } from "lucide-react";
+import { useState } from "react";
 
 const properties = [
   {
@@ -88,11 +89,34 @@ const properties = [
   },
 ];
 
+const countries = ["France", "Poland", "Germany", "Spain", "Italy", "Sweden"];
+
 export default function Card() {
   const router = useRouter();
+  const [activeIndex, setActiveIndex] = useState(null); // State to track the active button
+  const handleButtonClick = (index) => {
+    setActiveIndex(index); // Set the clicked button as active
+  };
 
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5">
+      <div className="overflow-x-auto no-scrollbar mb-6">
+        <div className="flex space-x-4">
+          {countries.map((country, index) => (
+            <button
+              key={index}
+              onClick={() => handleButtonClick(index)}
+              className={`px-10 py-3 rounded-full border ${
+                activeIndex === index
+                  ? "bg-[#3CD9C8] text-white"
+                  : "bg-white text-black"
+              } hover:shadow-md`}
+            >
+              {country}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {properties.map((property) => (
           <div

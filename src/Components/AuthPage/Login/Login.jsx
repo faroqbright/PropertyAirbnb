@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
@@ -15,6 +15,12 @@ const Login = () => {
   const handleSignUpClick = () => {
     router.push("/Auth/Signup");
   };
+
+  const handleLoginClick = async () => {
+    localStorage.setItem("isLogin", "true");
+    window.dispatchEvent(new Event("storage"));  
+    router.push('/Landing/Profile');
+  };  
 
   return (
     <div className="flex mx-auto justify-center min-h-screen p-4">
@@ -93,7 +99,7 @@ const Login = () => {
         </div>
 
         
-        <button className="w-full mt-8 py-3 bg-teal-500 text-white font-medium rounded-full">
+        <button className="w-full mt-8 py-3 bg-teal-500 text-white font-medium rounded-full" onClick={handleLoginClick}>
           Login
         </button>
 
