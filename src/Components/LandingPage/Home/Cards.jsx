@@ -89,7 +89,7 @@ const properties = [
   },
 ];
 
-const countries = ["France", "Poland", "Germany", "Spain", "Italy", "Sweden"];
+const countries = ["France", "Poland", "Germany", "Spain", "Italy", "Sweden", "Denmark", "Hungary"];
 
 export default function Card() {
   const router = useRouter();
@@ -110,7 +110,7 @@ export default function Card() {
                 activeIndex === index
                   ? "bg-[#3CD9C8] text-white"
                   : "bg-white text-black"
-              } hover:shadow-md`}
+              }`}
             >
               {country}
             </button>

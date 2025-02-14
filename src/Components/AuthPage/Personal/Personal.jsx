@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Camera, Check } from "lucide-react";
+import { Camera, Check, Plus } from "lucide-react";
 
 const Personal = () => {
   const [step, setStep] = useState(1);
@@ -147,7 +147,7 @@ const Personal = () => {
             {namesArray.map((name, index) => (
               <button
                 key={index}
-                className={`border rounded-full py-1 px-7 w-full my-2 ${
+                className={`border rounded-full py-2 px-5 w-full my-2 text-center ${
                   activeButtons.includes(index)
                     ? "bg-[#B19BD9] text-white"
                     : "text-[#737373]"
@@ -187,8 +187,8 @@ const Personal = () => {
                 }`}
               >
                 <span>{label}</span>
-                <span className="ml-2">
-                  {activePetButtons.includes(index) ? <Check /> : "+"}
+                <span className="ml-2 active:mb-0">
+                  {activePetButtons.includes(index) ? <Check /> : <Plus size={16} className="mb-0.5"/>}
                 </span>
               </button>
             ))}
@@ -223,7 +223,7 @@ const Personal = () => {
               >
                 <span>{label}</span>
                 <span className="ml-2">
-                  {activeDrinkButtons.includes(index) ? <Check /> : "+"}
+                  {activeDrinkButtons.includes(index) ? <Check /> : <Plus size={16} className="mb-0.5"/>}
                 </span>
               </button>
             ))}
@@ -258,7 +258,7 @@ const Personal = () => {
               >
                 <span>{label}</span>
                 <span className="ml-2">
-                  {activeSmokeButtons.includes(index) ? <Check /> : "+"}
+                  {activeSmokeButtons.includes(index) ? <Check /> : <Plus size={16} className="mb-0.5"/>}
                 </span>
               </button>
             ))}
@@ -293,7 +293,7 @@ const Personal = () => {
               >
                 <span>{label}</span>
                 <span className="ml-2">
-                  {activeDietButtons.includes(index) ? <Check /> : "+"}
+                  {activeDietButtons.includes(index) ? <Check /> : <Plus size={16} className="mb-0.5"/>}
                 </span>
               </button>
             ))}
