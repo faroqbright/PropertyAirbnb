@@ -1,6 +1,7 @@
-import "@/app/globals.css"; 
+import "@/app/globals.css";
 import Navbar from "@/Components/LandingPage/Common/Navbar";
 import Footer from "@/Components/LandingPage/Common/Footer";
+import { ToastContainer } from "react-toastify";
 
 export const metadata = {
   title: "CoLivers",
@@ -10,12 +11,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className="bg-white font-plus-jakarta text-black"
-      >
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+      />
+      <body className="bg-white font-plus-jakarta text-black">
         <Navbar />
         {children}
-        <Footer/>
+        <Footer />
       </body>
     </html>
   );
