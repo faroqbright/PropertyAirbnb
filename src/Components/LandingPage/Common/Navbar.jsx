@@ -3,11 +3,15 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, User, X } from "lucide-react";
+import { LogOut, Menu, Settings, User, X } from "lucide-react";
+import { useSelector } from "react-redux";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const state = useSelector((state) => state);
+  console.log(state);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
 
@@ -19,10 +23,10 @@ export default function Navbar() {
     checkLoginStatus();
     window.addEventListener("storage", checkLoginStatus);
     return () => window.removeEventListener("storage", checkLoginStatus);
-  }, []);  
+  }, []);
 
   useEffect(() => {
-    console.log("isLogin state updated:", isLogin); // Debug log
+    console.log("isLogin state updated:", isLogin);
   }, [isLogin]);
 
   const handleNavigate = () => {
@@ -45,6 +49,20 @@ export default function Navbar() {
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
     console.log("Menu toggled:", menuOpen);
+  };
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleLogout = () => {
+    router.push("/Auth/Login");
+  };
+
+  const goToSettings = () => {
+    router.push("/Profile");
   };
 
   return (
@@ -97,16 +115,37 @@ export default function Navbar() {
         </div>
 
         {isLogin ? (
-          <div className="rounded-full border-[1.5px] border-bluebutton px-3 py-[1px]">
-            <button
-              onClick={handleClick}
-              className="inline-flex items-center font-medium text-bluebutton"
-            >
-              <div className="bg-slate-100 rounded-full text-sm p-1 mr-2 mt-1">
-                <User size={17} className="text-bluebutton" />
+          <div className="relative z-10">
+            <div className="rounded-full border-[1.5px] border-bluebutton px-3 py-[1px]">
+              <button
+                onClick={toggleDropdown}
+                className="inline-flex items-center font-medium text-bluebutton"
+              >
+                <div className="bg-slate-100 rounded-full text-sm p-1 mr-2 mt-1">
+                  <User size={17} className="text-bluebutton" />
+                </div>
+                <span className="-mb-[3px]">Profile</span>
+              </button>
+            </div>
+
+            {isOpen && (
+              <div className="absolute right-0 mt-2 w-36 bg-white p-2 border rounded-lg shadow-lg">
+                <button
+                  onClick={goToSettings}
+                  className="flex items-center p-2 w-full text-left hover:bg-gray-100"
+                >
+                  <Settings size={16} className="mr-2" />
+                  Settings
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center p-2 w-full text-left hover:bg-gray-100"
+                >
+                  <LogOut size={16} className="mr-2" />
+                  Logout
+                </button>
               </div>
-              <span className="-mb-[3px]">Profile</span>
-            </button>
+            )}
           </div>
         ) : (
           <div
