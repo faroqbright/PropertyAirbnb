@@ -9,6 +9,8 @@ import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Facebook } from "lucide-react";
+import { auth } from "../../../firebase/firebaseConfig";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const Signup = () => {
   const router = useRouter();
@@ -66,12 +68,25 @@ const Signup = () => {
 
     setLoading(true);
 
+    if (!termsAccepted) {
+      toast.error("You must accept the terms and conditions.");
+      return;
+    }
+
     try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.Email,
+        formData.Password
+      );
+      const user = userCredential.user;
+
       const cnicUrl = await uploadImage(selectedImage, "cnic");
       const ownerDocUrl =
         step === 2 ? await uploadImage(selectedOwnerDoc, "owner_docs") : null;
 
       await addDoc(collection(db, "users"), {
+        uid: user.uid,
         fullName: formData.fullName,
         email: formData.Email,
         number: formData.Number,
@@ -82,22 +97,24 @@ const Signup = () => {
       });
 
       toast.success("Signup successful!");
-      setFormData({
-        fullName: "",
-        Email: "",
-        Number: "",
-        Password: "",
-        ConfirmPassword: "",
-        role: "LandLord",
-      });
+      if (
+        role == !"LandLord" &&
+        localStorage.setItem("userEmail", formData.Email)
+      )
+        setFormData({
+          fullName: "",
+          Email: "",
+          Number: "",
+          Password: "",
+          ConfirmPassword: "",
+          role: "LandLord",
+        });
       setSelectedImage(null);
       setSelectedOwnerDoc(null);
       setTermsAccepted(false);
       setShowPassword(false);
       setShowConfirmPassword(false);
-      router.push(
-        activeTab === "LandLord" ? "/Landing/Home" : "/Auth/Personal"
-      );
+      router.push(activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal");
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("Signup failed. Please try again.");
