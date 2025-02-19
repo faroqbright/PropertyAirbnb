@@ -14,7 +14,7 @@ import { Eye, EyeOff } from "lucide-react";
 const Login = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // To show loader
   const [showPassword, setShowPassword] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -42,13 +42,13 @@ const Login = () => {
       try {
         const response = await apiRequest("post", "/auth/login", values, {
           "Content-Type": "application/json",
-        });
+        }); 
         localStorage.setItem("isLogin", "true");
-        dispatch(setUserInfo(response.data));
+        dispatch(setUserInfo(response.data)); 
         router.push("/Landing/Home");
-        toast.success(response.data.message);
+        toast.success(response.data.message); 
       } catch (error) {
-        toast.error(error.response.data.error);
+        toast.error(error.response.data.error); 
       } finally {
         setLoading(false);
       }
