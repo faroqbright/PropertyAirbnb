@@ -1,37 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
-  loading: false,
-  userInfo: {}, //  user object
-  userToken: null,
-  error: null,
-  isAuthenticated: false,
-};
-export const authSlice = createSlice({
-  //name is default property of rtk ,auth is shown in my rtk devtools
-  //we can add initial state directly here as well
-  //reducers are pair of properties and funcion
-  //each reducer method has two params state,action
-  //state access the initial state
-  //actions give us dispatches values from code that use the reducer method action.payload
-  //make the structure in which you want to store value optional
-  //you can also directly reffer like this  state.user=action.payload
-  //state.user(any initialState property name) and store structure data in initialState
+const authSlice = createSlice({
   name: "auth",
-  initialState,
+  initialState: {
+    userInfo: null,
+  },
   reducers: {
     setUserInfo: (state, action) => {
-      console.log("🚀 ~ action:", action.payload.user);
-      state.loading = action?.payload?.user ? true : false;
-      state.isAuthenticated = action.payload?.user ? true : false;
-      state.userInfo = action.payload.user;
+      state.userInfo = action.payload;
     },
-    removeUserInfo: (state) => {
-      state.userInfo = {};
-      state.loading = null;
-      state.isAuthenticated = null;
+    clearUserInfo: (state) => {
+      state.userInfo = null;
     },
   },
 });
-export const { setUserInfo, removeUserInfo } = authSlice.actions;
+
+export const { setUserInfo, clearUserInfo } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,4 +1,4 @@
-import RootLayout from "../Components/RootLayout";  // Ensure the casing matches the file
+import RootLayout from "../Components/RootLayout";
 
 export const metadata = {
   title: "CoLivers",

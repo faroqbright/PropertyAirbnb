@@ -1,22 +1,35 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Camera, Check, Plus } from "lucide-react";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { storage, db } from "../../../firebase/firebaseConfig";
+import { toast } from "react-toastify";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "../../../firebase/firebaseConfig";
 
-const Personal = async () => {
+const Personal = () => {
   const [step, setStep] = useState(1);
   const [userData, setUserData] = useState({});
+  const [birth, setBirth] = useState("");
+  const [gender, setGender] = useState("");
+  const [sexOrientation, setSexOrientation] = useState("");
+  const [activeButtons, setActiveButtons] = useState([]);
+  const [activePetButtons, setActivePetButtons] = useState([]);
+  const [activeSmokeButtons, setActiveSmokeButtons] = useState([]);
+  const [activeDrinkButtons, setActiveDrinkButtons] = useState([]);
+  const [activeDietButtons, setActiveDietButtons] = useState([]);
+  const [userUID, setUserUID] = useState(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const storedUID = localStorage.getItem("userUID");
+    if (storedUID) {
+      setUserUID(storedUID);
+    }
+  }, []);
 
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split("T")[0];
   };
-
-  const [birth, setBirth] = useState("");
-  const [gender, setGender] = useState("");
-  const [sexOrientation, setSexOrientation] = useState("");
 
   const handleNext = async () => {
     let isValid = true;
@@ -27,9 +40,9 @@ const Personal = async () => {
       } else {
         setUserData((prevData) => ({
           ...prevData,
-          birth: birth,
-          gender: gender,
-          sexOrientation: sexOrientation,
+          birth,
+          gender,
+          sexOrientation,
         }));
       }
     } else if (step === 2) {
@@ -96,20 +109,29 @@ const Personal = async () => {
 
     if (isValid) {
       if (step === 6) {
+        if (!userUID) {
+          toast.error("User not found. Please sign up first.");
+          return;
+        }
         try {
-          const storeUserData = httpsCallable(functions, "storeUserData");
+          const userRef = doc(db, "users", userUID);
+          const userSnap = await getDoc(userRef);
 
-          const result = await storeUserData(userData);
-          console.log("Firebase API call successful:", result);
-          setStep(step + 1);
+          if (userSnap.exists()) {
+            await setDoc(userRef, { personalInfo: userData }, { merge: true });
+            toast.success("Personal data updated successfully!");
+            setStep(step + 1);
+            localStorage.removeItem('userUID');
+          } else {
+            toast.error("User not found in database. Please sign up first.");
+          }
         } catch (error) {
-          console.error("Firebase API call error:", error);
-          toast.error("Failed to save data. Please try again.");
+          console.error("Error updating Firestore document: ", error);
+          toast.error("Failed to update personal data. Please try again.");
         }
       } else {
         setStep(step + 1);
       }
-      console.log("User Data on Step", step, ":", userData);
     }
   };
 
@@ -124,8 +146,6 @@ const Personal = async () => {
     "Martail",
   ];
 
-  const [activeButtons, setActiveButtons] = useState([]);
-
   const handleClick = (index) => {
     if (activeButtons.includes(index)) {
       setActiveButtons(activeButtons.filter((i) => i !== index));
@@ -133,8 +153,6 @@ const Personal = async () => {
       setActiveButtons([...activeButtons, index]);
     }
   };
-
-  const [activePetButtons, setActivePetButtons] = useState([]);
 
   const handleToggleButton = (index) => {
     if (activePetButtons.includes(index)) {
@@ -144,8 +162,6 @@ const Personal = async () => {
     }
   };
 
-  const [activeDrinkButtons, setActiveDrinkButtons] = useState([]);
-
   const handleToggleDrinkButton = (index) => {
     if (activeDrinkButtons.includes(index)) {
       setActiveDrinkButtons(activeDrinkButtons.filter((i) => i !== index));
@@ -153,8 +169,6 @@ const Personal = async () => {
       setActiveDrinkButtons([...activeDrinkButtons, index]);
     }
   };
-
-  const [activeSmokeButtons, setActiveSmokeButtons] = useState([]);
 
   const handleToggleSmokeButton = (index) => {
     if (activeSmokeButtons.includes(index)) {
@@ -164,8 +178,6 @@ const Personal = async () => {
     }
   };
 
-  const [activeDietButtons, setActiveDietButtons] = useState([]);
-
   const handleToggleDietButton = (index) => {
     if (activeDietButtons.includes(index)) {
       setActiveDietButtons(activeDietButtons.filter((i) => i !== index));
@@ -174,40 +186,8 @@ const Personal = async () => {
     }
   };
 
-  const [userEmail, setUserEmail] = useState(null);
-  useEffect(() => {
-    const emailFromStorage = localStorage.getItem("userEmail");
-    if (emailFromStorage) {
-      setUserEmail(emailFromStorage);
-    }
-  }, []);
-
-  if (step === 6) {
-    try {
-      if (!userEmail) {
-        toast.error("User email not found. Please sign up first.");
-        return;
-      }
-
-      const dataToSave = {
-        email: userEmail,
-        personalInfo: userData,
-      };
-
-      const docRef = await addDoc(collection(db, "personalData"), dataToSave);
-
-      console.log("Document written with ID: ", docRef.id);
-      toast.success("Personal data saved successfully!");
-      setStep(step + 1);
-    } catch (error) {
-      console.error("Error adding document to Firestore: ", error);
-      toast.error("Failed to save personal data. Please try again.");
-    }
-  }
-
   return (
     <div className="flex items-center justify-center w-full mb-10 mt-10">
-      <ToastContainer />
       {step === 1 ? (
         <div className="bg-white rounded-xl border-[1.5px] border-gray-200 w-3/4 lg:w-1/2 py-14 lg:px-14 px-5 flex flex-col">
           <div className="flex bg-gray-200 rounded-full w-60 lg:w-72 m-auto lg:flex-row"></div>
@@ -229,12 +209,16 @@ const Personal = async () => {
                 Birth
               </label>
               <br />
-              <div className="relative w-full">
+              <div
+                className="relative w-full border-[1.5px] mt-3 pl-3 pr-5 rounded-full cursor-pointer"
+                onClick={() => inputRef.current?.showPicker()}
+              >
                 <input
                   type="date"
                   id="birth"
                   name="birth"
-                  className="border-[1.5px] w-full mt-3 py-2 pl-3 pr-5 rounded-full cursor-pointer"
+                  ref={inputRef}
+                  className="w-full py-2 cursor-pointer bg-transparent focus:outline-none"
                   value={birth}
                   onChange={(e) => setBirth(e.target.value)}
                   max={getTodayDate()}
@@ -250,7 +234,7 @@ const Personal = async () => {
               <input
                 type="text"
                 name="number"
-                placeholder="Write Here"
+                placeholder="Enter Gender"
                 className="border-[1.5px] w-full mt-3 py-2 pl-3 rounded-full"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
@@ -265,7 +249,7 @@ const Personal = async () => {
               <input
                 type="text"
                 name="password"
-                placeholder="Write Here"
+                placeholder="Enter Sex"
                 className="border-[1.5px] w-full mt-3 py-2 pl-3 rounded-full"
                 value={sexOrientation}
                 onChange={(e) => setSexOrientation(e.target.value)}

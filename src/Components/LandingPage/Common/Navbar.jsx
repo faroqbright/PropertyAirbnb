@@ -1,43 +1,55 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { LogOut, Menu, Settings, User, X } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { clearUserInfo } from "@/features/auth/authSlice";
+import { toast } from "react-toastify";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const state = useSelector((state) => state);
-  console.log(state);
-
+  const dispatch = useDispatch();
+  const userInfo = useSelector((state) => state.auth.userInfo);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const loginStatus = localStorage.getItem("isLogin");
-      setIsLogin(loginStatus === "true");
-    };
-    checkLoginStatus();
-    window.addEventListener("storage", checkLoginStatus);
-    return () => window.removeEventListener("storage", checkLoginStatus);
-  }, []);
-
-  useEffect(() => {
-    console.log("isLogin state updated:", isLogin);
-  }, [isLogin]);
+  const isAuthenticated = !!userInfo?.FullName;
 
   const handleNavigate = () => {
-    console.log("Navigating to Login");
     router.push("/Auth/Login");
   };
 
-  const handleClick = () => {
-    console.log("Navigating to Profile");
-    router.push("/Landing/Profile");
+  const handleLogout = () => {
+    document.cookie = "uid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    toast.success("User logged out successfully");
+    dispatch(clearUserInfo());
+    router.push("/Auth/Login");
+    setIsOpen(false);
   };
+
+  const goToSettings = () => {
+    router.push("/Landing/Profile");
+    setIsOpen(false);
+  };
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const navItems = [
     { name: "Home", href: "/Landing/Home" },
@@ -45,25 +57,6 @@ export default function Navbar() {
     { name: "Properties", href: "/Landing/Properties" },
     { name: "Contact", href: "/Landing/Contact" },
   ];
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-    console.log("Menu toggled:", menuOpen);
-  };
-
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const handleLogout = () => {
-    router.push("/Auth/Login");
-  };
-
-  const goToSettings = () => {
-    router.push("/Profile");
-  };
 
   return (
     <nav className="w-full p-6 bg-white border-b">
@@ -78,13 +71,11 @@ export default function Navbar() {
           />
           <span className="text-black font-semibold text-[20px]">CoLivers</span>
         </Link>
-
         <div className="md:hidden flex items-center">
-          <button onClick={toggleMenu} className="text-black">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="text-black">
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-
         <div
           className={`flex items-center gap-8 md:-ml-14 ${
             menuOpen
@@ -113,18 +104,19 @@ export default function Navbar() {
             </Link>
           ))}
         </div>
-
-        {isLogin ? (
-          <div className="relative z-10">
+        {isAuthenticated ? (
+          <div className="relative z-10" ref={dropdownRef}>
             <div className="rounded-full border-[1.5px] border-bluebutton px-3 py-[1px]">
               <button
-                onClick={toggleDropdown}
+                onClick={() => setIsOpen(!isOpen)}
                 className="inline-flex items-center font-medium text-bluebutton"
               >
                 <div className="bg-slate-100 rounded-full text-sm p-1 mr-2 mt-1">
                   <User size={17} className="text-bluebutton" />
                 </div>
-                <span className="-mb-[3px]">Profile</span>
+                <span className="-mb-[3px]">
+                  {userInfo.FullName.split(" ").slice(0, 9).join(" ")}
+                </span>
               </button>
             </div>
 

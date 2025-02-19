@@ -3,9 +3,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { storage, db } from "../../../firebase/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc } from "firebase/firestore";
+import { setDoc, doc } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Facebook } from "lucide-react";
@@ -17,7 +16,7 @@ const Signup = () => {
   const [activeTab, setActiveTab] = useState("LandLord");
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    fullName: "",
+    FullName: "",
     Email: "",
     Number: "",
     Password: "",
@@ -49,79 +48,97 @@ const Signup = () => {
     return getDownloadURL(storageRef);
   };
 
-  const handleSignUpClick = async () => {
-    if (
-      !formData.fullName ||
-      !formData.Email ||
-      !formData.Number ||
-      !formData.Password ||
-      !formData.ConfirmPassword
-    ) {
-      toast.error("Please fill in all fields.");
-      return;
-    }
-
-    if (formData.Password !== formData.ConfirmPassword) {
-      toast.error("Passwords do not match.");
-      return;
-    }
-
-    setLoading(true);
-
-    if (!termsAccepted) {
-      toast.error("You must accept the terms and conditions.");
-      return;
-    }
-
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.Email,
-        formData.Password
-      );
-      const user = userCredential.user;
-
-      const cnicUrl = await uploadImage(selectedImage, "cnic");
-      const ownerDocUrl =
-        step === 2 ? await uploadImage(selectedOwnerDoc, "owner_docs") : null;
-
-      await addDoc(collection(db, "users"), {
-        uid: user.uid,
-        fullName: formData.fullName,
-        email: formData.Email,
-        number: formData.Number,
-        userType: activeTab,
-        role: formData.role,
-        cnicUrl,
-        ownerDocUrl,
-      });
-
-      toast.success("Signup successful!");
+    const handleSignUpClick = async () => {
       if (
-        role == !"LandLord" &&
-        localStorage.setItem("userEmail", formData.Email)
-      )
+        !formData.FullName ||
+        !formData.Email ||
+        !formData.Number ||
+        !formData.Password ||
+        !formData.ConfirmPassword
+      ) {
+        toast.error("Please fill in all fields.");
+        return;
+      }
+
+      if (formData.Password.length < 8) {
+        toast.error("Password must be at least 8 characters long.");
+        return;
+      }
+
+      if (formData.Password !== formData.ConfirmPassword) {
+        toast.error("Passwords do not match.");
+        return;
+      }
+
+      if (!termsAccepted) {
+        toast.error("You must accept the terms and conditions.");
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          formData.Email,
+          formData.Password
+        );
+        const user = userCredential.user;
+
+        const cnicUrl = await uploadImage(selectedImage, "cnic");
+        const ownerDocUrl =
+          step === 2 ? await uploadImage(selectedOwnerDoc, "owner_docs") : null;
+
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          FullName: formData.FullName,
+          email: formData.Email,
+          number: formData.Number,
+          userType: activeTab,
+          role: formData.role,
+          cnicUrl,
+          ownerDocUrl,
+        });
+
+        if (activeTab === "Tenant") {
+          localStorage.setItem("userUID", user.uid);
+        }
+
+        toast.success("Signup successful!");
+
         setFormData({
-          fullName: "",
+          FullName: "",
           Email: "",
           Number: "",
           Password: "",
           ConfirmPassword: "",
           role: "LandLord",
         });
-      setSelectedImage(null);
-      setSelectedOwnerDoc(null);
-      setTermsAccepted(false);
-      setShowPassword(false);
-      setShowConfirmPassword(false);
-      router.push(activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal");
-    } catch (error) {
-      console.error("Signup error:", error);
-      toast.error("Signup failed. Please try again.");
-    }
 
-    setLoading(false);
-  };
+        setSelectedImage(null);
+        setSelectedOwnerDoc(null);
+        setTermsAccepted(false);
+        setShowPassword(false);
+        setShowConfirmPassword(false);
+
+        setLoading(false);
+
+        await router.push(
+          activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal"
+        );
+      } catch (error) {
+        console.log(error);
+        
+        let errorMessage = error.code
+          ? error.code.split("/")[1].replace(/-/g, " ")
+          : "Something went wrong";
+        errorMessage =
+          errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
+        toast.error(errorMessage);
+
+        setLoading(false);
+      }
+    };
 
   return (
     <div className="flex items-center justify-center w-full my-10">
@@ -149,7 +166,7 @@ const Signup = () => {
           Register Here!
         </h1>
         <div className="mt-10">
-          {["fullName", "Email", "Number"].map((field, idx) => (
+          {["FullName", "Email", "Number"].map((field, idx) => (
             <div key={idx} className="mt-5">
               <label className="text-gray-700">
                 {field.replace(/([A-Z])/g, " $1").trim()}
@@ -235,15 +252,24 @@ const Signup = () => {
             />
             <p className="ml-3 text-gray-400">
               By clicking Continue, you agree to our{" "}
-              <span className="text-bluebutton underline cursor-pointer">
+              <span
+                onClick={() => router.push("/Landing/Terms")}
+                className="text-bluebutton underline cursor-pointer"
+              >
                 User Agreement
               </span>
               ,{" "}
-              <span className="text-bluebutton underline cursor-pointer">
+              <span
+                onClick={() => router.push("/Landing/Privacy")}
+                className="text-bluebutton underline cursor-pointer"
+              >
                 Privacy Policy
               </span>
               , and{" "}
-              <span className="text-bluebutton underline cursor-pointer">
+              <span
+                onClick={() => router.push("/Landing/Terms")}
+                className="text-bluebutton underline cursor-pointer"
+              >
                 Cookie Policy
               </span>
               .
