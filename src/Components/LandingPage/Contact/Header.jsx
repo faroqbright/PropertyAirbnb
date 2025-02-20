@@ -1,7 +1,44 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Phone, Mail, Send } from "lucide-react";
+import { db } from "../../../firebase/firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
+import {  toast } from "react-toastify";
 
 export default function Header() {
+
+  const [formData, setFormData] = useState({
+    name: "",
+    jobPosition: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("Submitting form data:", formData);
+  
+    try {
+      console.log("Writing to Firestore...");
+      await setDoc(doc(db, "contacts", encodeURIComponent(formData.email)), formData);
+      console.log("Data saved successfully!");
+      
+      toast.success("Message sent successfully!", { position: "top-right", autoClose: 3000 });
+      
+      setFormData({ name: "", jobPosition: "", email: "", phone: "", message: "" });
+    } catch (error) {
+      console.error("Firestore Error:", error);
+      toast.error("Failed to send message!");
+    }
+  };
+  
+
   return (
     <div className="min-h-screen mt-14 mb-6 lg:px-10 mx-2">
       <div className="flex items-center justify-center mx-auto">
@@ -46,11 +83,18 @@ export default function Header() {
         </div>
 
         <div className="w-full mx-auto sm:w-[60%] flex flex-col bg-white lg:px-16 py-6">
-          <form className="space-y-4 flex-grow lg:-mb-5 lg:-mt-3 mt-5">
+          <form
+            className="space-y-4 flex-grow lg:-mb-5 lg:-mt-3 mt-5"
+            onSubmit={handleSubmit}
+          >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <label className="block">
                 <span className="font-medium text-[15px] ml-1">Your Name*</span>
                 <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
                   type="text"
                   placeholder="Ex. Saul Ramirez"
                   className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-full"
@@ -62,8 +106,12 @@ export default function Header() {
                 </span>
                 <input
                   type="text"
+                  name="jobPosition"
+                  value={formData.jobPosition}
+                  onChange={handleChange}
                   placeholder="Ex. Chief Technology Officer"
                   className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-full"
+                  required
                 />
               </label>
               <label className="block">
@@ -72,8 +120,12 @@ export default function Header() {
                 </span>
                 <input
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="example@example.com"
                   className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-full"
+                  required
                 />
               </label>
               <label className="block">
@@ -82,8 +134,12 @@ export default function Header() {
                 </span>
                 <input
                   type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
                   placeholder="Ex. +44XXXXXXXXXX"
                   className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-full"
+                  required
                 />
               </label>
             </div>
@@ -92,8 +148,12 @@ export default function Header() {
                 Your Message*
               </span>
               <textarea
+                name="message"
+                value={formData.message}
+                onChange={handleChange}
                 placeholder="Your Message..."
                 className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-xl h-24"
+                required
               ></textarea>
             </label>
             <button
