@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useSelector } from "react-redux";
 
 const adminBookings = [
   {
@@ -113,12 +114,20 @@ const userBookings = [
 
 export default function Bookings() {
   const [status, setStatus] = useState("ongoing");
+  const userInfo = useSelector((state) => state.auth.userInfo);
   const [isAdmin, setIsAdmin] = useState(true);
   const router = useRouter();
-
   const handleToggle = (newStatus) => {
     setStatus(newStatus);
   };
+
+  useEffect(() => {
+    if (userInfo?.role === "LandLord") {
+      setIsAdmin(true); 
+    } else {
+      setIsAdmin(false);
+    }
+  }, [userInfo]);
 
   const handleButtonClick = (btntext) => {
     if (btntext === "Message") {

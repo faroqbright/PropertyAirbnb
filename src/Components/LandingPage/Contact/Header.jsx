@@ -4,10 +4,9 @@ import React, { useState } from "react";
 import { Phone, Mail, Send } from "lucide-react";
 import { db } from "../../../firebase/firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
-import {  toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 export default function Header() {
-
   const [formData, setFormData] = useState({
     name: "",
     jobPosition: "",
@@ -23,21 +22,32 @@ export default function Header() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Submitting form data:", formData);
-  
+
     try {
       console.log("Writing to Firestore...");
-      await setDoc(doc(db, "contacts", encodeURIComponent(formData.email)), formData);
+      await setDoc(
+        doc(db, "contacts", encodeURIComponent(formData.email)),
+        formData
+      );
       console.log("Data saved successfully!");
-      
-      toast.success("Message sent successfully!", { position: "top-right", autoClose: 3000 });
-      
-      setFormData({ name: "", jobPosition: "", email: "", phone: "", message: "" });
+
+      toast.success("Message sent successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+
+      setFormData({
+        name: "",
+        jobPosition: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
     } catch (error) {
-      console.error("Firestore Error:", error);
-      toast.error("Failed to send message!");
+      console.error("Firestore Error:", error.code, error.message);
+      toast.error(`Error: ${error.message}`);
     }
   };
-  
 
   return (
     <div className="min-h-screen mt-14 mb-6 lg:px-10 mx-2">

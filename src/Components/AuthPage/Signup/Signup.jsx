@@ -8,11 +8,13 @@ import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Facebook } from "lucide-react";
-import { auth } from "../../../firebase/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../../firebase/firebaseConfig";
+import { signInWithPopup, FacebookAuthProvider } from "firebase/auth";
 
 const Signup = () => {
   const router = useRouter();
+  const provider = new FacebookAuthProvider();
   const [activeTab, setActiveTab] = useState("LandLord");
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -48,97 +50,120 @@ const Signup = () => {
     return getDownloadURL(storageRef);
   };
 
-    const handleSignUpClick = async () => {
-      if (
-        !formData.FullName ||
-        !formData.Email ||
-        !formData.Number ||
-        !formData.Password ||
-        !formData.ConfirmPassword
-      ) {
-        toast.error("Please fill in all fields.");
-        return;
+  const handleSignUpClick = async () => {
+    if (
+      !formData.FullName ||
+      !formData.Email ||
+      !formData.Number ||
+      !formData.Password ||
+      !formData.ConfirmPassword
+    ) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+
+    if (formData.Password.length < 8) {
+      toast.error("Password must be at least 8 characters long.");
+      return;
+    }
+
+    if (formData.Password !== formData.ConfirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast.error("You must accept the terms and conditions.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.Email,
+        formData.Password
+      );
+      const user = userCredential.user;
+
+      const cnicUrl = await uploadImage(selectedImage, "cnic");
+      const ownerDocUrl =
+        step === 2 ? await uploadImage(selectedOwnerDoc, "owner_docs") : null;
+
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        FullName: formData.FullName,
+        email: formData.Email,
+        number: formData.Number,
+        userType: activeTab,
+        role: formData.role,
+        cnicUrl,
+        ownerDocUrl,
+      });
+
+      if (activeTab === "Tenant") {
+        localStorage.setItem("userUID", user.uid);
       }
 
-      if (formData.Password.length < 8) {
-        toast.error("Password must be at least 8 characters long.");
-        return;
-      }
+      toast.success("Signup successful!");
 
-      if (formData.Password !== formData.ConfirmPassword) {
-        toast.error("Passwords do not match.");
-        return;
-      }
+      setFormData({
+        FullName: "",
+        Email: "",
+        Number: "",
+        Password: "",
+        ConfirmPassword: "",
+        role: "LandLord",
+      });
 
-      if (!termsAccepted) {
-        toast.error("You must accept the terms and conditions.");
-        return;
-      }
+      setSelectedImage(null);
+      setSelectedOwnerDoc(null);
+      setTermsAccepted(false);
+      setShowPassword(false);
+      setShowConfirmPassword(false);
 
-      setLoading(true);
+      setLoading(false);
 
-      try {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          formData.Email,
-          formData.Password
-        );
-        const user = userCredential.user;
+      await router.push(
+        activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal"
+      );
+    } catch (error) {
+      console.log(error);
 
-        const cnicUrl = await uploadImage(selectedImage, "cnic");
-        const ownerDocUrl =
-          step === 2 ? await uploadImage(selectedOwnerDoc, "owner_docs") : null;
+      let errorMessage = error.code
+        ? error.code.split("/")[1].replace(/-/g, " ")
+        : "Something went wrong";
+      errorMessage =
+        errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
+      toast.error(errorMessage);
 
-        await setDoc(doc(db, "users", user.uid), {
-          uid: user.uid,
-          FullName: formData.FullName,
-          email: formData.Email,
-          number: formData.Number,
-          userType: activeTab,
-          role: formData.role,
-          cnicUrl,
-          ownerDocUrl,
-        });
+      setLoading(false);
+    }
+  };
 
-        if (activeTab === "Tenant") {
-          localStorage.setItem("userUID", user.uid);
-        }
+  const signInWithFacebook = async () => {
+    try {
+      const provider = new FacebookAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
-        toast.success("Signup successful!");
+      // Store user data in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        FullName: user.displayName || "",
+        email: user.email || "",
+        profilePicture: user.photoURL || "",
+        loginMethod: "Facebook",
+      });
 
-        setFormData({
-          FullName: "",
-          Email: "",
-          Number: "",
-          Password: "",
-          ConfirmPassword: "",
-          role: "LandLord",
-        });
-
-        setSelectedImage(null);
-        setSelectedOwnerDoc(null);
-        setTermsAccepted(false);
-        setShowPassword(false);
-        setShowConfirmPassword(false);
-
-        setLoading(false);
-
-        await router.push(
-          activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal"
-        );
-      } catch (error) {
-        console.log(error);
-        
-        let errorMessage = error.code
-          ? error.code.split("/")[1].replace(/-/g, " ")
-          : "Something went wrong";
-        errorMessage =
-          errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
-        toast.error(errorMessage);
-
-        setLoading(false);
-      }
-    };
+      toast.success("Logged in successfully with Facebook!");
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Facebook Auth Error:", error.code, error.message);
+      toast.error(`Error: ${error.message}`);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center w-full my-10">
@@ -285,10 +310,14 @@ const Signup = () => {
             {loading ? "Signing Up..." : "Sign Up"}
           </button>
           <div className="flex flex-col lg:flex-row lg:justify-between mt-10 gap-4">
-            <button className="flex justify-center items-center text-center gap-2 border-[1.5px] rounded-full mt-5 lg:mt-0 py-2 px-5 text-gray-500">
+            <button
+              onClick={signInWithFacebook}
+              className="flex justify-center items-center text-center gap-2 border-[1.5px] rounded-full mt-5 lg:mt-0 py-2 px-5 text-gray-500"
+            >
               <Facebook className="text-white bg-blue-600 rounded-full p-1" />
               Connect with Facebook
             </button>
+
             <button className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-5 text-gray-500">
               <FcGoogle size={20} />
               Continue with Google
