@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut, Menu, Settings, User, X } from "lucide-react";
+import { CircleUserRound, LogOut, Menu, Settings, User, X } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUserInfo } from "@/features/auth/authSlice";
 import { toast } from "react-toastify";
@@ -126,8 +126,8 @@ export default function Navbar() {
                   onClick={goToSettings}
                   className="flex items-center p-2 w-full text-left hover:bg-gray-100"
                 >
-                  <Settings size={16} className="mr-2" />
-                  Settings
+                  <CircleUserRound size={16} className="mr-2" />
+                  Profile
                 </button>
                 <button
                   onClick={handleLogout}
