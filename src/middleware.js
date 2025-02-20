@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
-  const authPages = ["/Auth/Login", "/Auth/Signup", "/Auth/Forgot", "/Auth/Personal", "/Auth/ChangePassword"];
+  const authPages = ["/Auth/Login", "/Auth/Signup", "/Auth/Forgot", "/Auth/Personal", "/Auth/ResetPassword"];
 
   const isAuthPage = authPages.some((page) => pathname.startsWith(page));
 

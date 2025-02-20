@@ -166,6 +166,7 @@ const Login = () => {
 
             <div className="flex justify-center lg:justify-end">
               <button
+              type="button"
                 className="text-sm text-[#B19BD9]"
                 onClick={handleForgotPassword}
               >
