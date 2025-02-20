@@ -61,20 +61,26 @@ const ChangePassword = () => {
       const credential = EmailAuthProvider.credential(user.email, oldPassword);
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
-      toast.success("Password updated successfully!");
 
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
       handleLogout();
-    } catch (err) {
-      toast.error(err.message);
+    } catch (error) {
+      console.log(error);
+
+      let errorMessage = error.code
+        ? error.code.split("/")[1].replace(/-/g, " ")
+        : "Something went wrong";
+      errorMessage =
+        errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
+      toast.error(errorMessage);
     }
   };
 
   const handleLogout = () => {
     document.cookie = "uid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    toast.success("Password changed and User logged out successfully");
+    toast.success("Password updated and User logged out successfully!");
     dispatch(clearUserInfo());
     router.push("/Auth/Login");
   };
@@ -98,7 +104,7 @@ const ChangePassword = () => {
             <button
               type="button"
               onClick={() => setShowOldPassword(!showOldPassword)}
-              className="absolute right-3 top-11 text-gray-500"
+              className="absolute right-3 top-[46px] text-gray-500"
             >
               {showOldPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -115,7 +121,7 @@ const ChangePassword = () => {
             <button
               type="button"
               onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-11 text-gray-500"
+              className="absolute right-3 top-[46px] text-gray-500"
             >
               {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>

@@ -3,11 +3,10 @@
 import React, { useState } from "react";
 import { Phone, Mail, Send } from "lucide-react";
 import { db } from "../../../firebase/firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
-import {  toast } from "react-toastify";
+import { collection, addDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 export default function Header() {
-
   const [formData, setFormData] = useState({
     name: "",
     jobPosition: "",
@@ -22,22 +21,39 @@ export default function Header() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting form data:", formData);
-  
+
+    const requiredFields = {
+      name: "Name",
+      jobPosition: "Job Position",
+      email: "Email",
+      phone: "Phone",
+      message: "Message",
+    };
+
+    const emptyField = Object.entries(requiredFields).find(
+      ([key]) => !formData[key]?.trim()
+    );
+
+    if (emptyField) {
+      toast.error(`${emptyField[1]} is required!`);
+      return;
+    }
+
     try {
-      console.log("Writing to Firestore...");
-      await setDoc(doc(db, "contacts", encodeURIComponent(formData.email)), formData);
-      console.log("Data saved successfully!");
-      
-      toast.success("Message sent successfully!", { position: "top-right", autoClose: 3000 });
-      
-      setFormData({ name: "", jobPosition: "", email: "", phone: "", message: "" });
+      await addDoc(collection(db, "contacts"), formData);
+      toast.success("Message sent successfully!");
+      setFormData({
+        name: "",
+        jobPosition: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
     } catch (error) {
       console.error("Firestore Error:", error);
       toast.error("Failed to send message!");
     }
   };
-  
 
   return (
     <div className="min-h-screen mt-14 mb-6 lg:px-10 mx-2">
@@ -94,7 +110,6 @@ export default function Header() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  required
                   type="text"
                   placeholder="Ex. Saul Ramirez"
                   className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-full"
@@ -111,7 +126,6 @@ export default function Header() {
                   onChange={handleChange}
                   placeholder="Ex. Chief Technology Officer"
                   className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-full"
-                  required
                 />
               </label>
               <label className="block">
@@ -125,7 +139,6 @@ export default function Header() {
                   onChange={handleChange}
                   placeholder="example@example.com"
                   className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-full"
-                  required
                 />
               </label>
               <label className="block">
@@ -139,7 +152,6 @@ export default function Header() {
                   onChange={handleChange}
                   placeholder="Ex. +44XXXXXXXXXX"
                   className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-full"
-                  required
                 />
               </label>
             </div>
@@ -153,7 +165,6 @@ export default function Header() {
                 onChange={handleChange}
                 placeholder="Your Message..."
                 className="w-full px-3 py-2 mt-1 pl-4 border-[1.5px] border-[#D2D2D2] rounded-xl h-24"
-                required
               ></textarea>
             </label>
             <button
