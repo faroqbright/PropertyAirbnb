@@ -150,7 +150,6 @@ const Signup = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Store user data in Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         FullName: user.displayName || "",
