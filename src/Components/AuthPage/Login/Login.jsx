@@ -141,7 +141,6 @@ const Login = () => {
       toast.error(`Error: ${error.message}`);
     }
   };
-  
 
   return (
     <div className="flex mx-auto justify-center min-h-screen p-4">
