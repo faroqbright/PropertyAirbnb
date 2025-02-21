@@ -150,6 +150,7 @@ const Login = () => {
           loginMethod: "Google",
         });
       }
+      
   
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
