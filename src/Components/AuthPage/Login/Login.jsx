@@ -89,59 +89,79 @@ const Login = () => {
       const provider = new FacebookAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        FullName: user.displayName || "",
-        email: user.email || "",
-        profilePicture: user.photoURL || "",
-        userType: activeTab,
-        role: activeTab,
-        loginMethod: "Facebook",
-      });
-
+  
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+  
+      if (userSnap.exists()) {
+        const existingUser = userSnap.data();
+  
+        if (existingUser.role === "Tenant" && existingUser.role !== activeTab) {
+          toast.error("Access denied: Role mismatch.");
+          return;
+        }
+      } else {
+        await setDoc(userRef, {
+          uid: user.uid,
+          FullName: user.displayName || "",
+          email: user.email || "",
+          profilePicture: user.photoURL || "",
+          userType: activeTab,
+          role: formData.role,
+          loginMethod: "Facebook",
+        });
+      }
+  
       toast.success("Logged in successfully with Facebook!");
       router.push("/Landing/Home");
       console.log("Facebook Auth Success:", user);
       dispatch(setUserInfo(user));
-      document.cookie = `uid=${user.uid}; path=/; max-age=${
-        7 * 24 * 60 * 60
-      }; Secure; SameSite=Lax`;
+      document.cookie = `uid=${user.uid}; path=/; max-age=${7 * 24 * 60 * 60}; Secure; SameSite=Lax`;
     } catch (error) {
       console.error("Facebook Auth Error:", error.code, error.message);
       toast.error(`Error: ${error.message}`);
     }
   };
-
+  
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
   
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        FullName: user.displayName || "",
-        email: user.email || "",
-        profilePicture: user.photoURL || "",
-        userType: activeTab,
-        role: activeTab,
-        loginMethod: "Google",
-      });
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+  
+      if (userSnap.exists()) {
+        const existingUser = userSnap.data();
+  
+        if (existingUser.role === "Tenant" && existingUser.role !== activeTab) {
+          toast.error("Access denied: Role mismatch.");
+          return;
+        }
+      } else {
+        await setDoc(userRef, {
+          uid: user.uid,
+          FullName: user.displayName || "",
+          email: user.email || "",
+          profilePicture: user.photoURL || "",
+          userType: activeTab,
+          role: activeTab,
+          loginMethod: "Google",
+        });
+      }
   
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
       console.log("Google Auth Success:", user);
       dispatch(setUserInfo(user));
-      document.cookie = `uid=${user.uid}; path=/; max-age=${
-        7 * 24 * 60 * 60
-      }; Secure; SameSite=Lax`;
+      document.cookie = `uid=${user.uid}; path=/; max-age=${7 * 24 * 60 * 60}; Secure; SameSite=Lax`;
     } catch (error) {
       console.error("Google Auth Error:", error.code, error.message);
       toast.error(`Error: ${error.message}`);
     }
   };
-
+  
   return (
     <div className="flex mx-auto justify-center min-h-screen p-4">
       <div className="bg-white rounded-2xl border-[1.5px] border-gray-200 w-full max-w-lg lg:max-w-xl px-10 py-20">

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { storage, db } from "../../../firebase/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { setDoc, doc } from "firebase/firestore";
+import { setDoc, doc, getDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -153,15 +153,27 @@ const Signup = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        FullName: user.displayName || "",
-        email: user.email || "",
-        profilePicture: user.photoURL || "",
-        userType: activeTab,
-        role: formData.role,
-        loginMethod: "Facebook",
-      });
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const existingUser = userSnap.data();
+
+        if (existingUser.role === "Tenant" && existingUser.role !== activeTab) {
+          toast.error("Access denied: Role mismatch.");
+          return;
+        }
+      } else {
+        await setDoc(userRef, {
+          uid: user.uid,
+          FullName: user.displayName || "",
+          email: user.email || "",
+          profilePicture: user.photoURL || "",
+          userType: activeTab,
+          role: formData.role,
+          loginMethod: "Facebook",
+        });
+      }
 
       toast.success("Logged in successfully with Facebook!");
       router.push("/Landing/Home");
@@ -182,15 +194,27 @@ const Signup = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        FullName: user.displayName || "",
-        email: user.email || "",
-        profilePicture: user.photoURL || "",
-        userType: activeTab,
-        role: activeTab,
-        loginMethod: "Google",
-      });
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const existingUser = userSnap.data();
+
+        if (existingUser.role === "Tenant" && existingUser.role !== activeTab) {
+          toast.error("Access denied: Role mismatch.");
+          return;
+        }
+      } else {
+        await setDoc(userRef, {
+          uid: user.uid,
+          FullName: user.displayName || "",
+          email: user.email || "",
+          profilePicture: user.photoURL || "",
+          userType: activeTab,
+          role: activeTab,
+          loginMethod: "Google",
+        });
+      }
 
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
