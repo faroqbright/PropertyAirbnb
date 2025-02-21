@@ -22,7 +22,7 @@ export default function Header() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    
+
     const requiredFields = {
       name: "Name",
       jobPosition: "Job Position",
@@ -40,6 +40,7 @@ export default function Header() {
       return;
     }
 
+    
     try {
       await addDoc(collection(db, "contacts"), formData);
       toast.success("Message sent successfully!");
