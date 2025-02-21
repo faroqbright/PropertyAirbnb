@@ -12,7 +12,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
-  const userInfo = useSelector((state) => state.auth.userInfo);
+  const userInfo = useSelector((state) => state?.auth?.userInfo);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -115,7 +115,7 @@ export default function Navbar() {
                   <User size={17} className="text-bluebutton" />
                 </div>
                 <span className="-mb-[3px]">
-                  {userInfo.FullName.split(" ").slice(0, 9).join(" ") || userInfo.displayName.split(" ").slice(0, 9).join(" ")}
+                  {userInfo?.FullName?.split(" ").slice(0, 9).join(" ") || userInfo?.displayName?.split(" ").slice(0, 9).join(" ")}
                 </span>
               </button>
             </div>
