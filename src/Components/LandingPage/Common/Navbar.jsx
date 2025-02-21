@@ -17,7 +17,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const isAuthenticated = !!userInfo?.FullName;
+  const isAuthenticated = !!userInfo?.FullName || !!userInfo?.displayName;
 
   const handleNavigate = () => {
     router.push("/Auth/Login");
@@ -115,7 +115,7 @@ export default function Navbar() {
                   <User size={17} className="text-bluebutton" />
                 </div>
                 <span className="-mb-[3px]">
-                  {userInfo.FullName.split(" ").slice(0, 9).join(" ")}
+                  {userInfo.FullName.split(" ").slice(0, 9).join(" ") || userInfo.displayName.split(" ").slice(0, 9).join(" ")}
                 </span>
               </button>
             </div>
