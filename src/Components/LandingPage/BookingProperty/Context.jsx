@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Star, Check } from "lucide-react";
+import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 export default function Context() {
   const [selectedRooms, setSelectedRooms] = useState("room1");
@@ -10,6 +12,8 @@ export default function Context() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [buttonText, setButtonText] = useState("Reserve");
   const [fromProfile, setFromProfile] = useState(false);
+  const user = useSelector((state) => state.auth.userInfo);
+  console.log(user);
 
   useEffect(() => {
     if (localStorage.getItem("fromProfile")) {
@@ -31,10 +35,16 @@ export default function Context() {
   }, [router]);
 
   const handleButtonClick = () => {
-    if (fromProfile) {
-      router.push("/Landing/Profile");
+    if (!user) {
+      toast.error("Please log in first.");
+      router.push("/Auth/Login");
+      return;
     } else {
-      router.push("/Landing/Properties/PropertiesDetail/Payment");
+      if (fromProfile) {
+        router.push("/Landing/Profile");
+      } else {
+        router.push("/Landing/Properties/PropertiesDetail/Payment");
+      }
     }
     localStorage.removeItem("fromProfile");
   };

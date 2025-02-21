@@ -89,7 +89,7 @@ const properties = [
   },
 ];
 
-const countries = ["France", "Poland", "Germany", "Spain", "Italy", "Sweden", "Denmark", "Hungary"];
+const countries = ["France", "Finland", "Cyprus", "Poland", "Germany", "Spain", "Italy", "Sweden", "Denmark", "Hungary"];
 
 export default function Card() {
   const router = useRouter();
