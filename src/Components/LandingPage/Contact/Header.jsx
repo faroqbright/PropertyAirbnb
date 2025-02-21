@@ -3,11 +3,7 @@
 import React, { useState } from "react";
 import { Phone, Mail, Send } from "lucide-react";
 import { db } from "../../../firebase/firebaseConfig";
-<<<<<<< HEAD
-import { doc, setDoc } from "firebase/firestore";
-=======
 import { collection, addDoc } from "firebase/firestore";
->>>>>>> 22f93393b297900d5aff111c7b89eef843aac942
 import { toast } from "react-toastify";
 
 export default function Header() {
@@ -25,24 +21,8 @@ export default function Header() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-<<<<<<< HEAD
-    console.log("Submitting form data:", formData);
 
-    try {
-      console.log("Writing to Firestore...");
-      await setDoc(
-        doc(db, "contacts", encodeURIComponent(formData.email)),
-        formData
-      );
-      console.log("Data saved successfully!");
-
-      toast.success("Message sent successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-
-=======
-
+    
     const requiredFields = {
       name: "Name",
       jobPosition: "Job Position",
@@ -63,7 +43,6 @@ export default function Header() {
     try {
       await addDoc(collection(db, "contacts"), formData);
       toast.success("Message sent successfully!");
->>>>>>> 22f93393b297900d5aff111c7b89eef843aac942
       setFormData({
         name: "",
         jobPosition: "",
