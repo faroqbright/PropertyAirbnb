@@ -187,6 +187,7 @@ const Signup = () => {
       toast.error(`Error: ${error.message}`);
     }
   };
+  
 
   const loginWithGoogle = async () => {
     try {
@@ -217,6 +218,10 @@ const Signup = () => {
         });
       }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> fac8a188aad63884c1db21199cfa7957cf43cca0
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
       dispatch(setUserInfo(user));
