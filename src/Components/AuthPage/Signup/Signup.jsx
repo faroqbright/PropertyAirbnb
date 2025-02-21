@@ -217,11 +217,8 @@ const Signup = () => {
           loginMethod: "Google",
         });
       }
+      
 
-<<<<<<< HEAD
-=======
-
->>>>>>> fac8a188aad63884c1db21199cfa7957cf43cca0
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
       dispatch(setUserInfo(user));
