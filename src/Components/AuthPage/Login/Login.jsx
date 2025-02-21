@@ -3,11 +3,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { FacebookAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { toast } from "react-toastify";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../../firebase/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { setUserInfo } from "@/features/auth/authSlice";
 import { useDispatch } from "react-redux";
 
@@ -82,6 +82,35 @@ const Login = () => {
 
   const handleSignUpClick = () => {
     router.push("/Auth/Signup");
+  };
+
+  const loginInWithFacebook = async () => {
+    try {
+      const provider = new FacebookAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        FullName: user.displayName || "",
+        email: user.email || "",
+        profilePicture: user.photoURL || "",
+        userType: activeTab,
+        role: activeTab,
+        loginMethod: "Facebook",
+      });
+
+      toast.success("Logged in successfully with Facebook!");
+      router.push("/Landing/Home");
+      console.log("Facebook Auth Success:", user);
+      dispatch(setUserInfo(user));
+      document.cookie = `uid=${user.uid}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }; Secure; SameSite=Lax`;
+    } catch (error) {
+      console.error("Facebook Auth Error:", error.code, error.message);
+      toast.error(`Error: ${error.message}`);
+    }
   };
 
   return (
@@ -166,7 +195,7 @@ const Login = () => {
 
             <div className="flex justify-center lg:justify-end">
               <button
-              type="button"
+                type="button"
                 className="text-sm text-[#B19BD9]"
                 onClick={handleForgotPassword}
               >
@@ -190,7 +219,7 @@ const Login = () => {
             Continue with Google
           </button>
           <button className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500">
-            <FaFacebook size={20} className="text-blue-600" />
+            <FaFacebook size={20} className="text-blue-600" onClick={loginInWithFacebook}/>
             Continue with Facebook
           </button>
         </div>
