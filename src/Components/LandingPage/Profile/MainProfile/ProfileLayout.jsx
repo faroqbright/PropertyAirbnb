@@ -26,6 +26,7 @@ export default function Dashboard() {
     { name: "Bookings", icon: <Calendar size={18} />, component: <Bookings /> },
     { name: "Profile", icon: <User size={18} />, component: <Profile /> },
   ];
+  
 
   if (role === true) {
     tabs.push(
