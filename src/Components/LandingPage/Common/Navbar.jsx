@@ -13,7 +13,6 @@ export default function Navbar() {
   const router = useRouter();
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.auth.userInfo);
-  console.log("User Info:", userInfo);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);

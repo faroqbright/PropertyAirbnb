@@ -154,6 +154,8 @@ const Signup = () => {
         FullName: user.displayName || "",
         email: user.email || "",
         profilePicture: user.photoURL || "",
+        userType: activeTab,
+        role: formData.role,
         loginMethod: "Facebook",
       });
 
@@ -310,17 +312,16 @@ const Signup = () => {
             {loading ? "Signing Up..." : "Sign Up"}
           </button>
           <div className="flex flex-col lg:flex-row lg:justify-between mt-10 gap-4">
+            <button className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-5 text-gray-500">
+              <FcGoogle size={20} />
+              Continue with Google
+            </button>
             <button
               onClick={signInWithFacebook}
               className="flex justify-center items-center text-center gap-2 border-[1.5px] rounded-full mt-5 lg:mt-0 py-2 px-5 text-gray-500"
             >
               <Facebook className="text-white bg-blue-600 rounded-full p-1" />
               Connect with Facebook
-            </button>
-
-            <button className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-5 text-gray-500">
-              <FcGoogle size={20} />
-              Continue with Google
             </button>
           </div>
         </div>
