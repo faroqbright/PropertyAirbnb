@@ -11,10 +11,12 @@ import { Facebook } from "lucide-react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../../firebase/firebaseConfig";
 import { signInWithPopup, FacebookAuthProvider } from "firebase/auth";
+import { setUserInfo } from "@/features/auth/authSlice";
+import { useDispatch } from "react-redux";
 
 const Signup = () => {
+  const dispatch = useDispatch();
   const router = useRouter();
-  const provider = new FacebookAuthProvider();
   const [activeTab, setActiveTab] = useState("LandLord");
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -160,7 +162,12 @@ const Signup = () => {
       });
 
       toast.success("Logged in successfully with Facebook!");
-      router.push("/dashboard");
+      router.push("/Landing/Home");
+      console.log("Facebook Auth Success:", user);
+      dispatch(setUserInfo(user));
+      document.cookie = `uid=${user.uid}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }; Secure; SameSite=Lax`;
     } catch (error) {
       console.error("Facebook Auth Error:", error.code, error.message);
       toast.error(`Error: ${error.message}`);
