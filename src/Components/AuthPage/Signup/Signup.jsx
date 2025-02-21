@@ -216,6 +216,7 @@ const Signup = () => {
         });
       }
 
+      
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
       console.log("Google Auth Success:", user);
