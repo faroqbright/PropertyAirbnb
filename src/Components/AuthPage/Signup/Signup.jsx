@@ -158,9 +158,10 @@ const Signup = () => {
 
       if (userSnap.exists()) {
         const existingUser = userSnap.data();
+        const userRole = existingUser.role;
 
-        if (existingUser.role === "Tenant" && existingUser.role !== activeTab) {
-          toast.error("Access denied: Role mismatch.");
+        if (userRole !== activeTab) {
+          toast.error(`You are not registered as a ${activeTab}.`);
           return;
         }
       } else {
@@ -170,14 +171,13 @@ const Signup = () => {
           email: user.email || "",
           profilePicture: user.photoURL || "",
           userType: activeTab,
-          role: formData.role,
+          role: activeTab,
           loginMethod: "Facebook",
         });
       }
 
       toast.success("Logged in successfully with Facebook!");
       router.push("/Landing/Home");
-      console.log("Facebook Auth Success:", user);
       dispatch(setUserInfo(user));
       document.cookie = `uid=${user.uid}; path=/; max-age=${
         7 * 24 * 60 * 60
@@ -199,9 +199,10 @@ const Signup = () => {
 
       if (userSnap.exists()) {
         const existingUser = userSnap.data();
+        const userRole = existingUser.role;
 
-        if (existingUser.role === "Tenant" && existingUser.role !== activeTab) {
-          toast.error("Access denied: Role mismatch.");
+        if (userRole !== activeTab) {
+          toast.error(`You are not registered as a ${activeTab}.`);
           return;
         }
       } else {
@@ -216,10 +217,8 @@ const Signup = () => {
         });
       }
 
-      
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
-      console.log("Google Auth Success:", user);
       dispatch(setUserInfo(user));
       document.cookie = `uid=${user.uid}; path=/; max-age=${
         7 * 24 * 60 * 60
