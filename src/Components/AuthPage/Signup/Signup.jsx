@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Facebook } from "lucide-react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../../../firebase/firebaseConfig";
 import { signInWithPopup, FacebookAuthProvider } from "firebase/auth";
 import { setUserInfo } from "@/features/auth/authSlice";
@@ -174,6 +174,35 @@ const Signup = () => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+  
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        FullName: user.displayName || "",
+        email: user.email || "",
+        profilePicture: user.photoURL || "",
+        userType: activeTab,
+        role: activeTab,
+        loginMethod: "Google",
+      });
+  
+      toast.success("Logged in successfully with Google!");
+      router.push("/Landing/Home");
+      console.log("Google Auth Success:", user);
+      dispatch(setUserInfo(user));
+      document.cookie = `uid=${user.uid}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }; Secure; SameSite=Lax`;
+    } catch (error) {
+      console.error("Google Auth Error:", error.code, error.message);
+      toast.error(`Error: ${error.message}`);
+    }
+  };
+  
   return (
     <div className="flex items-center justify-center w-full my-10">
       <div className="bg-white rounded-xl border border-gray-200 w-3/4 lg:w-1/2 px-5 lg:px-14 py-20">
@@ -319,7 +348,7 @@ const Signup = () => {
             {loading ? "Signing Up..." : "Sign Up"}
           </button>
           <div className="flex flex-col lg:flex-row lg:justify-between mt-10 gap-4">
-            <button className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-5 text-gray-500">
+            <button onClick={loginWithGoogle} className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-5 text-gray-500">
               <FcGoogle size={20} />
               Continue with Google
             </button>

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { FacebookAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { FacebookAuthProvider, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { toast } from "react-toastify";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../../firebase/firebaseConfig";
@@ -113,6 +113,36 @@ const Login = () => {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+  
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        FullName: user.displayName || "",
+        email: user.email || "",
+        profilePicture: user.photoURL || "",
+        userType: activeTab,
+        role: activeTab,
+        loginMethod: "Google",
+      });
+  
+      toast.success("Logged in successfully with Google!");
+      router.push("/Landing/Home");
+      console.log("Google Auth Success:", user);
+      dispatch(setUserInfo(user));
+      document.cookie = `uid=${user.uid}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }; Secure; SameSite=Lax`;
+    } catch (error) {
+      console.error("Google Auth Error:", error.code, error.message);
+      toast.error(`Error: ${error.message}`);
+    }
+  };
+  
+
   return (
     <div className="flex mx-auto justify-center min-h-screen p-4">
       <div className="bg-white rounded-2xl border-[1.5px] border-gray-200 w-full max-w-lg lg:max-w-xl px-10 py-20">
@@ -214,12 +244,12 @@ const Login = () => {
         </form>
 
         <div className="flex flex-col lg:flex-row justify-between mt-8 gap-2">
-          <button className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500">
+          <button onClick={loginWithGoogle} className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500">
             <FcGoogle size={20} />
             Continue with Google
           </button>
-          <button className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500">
-            <FaFacebook size={20} className="text-blue-600" onClick={loginInWithFacebook}/>
+          <button onClick={loginInWithFacebook} className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500">
+            <FaFacebook size={20} className="text-blue-600"/>
             Continue with Facebook
           </button>
         </div>
