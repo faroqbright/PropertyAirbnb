@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { storage, db } from "../../../firebase/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -16,6 +16,8 @@ import { auth } from "../../../firebase/firebaseConfig";
 import { signInWithPopup, FacebookAuthProvider } from "firebase/auth";
 import { setUserInfo } from "@/features/auth/authSlice";
 import { useDispatch } from "react-redux";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 const Signup = () => {
   const dispatch = useDispatch();
@@ -36,6 +38,45 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [defaultCountry, setDefaultCountry] = useState("");
+  const [Number, setNumber] = useState("");
+
+  const getUserIP = async () => {
+    try {
+      const response = await fetch("https://api.ipify.org?format=json");
+      const data = await response.json();
+      return data.ip;
+    } catch (error) {
+      console.error("Failed to fetch IP address", error);
+      return "Unknown IP";
+    }
+  };
+
+  const getCountryCode = async (ip) => {
+    try {
+      const response = await fetch(`https://ipapi.co/${ip}/json/`);
+      const data = await response.json();
+      return data.country_code.toLowerCase(); // Ensure country code is lowercase
+    } catch (error) {
+      console.error("Failed to fetch country code", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const initialize = async () => {
+      const ip = await getUserIP();
+      if (ip) {
+        const countryCode = await getCountryCode(ip);
+        if (countryCode) {
+          console.log("Detected Country Code:", countryCode); // Debugging
+          setDefaultCountry(countryCode);
+        }
+      }
+    };
+
+    initialize();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -187,7 +228,6 @@ const Signup = () => {
       toast.error(`Error: ${error.message}`);
     }
   };
-  
 
   const loginWithGoogle = async () => {
     try {
@@ -217,7 +257,6 @@ const Signup = () => {
           loginMethod: "Google",
         });
       }
-      
 
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
@@ -261,7 +300,7 @@ const Signup = () => {
           Register Here!
         </h1>
         <div className="mt-10">
-          {["FullName", "Email", "Number"].map((field, idx) => (
+          {["FullName", "Email"].map((field, idx) => (
             <div key={idx} className="mt-5">
               <label className="text-gray-700">
                 {field.replace(/([A-Z])/g, " $1").trim()}
@@ -278,6 +317,31 @@ const Signup = () => {
               />
             </div>
           ))}
+
+          <div className="flex flex-col w-full mt-4">
+            <label className="text-gray-700 mb-2">Phone Number</label>
+            <div className="w-full flex items-center border border-gray-300 rounded-full">
+              <div className="w-full px-3 flex items-center">
+                <PhoneInput
+                  country={defaultCountry || "us"}
+                  enableSearch={true}
+                  disableDropdown={false}
+                  value={Number}
+                  onChange={(Number) => setNumber(Number)}
+                  buttonClass="px-2"
+                  inputClass="w-full !border-0 text-gray-900 placeholder-gray-400 focus:outline-none"
+                  dropdownClass="max-h-48 bg-black overflow-y-auto bg-white"
+                  containerClass="flex items-center"
+                  inputProps={{
+                    name: "Number",
+                    id: "Number",
+                    autoComplete: "tel",
+                  }}
+                  placeholder="Enter your phone number"
+                />
+              </div>
+            </div>
+          </div>
 
           {["Password", "ConfirmPassword"].map((field, idx) => (
             <div key={idx} className="mt-5 relative">

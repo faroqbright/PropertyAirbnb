@@ -21,6 +21,7 @@ export default function Navbar() {
 
   const handleNavigate = () => {
     router.push("/Auth/Login");
+    setIsOpen(false);
   };
 
   const handleLogout = () => {
@@ -87,6 +88,7 @@ export default function Navbar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => setIsOpen(false)}
               className={`relative group ${
                 pathname.startsWith(item.href)
                   ? "text-[#3CD8C8]"
