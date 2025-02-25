@@ -4,6 +4,13 @@ import { Camera, Check, Plus } from "lucide-react";
 import { toast } from "react-toastify";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../../../firebase/firebaseConfig";
+import { getAuth } from "firebase/auth";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 
 const Personal = () => {
   const [step, setStep] = useState(1);
@@ -18,6 +25,10 @@ const Personal = () => {
   const [activeDietButtons, setActiveDietButtons] = useState([]);
   const [userUID, setUserUID] = useState(null);
   const inputRef = useRef(null);
+  const [image, setImage] = useState(null);
+  const [selectedOwnerDoc, setSelectedOwnerDoc] = useState(null);
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const storedUID = localStorage.getItem("userUID");
@@ -25,6 +36,76 @@ const Personal = () => {
       setUserUID(storedUID);
     }
   }, []);
+
+  const handleIconClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          setUploading(true);
+          const imageUrl = await uploadImage(reader.result, "profile_pictures");
+          setImage(imageUrl);
+          setUploading(false);
+        } catch (error) {
+          console.error("Upload failed:", error);
+          setUploading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (uri, folder) => {
+    try {
+      const auth = getAuth();
+      const storage = getStorage();
+      const userId = auth.currentUser?.uid;
+
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+
+      if (!uri) {
+        throw new Error("No image selected");
+      }
+
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const fileName = `${Date.now()}.jpg`;
+      const storageRef = ref(storage, `users/${userId}/${folder}/${fileName}`);
+
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log("Upload is " + progress + "% done");
+          },
+          (error) => {
+            reject(error);
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log("File available at", downloadURL);
+            resolve(downloadURL);
+          }
+        );
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    }
+  };
 
   const getTodayDate = () => {
     const today = new Date();
@@ -40,6 +121,7 @@ const Personal = () => {
       } else {
         setUserData((prevData) => ({
           ...prevData,
+          image,
           birth,
           gender,
           sexOrientation,
@@ -119,9 +201,10 @@ const Personal = () => {
 
           if (userSnap.exists()) {
             await setDoc(userRef, { personalInfo: userData }, { merge: true });
+            uploadImage(selectedOwnerDoc, "owner_docs");
             toast.success("Personal data updated successfully!");
             setStep(step + 1);
-            localStorage.removeItem('userUID');
+            localStorage.removeItem("userUID");
           } else {
             toast.error("User not found in database. Please sign up first.");
           }
@@ -196,10 +279,30 @@ const Personal = () => {
             <h1>Personal Information!</h1>
           </div>
 
-          <div className="flex items-center justify-center h-full mt-10 text-textclr">
-            <Camera
-              className="p-7 bg-gray-300 rounded-full text-textclr"
-              size={90}
+          <div className="flex flex-col items-center justify-center h-full mt-10 text-textclr">
+            <div
+              onClick={handleIconClick}
+              className="w-[100px] h-[100px] flex items-center justify-center bg-gray-300 rounded-full cursor-pointer overflow-hidden relative"
+            >
+              {uploading ? (
+                <span className="text-sm text-gray-700">Uploading...</span>
+              ) : image ? (
+                <img
+                  src={image}
+                  alt="Uploaded"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Camera className="p-7 text-textclr" size={90} />
+              )}
+            </div>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*"
             />
           </div>
 

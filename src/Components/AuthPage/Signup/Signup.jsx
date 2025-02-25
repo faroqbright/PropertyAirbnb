@@ -1,8 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { storage, db } from "../../../firebase/firebaseConfig";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "../../../firebase/firebaseConfig";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
@@ -12,6 +11,8 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
 } from "firebase/auth";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 import { auth } from "../../../firebase/firebaseConfig";
 import { signInWithPopup, FacebookAuthProvider } from "firebase/auth";
 import { setUserInfo } from "@/features/auth/authSlice";
@@ -39,7 +40,6 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [defaultCountry, setDefaultCountry] = useState("");
-  const [Number, setNumber] = useState("");
 
   const getUserIP = async () => {
     try {
@@ -56,7 +56,7 @@ const Signup = () => {
     try {
       const response = await fetch(`https://ipapi.co/${ip}/json/`);
       const data = await response.json();
-      return data.country_code.toLowerCase(); // Ensure country code is lowercase
+      return data.country_code.toLowerCase();
     } catch (error) {
       console.error("Failed to fetch country code", error);
       return null;
@@ -69,7 +69,6 @@ const Signup = () => {
       if (ip) {
         const countryCode = await getCountryCode(ip);
         if (countryCode) {
-          console.log("Detected Country Code:", countryCode); // Debugging
           setDefaultCountry(countryCode);
         }
       }
@@ -89,14 +88,51 @@ const Signup = () => {
     }
   };
 
-  const uploadImage = async (file, folder) => {
-    if (!file) return null;
-    const storageRef = ref(storage, `${folder}/${file.name}`);
-    await uploadBytes(storageRef, file);
-    return getDownloadURL(storageRef);
+  const uploadImage = async (uri, folder) => {
+    try {
+      const auth = getAuth();
+      const storage = getStorage();
+      const userId = auth.currentUser?.uid;
+  
+      if (!userId) {
+        throw new Error("User not authenticated");
+      }
+      
+      if (!uri) {
+        throw new Error("No image selected");
+      }
+  
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const fileName = `${Date.now()}.jpg`;
+      const storageRef = ref(storage, `users/${userId}/${folder}/${fileName}`);
+  
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+  
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log("Upload is " + progress + "% done");
+          },
+          (error) => {
+            reject(error);
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log("File available at", downloadURL);
+            resolve(downloadURL);
+          }
+        );
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    }
   };
 
-  const handleSignUpClick = async () => {
+  const handleSignUpClick = async () => {        
     if (
       !formData.FullName ||
       !formData.Email ||
@@ -107,24 +143,29 @@ const Signup = () => {
       toast.error("Please fill in all fields.");
       return;
     }
-
+  
+    if (!formData.Number) {
+      toast.error("Phone number is required.");
+      return;
+    }
+  
     if (formData.Password.length < 8) {
       toast.error("Password must be at least 8 characters long.");
       return;
     }
-
+  
     if (formData.Password !== formData.ConfirmPassword) {
       toast.error("Passwords do not match.");
       return;
     }
-
+  
     if (!termsAccepted) {
       toast.error("You must accept the terms and conditions.");
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -132,11 +173,10 @@ const Signup = () => {
         formData.Password
       );
       const user = userCredential.user;
-
-      const cnicUrl = await uploadImage(selectedImage, "cnic");
-      const ownerDocUrl =
-        step === 2 ? await uploadImage(selectedOwnerDoc, "owner_docs") : null;
-
+  
+      const cnicUrl = selectedImage ? await uploadImage(selectedImage, "cnic") : null;
+      const ownerDocUrl = step === 2 && selectedOwnerDoc ? await uploadImage(selectedOwnerDoc, "owner_docs") : null;
+  
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         FullName: formData.FullName,
@@ -147,13 +187,13 @@ const Signup = () => {
         cnicUrl,
         ownerDocUrl,
       });
-
+  
       if (activeTab === "Tenant") {
         localStorage.setItem("userUID", user.uid);
       }
-
+  
       toast.success("Signup successful!");
-
+  
       setFormData({
         FullName: "",
         Email: "",
@@ -162,31 +202,28 @@ const Signup = () => {
         ConfirmPassword: "",
         role: "LandLord",
       });
-
+  
       setSelectedImage(null);
       setSelectedOwnerDoc(null);
       setTermsAccepted(false);
       setShowPassword(false);
       setShowConfirmPassword(false);
-
+  
       setLoading(false);
-
-      await router.push(
-        activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal"
-      );
+  
+      await router.push(activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal");
     } catch (error) {
       console.log(error);
-
+  
       let errorMessage = error.code
         ? error.code.split("/")[1].replace(/-/g, " ")
         : "Something went wrong";
-      errorMessage =
-        errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
+      errorMessage = errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
       toast.error(errorMessage);
-
+  
       setLoading(false);
     }
-  };
+  };  
 
   const signInWithFacebook = async () => {
     try {
@@ -326,9 +363,12 @@ const Signup = () => {
                   country={defaultCountry || "us"}
                   enableSearch={true}
                   disableDropdown={false}
-                  value={Number}
-                  onChange={(Number) => setNumber(Number)}
-                  buttonClass="px-2"
+                  value={formData.Number}
+                  onChange={(num) => {
+                    console.log("PhoneInput value:", num);
+                    setFormData((prev) => ({ ...prev, Number: num }));
+                  }}
+                                    buttonClass="px-2"
                   inputClass="w-full !border-0 text-gray-900 placeholder-gray-400 focus:outline-none"
                   dropdownClass="max-h-48 bg-black overflow-y-auto bg-white"
                   containerClass="flex items-center"
