@@ -319,27 +319,32 @@ const Signup = () => {
           ))}
 
           <div className="flex flex-col w-full mt-4">
-            <label className="text-gray-700 mb-2">Phone Number</label>
-            <div className="w-full flex items-center border border-gray-300 rounded-full">
-              <div className="w-full px-3 flex items-center">
-                <PhoneInput
-                  country={defaultCountry || "us"}
-                  enableSearch={true}
-                  disableDropdown={false}
-                  value={Number}
-                  onChange={(Number) => setNumber(Number)}
-                  buttonClass="px-2"
-                  inputClass="w-full !border-0 text-gray-900 placeholder-gray-400 focus:outline-none"
-                  dropdownClass="max-h-48 bg-black overflow-y-auto bg-white"
-                  containerClass="flex items-center"
-                  inputProps={{
-                    name: "Number",
-                    id: "Number",
-                    autoComplete: "tel",
-                  }}
-                  placeholder="Enter your phone number"
-                />
-              </div>
+            <label className="text-gray-700 mb-2 font-semibold">
+              Phone Number
+            </label>
+            <div
+              className="border w-full mt-3 py-2 pl-3 pr-2 rounded-full flex items-center cursor-text"
+              // Clicking anywhere on the container focuses the input field
+              onClick={() => document.getElementById("Number")?.focus()}
+            >
+              <PhoneInput
+                country={defaultCountry}
+                enableSearch={true}
+                disableDropdown={false}
+                value={Number}
+                onChange={(num) => setNumber(num)}
+                // Ensure the input takes the full width of the container
+                inputClass="w-full !border-0 text-gray-900 placeholder-gray-400 focus:outline-none bg-transparent"
+                buttonClass="px-2"
+                dropdownClass="max-h-48 overflow-y-auto bg-white shadow-lg rounded-md scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200"
+                containerClass="flex items-center w-full"
+                inputProps={{
+                  name: "Number",
+                  id: "Number",
+                  autoComplete: "tel",
+                }}
+                placeholder="Enter your phone number"
+              />
             </div>
           </div>
 
