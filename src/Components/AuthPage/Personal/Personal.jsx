@@ -43,53 +43,36 @@ const Personal = () => {
     }
   };
 
-  const handleFileChange = async (event) => {
-    const file = event.target.files?.[0];
+  const [selectedFile, setSelectedFile] = useState(null);  
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+  
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          setUploading(true);
-          const imageUrl = await uploadImage(reader.result, "profile_pictures");
-          setImage(imageUrl);
-          setUploading(false);
-        } catch (error) {
-          console.error("Upload failed:", error);
-          setUploading(false);
-        }
+      reader.onloadend = () => {
+        setImage(reader.result); // Show preview
+        setSelectedFile(file); // Store selected file
       };
       reader.readAsDataURL(file);
     }
-  };
+  };  
 
-  const uploadImage = async (uri, folder) => {
+  const uploadImage = async () => {
     try {
-      const auth = getAuth();
-      const storage = getStorage();
-      const userId = auth.currentUser?.uid;
-
-      if (!userId) {
-        throw new Error("User not authenticated");
-      }
-
-      if (!uri) {
+      if (!selectedFile) {
         throw new Error("No image selected");
       }
-
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const fileName = `${Date.now()}.jpg`;
-      const storageRef = ref(storage, `users/${userId}/${folder}/${fileName}`);
-
-      const uploadTask = uploadBytesResumable(storageRef, blob);
-
+  
+      const storage = getStorage();
+      const fileName = `${Date.now()}_${selectedFile.name}`;
+      const storageRef = ref(storage, `profile_pictures/${fileName}`);
+      const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+  
       return new Promise((resolve, reject) => {
         uploadTask.on(
           "state_changed",
           (snapshot) => {
-            const progress =
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log("Upload is " + progress + "% done");
+            console.log(`Upload is ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}% done`);
           },
           (error) => {
             reject(error);
@@ -105,7 +88,7 @@ const Personal = () => {
       console.error("Error uploading image:", error);
       throw error;
     }
-  };
+  };  
 
   const getTodayDate = () => {
     const today = new Date();
@@ -200,7 +183,11 @@ const Personal = () => {
           const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {
-            await setDoc(userRef, { personalInfo: userData }, { merge: true });
+            let uploadedImageUrl = null;
+            if (selectedFile) {
+              uploadedImageUrl = await uploadImage();
+            }
+            await setDoc(userRef, { personalInfo: { ...userData, image: uploadedImageUrl } },{ merge: true });
             uploadImage(selectedOwnerDoc, "owner_docs");
             toast.success("Personal data updated successfully!");
             setStep(step + 1);
@@ -298,12 +285,13 @@ const Personal = () => {
             </div>
 
             <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept="image/*"
-            />
+  type="file"
+  accept="image/*"
+  ref={fileInputRef}
+  style={{ display: "none" }}
+  onChange={handleFileChange}
+/>
+
           </div>
 
           <div className="mt-10">
