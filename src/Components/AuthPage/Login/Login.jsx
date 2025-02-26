@@ -164,7 +164,7 @@ const Login = () => {
   
   return (
     <div className="flex mx-auto justify-center min-h-screen p-4">
-      <div className="bg-white rounded-2xl border-[1.5px] border-gray-200 w-full max-w-lg lg:max-w-xl px-10 py-20">
+      <div className="bg-white rounded-2xl border-[1.5px] border-gray-200 w-full max-w-3xl px-10 lg:px-20 py-20">
         <div className="flex justify-center mb-8">
           <div className="flex bg-gray-200 rounded-full w-2/3 max-w-md">
             <button

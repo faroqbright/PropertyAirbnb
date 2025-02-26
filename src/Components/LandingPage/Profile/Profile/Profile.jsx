@@ -168,7 +168,8 @@ export default function Bookings() {
         updatedData.hobbies = selectedHobbies;
         updatedData.preferences = selectedPreferences;
 
-        if (loadingSave) { items
+        if (loadingSave) {
+          items;
           updatedData.hobbies = [];
           updatedData.preferences = [];
           updatedUserInfo.hobbies = [];
@@ -210,6 +211,36 @@ export default function Bookings() {
     } else {
       setSelectedPreferences([...selectedPreferences, preference]);
     }
+  };
+
+  const handleImageChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        setImage(reader.result);
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const userData = {
+    personalInfo: {},
+    drinkingHabits: ["Outside", "InHouse"],
+    hobbies: [
+      "Moving",
+      "Running",
+      "Moving",
+      "Moving",
+      "Martial",
+      "Gym",
+      "Running",
+      "Gym",
+    ],
+    petFriendly: ["Cat", "Dog", "Allergic to Pets"],
+    smokingHabits: ["Outside", "InHouse"],
   };
 
   return (
@@ -350,6 +381,7 @@ export default function Bookings() {
               {loadingSave ? "Saving..." : "Edit"}
             </button>
           </div>
+
         </div>
       ) : (
         <div className="border-[1px] rounded-2xl p-8 md:p-6 lg:p-8">
@@ -357,9 +389,23 @@ export default function Bookings() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-                    <CameraIcon className="w-8 h-8 text-gray-600" />
+                  <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                    {userInfo.personalInfo?.image ? (
+                      <img
+                        src={userInfo.personalInfo.image}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <CameraIcon className="w-8 h-8 text-gray-600" />
+                    )}
                   </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handleImageChange}
+                  />
                 </div>
                 <div className="flex items-center gap-1">
                   <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
@@ -386,16 +432,6 @@ export default function Bookings() {
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
-                {/* <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
-                  <input
-                    className="border p-2 rounded-full w-full"
-                    placeholder="Write here"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div> */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Email</label>
                   <input
@@ -405,13 +441,6 @@ export default function Bookings() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
-                  <button
-                    className="text-white bg-bluebutton py-2 px-4 rounded-full mt-2"
-                    onClick={handleVerifyEmail}
-                    disabled={verifyingEmail}
-                  >
-                    {verifyingEmail ? "Verifying..." : "Verify Email"}
-                  </button>
                 </div>
               </div>
               <div className="space-y-2">

@@ -158,6 +158,16 @@ const Signup = () => {
       toast.error("Passwords do not match.");
       return;
     }
+
+    if (!selectedImage) {
+      toast.error("CNIC upload is required.");
+      return;
+    }
+
+    if (step === 2 && !selectedOwnerDoc) {
+      toast.error("Owner document upload is required.");
+      return;
+    }
   
     if (!termsAccepted) {
       toast.error("You must accept the terms and conditions.");
@@ -313,7 +323,7 @@ const Signup = () => {
 
   return (
     <div className="flex items-center justify-center w-full my-10">
-      <div className="bg-white rounded-xl border border-gray-200 w-3/4 lg:w-1/2 px-5 lg:px-14 py-20">
+      <div className="bg-white rounded-xl border max-w-4xl border-gray-200 w-3/4 lg:w-1/2 px-5 lg:px-14 py-20">
         <div className="flex bg-gray-200 rounded-full w-60 lg:w-72 mx-auto">
           {["LandLord", "Tenant"].map((role) => (
             <button
