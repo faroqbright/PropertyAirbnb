@@ -154,7 +154,15 @@ const Login = () => {
   
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
-      dispatch(setUserInfo(user));
+      dispatch(
+        setUserInfo({
+          uid: user.uid,
+          displayName: user.displayName || "",
+          email: user.email || "",
+          photoURL: user.photoURL || "",
+          role: activeTab,
+        })
+      );      
       document.cookie = `uid=${user.uid}; path=/; max-age=${7 * 24 * 60 * 60}; Secure; SameSite=Lax`;
     } catch (error) {
       console.error("Google Auth Error:", error.code, error.message);

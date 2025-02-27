@@ -33,11 +33,11 @@ export default function Bookings() {
 
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.auth.userInfo);
-  console.log(userInfo);
 
+  console.log(userInfo);
   useEffect(() => {
     if (userInfo) {
-      setName(userInfo.FullName || "");
+      setName(userInfo.FullName || userInfo.displayName || ""); // Use displayName as fallback
       setEmail(userInfo.email || "");
       setNumber(userInfo.number || "");
       setSelectedHobbies(userInfo.hobbies || []);
@@ -381,7 +381,6 @@ export default function Bookings() {
               {loadingSave ? "Saving..." : "Edit"}
             </button>
           </div>
-
         </div>
       ) : (
         <div className="border-[1px] rounded-2xl p-8 md:p-6 lg:p-8">
