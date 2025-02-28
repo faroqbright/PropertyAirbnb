@@ -1,24 +1,36 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { Star, User } from "lucide-react"; // ✅ Import User icon
 import { useRouter } from "next/navigation";
 import { db } from "@/firebase/firebaseConfig";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import { useSelector } from "react-redux";
 
 export default function Reviews() {
   const router = useRouter();
   const [reviews, setReviews] = useState([]);
+  const selector = useSelector((state) => state);
+  const userType = selector?.auth?.userInfo?.userType;
+  const [step, setStep] = useState(null);
+
+  useEffect(() => {
+    if (userType) {
+      setStep(userType === "Landlord" ? 0 : 1);
+    }
+  }, [userType]);
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
+        const collectionName =
+          userType === "Landlord" ? "LandlordReviews" : "reviews";
+
         const q = query(
-          collection(db, "reviews"),
-          where("userType", "==", "Tenant"),
-          limit(6)
+          collection(db, collectionName),
+          limit(6) // ✅ Removed where() to avoid filtering issues
         );
-        
+
         const querySnapshot = await getDocs(q);
         const fetchedReviews = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -31,43 +43,50 @@ export default function Reviews() {
       }
     };
 
-    fetchReviews();
-  }, []);
-
-  console.log(reviews)
+    if (userType) fetchReviews();
+  }, [userType]);
 
   return (
     <div className="max-w-7xl mx-auto p-9">
       <h1 className="text-[28px] font-bold text-center text-black mb-6">
-        What landlords say about this place
+        What {userType === "Landlord" ? "Landlords" : "Tenants"} say about this
+        place
       </h1>
 
       <div className="md:pl-24">
         <div className="flex items-start space-x-2 mb-8 pl-7">
           <Star fill="#FFBF2B" className="w-5 h-5 text-[#FFBF2B]" />
-          <span className="font-semibold">5.0  &bull; {reviews.length} reviews</span>
+          <span className="font-semibold">
+            5.0 &bull; {reviews.length} reviews
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {reviews.map((item) => (
             <div key={item.id} className="p-4 bg-white rounded-lg shadow">
               <div className="flex items-center space-x-4 mb-3">
-                <img
-                  src={item?.userImage || "/default-profile.png"}
-                  alt={item.userName}
-                  width={56}
-                  height={56}
-                  className="rounded-full"
-                />
+                {userType === "Landlord" ? (
+                  <User className="w-14 h-14 text-gray-600 bg-gray-200 rounded-full p-2" />
+                ) : (
+                  <Image
+                    src={item?.userImage || "/default-profile.png"}
+                    alt={item.userName}
+                    width={56}
+                    height={56}
+                    className="rounded-full"
+                  />
+                )}
                 <div>
                   <h3 className="font-semibold text-black">{item.userName}</h3>
-                  <p className="text-gray-500 text-sm">{
-                    new Date(item.createdAt).toLocaleDateString("en-GB", {
+                  <p className="text-gray-500 text-sm">
+                    {new Date(
+                      item.createdAt?.seconds * 1000
+                    ).toLocaleDateString("en-GB", {
                       day: "2-digit",
                       month: "long",
-                      year: "numeric"
-                    })
-                  }</p>
+                      year: "numeric",
+                    })}
+                  </p>
                 </div>
               </div>
               <div>

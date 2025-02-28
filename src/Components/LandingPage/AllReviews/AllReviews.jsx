@@ -4,21 +4,29 @@ import Image from "next/image";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { db } from "@/firebase/firebaseConfig";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { useSelector } from "react-redux";
+import { collection, query, where, limit, getDocs } from "firebase/firestore";
 
 export default function Reviews() {
   const router = useRouter();
   const [reviews, setReviews] = useState([]);
 
+  // Get userType from Redux state
+  const userType = useSelector((state) => state?.auth?.userInfo?.userType);
+
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const q = query(
-          collection(db, "reviews"),
-          where("userType", "==", "Tenant"),
-          limit(6)
-        );
-        
+        const collectionName = userType === "Landlord" ? "LandlordReviews" : "reviews";
+
+        let q;
+        if (userType === "Tenant") {
+          // Explicitly filter for Tenant users
+          q = query(collection(db, collectionName), where("userType", "==", "Tenant"), limit(6));
+        } else {
+          q = query(collection(db, collectionName), limit(6));
+        }
+
         const querySnapshot = await getDocs(q);
         const fetchedReviews = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -31,14 +39,15 @@ export default function Reviews() {
       }
     };
 
-    fetchReviews();
-  }, []);
-
+    if (userType) {
+      fetchReviews();
+    }
+  }, [userType]);
 
   return (
     <div className="max-w-7xl mx-auto p-9 my-16">
       <h1 className="text-[28px] font-bold text-center text-black mb-6">
-        What landlords say about this place
+        {userType === "Tenant" ? "What landlords say" : "What tenants say"} about this place
       </h1>
 
       <div className="md:pl-24">
@@ -63,17 +72,19 @@ export default function Reviews() {
                 <div>
                   <h3 className="font-semibold text-black">{item.userName}</h3>
                   <p className="text-gray-500 text-sm">
-                    {new Date(item.createdAt).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    {item.createdAt?.seconds
+                      ? new Date(item.createdAt.seconds * 1000).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : "Unknown date"}
                   </p>
                 </div>
               </div>
               <div>
                 <p className="text-gray-700 text-[15px] sm:text-[16px] md:text-[17px]">
-                  {item.description}
+                  {item.description || item.ratings?.Description || "No review text available"}
                 </p>
               </div>
             </div>

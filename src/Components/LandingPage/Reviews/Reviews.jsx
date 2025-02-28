@@ -52,7 +52,7 @@ export default function WriteReview() {
         communication: ratings.Communication,
         honesty: ratings.Honesty,
         description: ratings.Description,
-        createdAt: new Date().toISOString(), // Store timestamp
+        createdAt: serverTimestamp(), // Store timestamp
       });
 
       toast.success("Review submitted successfully!");
