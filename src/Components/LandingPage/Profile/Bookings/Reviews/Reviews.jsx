@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import React, { useState } from "react";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
@@ -75,8 +74,6 @@ export default function WriteReview() {
         </h1>
         <div className="flex space-x-1 mb-3">
           {Array.from({ length: 5 }).map((_, starIndex) => (
-        <div className="flex space-x-1 mb-3">
-          {Array.from({ length: 5 }).map((_, starIndex) => (
             <Star
               key={starIndex}
               size={30}
@@ -89,8 +86,6 @@ export default function WriteReview() {
             />
           ))}
         </div>
-        ;
-        ;
         <div className="w-full">
           <label
             htmlFor="description"
@@ -104,12 +99,9 @@ export default function WriteReview() {
             className="w-full sm:w-[537px] h-[122px] p-4 border rounded-3xl resize-none "
             value={ratings.Description}
             onChange={handleChange}
-            value={ratings.Description}
-            onChange={handleChange}
           ></textarea>
         </div>
         <button
-          onClick={handleSubmit}
           onClick={handleSubmit}
           className="w-full max-w-[215px] h-[53px] bg-bluebutton text-white text-base sm:text-lg font-medium py-3 rounded-full"
         >

@@ -1,14 +1,15 @@
-import React from "react";
+"use client"
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Star } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { db } from "@/firebase/firebaseConfig";
-import { useSelector } from "react-redux";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import { useSelector } from "react-redux";
 
 export default function Reviews() {
-  const router = useRouter();
   const [reviews, setReviews] = useState([]);
+  console.log(reviews);
+  
 
   // Get userType from Redux state
   const userType = useSelector((state) => state?.auth?.userInfo?.userType);
@@ -59,7 +60,7 @@ export default function Reviews() {
           {reviews.map((item, index) => (
             <div key={index} className="p-4 bg-white">
               <div className="flex items-center space-x-4 mb-3">
-                <Image
+                <img
                   src={item.imageUrl}
                   alt={item.name}
                   width={56}
