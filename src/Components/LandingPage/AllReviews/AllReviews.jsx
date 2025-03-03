@@ -1,5 +1,4 @@
-"use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Image from "next/image";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -53,18 +52,16 @@ export default function Reviews() {
       <div className="md:pl-24">
         <div className="flex items-start space-x-2 mb-8 pl-7">
           <Star fill="#FFBF2B" className="w-5 h-5 text-[#FFBF2B]" />
-          <span className="font-semibold">
-            5.0 &bull; {reviews.length} reviews
-          </span>
+          <span className="font-semibold">5.0  &bull;  7 reviews</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {reviews.map((item) => (
-            <div key={item.id} className="p-4 bg-white rounded-lg shadow">
+          {reviews.map((item, index) => (
+            <div key={index} className="p-4 bg-white">
               <div className="flex items-center space-x-4 mb-3">
-                <img
-                  src={item?.userImage || "/default-profile.png"}
-                  alt={item.userName}
+                <Image
+                  src={item.imageUrl}
+                  alt={item.name}
                   width={56}
                   height={56}
                   className="rounded-full"

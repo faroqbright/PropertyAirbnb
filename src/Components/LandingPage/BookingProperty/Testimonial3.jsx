@@ -6,10 +6,21 @@ import { useRouter } from "next/navigation";
 import { db } from "@/firebase/firebaseConfig";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
 import { useSelector } from "react-redux";
+import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import { useSelector } from "react-redux";
 
 export default function Reviews() {
   const router = useRouter();
   const [reviews, setReviews] = useState([]);
+  const selector = useSelector((state) => state);
+  const userType = selector?.auth?.userInfo?.userType;
+  const [step, setStep] = useState(null);
+
+  useEffect(() => {
+    if (userType) {
+      setStep(userType === "Landlord" ? 0 : 1);
+    }
+  }, [userType]);
   const selector = useSelector((state) => state);
   const userType = selector?.auth?.userInfo?.userType;
   const [step, setStep] = useState(null);
@@ -30,6 +41,7 @@ export default function Reviews() {
           collection(db, collectionName),
           limit(6) // ✅ Removed where() to avoid filtering issues
         );
+
 
         const querySnapshot = await getDocs(q);
         const fetchedReviews = querySnapshot.docs.map((doc) => ({
