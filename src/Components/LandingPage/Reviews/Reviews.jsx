@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { db } from "@/firebase/firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../../firebase/firebaseConfig";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"; // Import serverTimestamp
 import { toast } from "react-toastify";
 
 export default function WriteReview() {
@@ -19,57 +19,53 @@ export default function WriteReview() {
   const userImage =
     selector?.auth?.userInfo?.personalInfo?.image || "/default-profile.png";
 
-  const [ratings, setRatings] = useState({
-    Organization: 0,
-    Communication: 0,
-    Honesty: 0,
-    Description: "",
-  });
+  if (userType === "LandLord") {
+    router.push("/Landing/Profile/Details/Reviews");
+  } else {
+    const [ratings, setRatings] = useState({
+      Organization: 0,
+      Communication: 0,
+      Honesty: 0,
+      Description: "",
+    });
 
-  const handleStarClick = (category, index) => {
-    setRatings((prevRatings) => ({
-      ...prevRatings,
-      [category]: index + 1, // Set clicked star rating
-    }));
-  };
+    const handleStarClick = (category, index) => {
+      setRatings((prevRatings) => ({
+        ...prevRatings,
+        [category]: index + 1, // Set clicked star rating
+      }));
+    };
 
-  // Handle Submit Review
-  const handleSubmit = async () => {
-    if (!userId) {
-      toast.error("User not logged in!");
-      return;
-    }
+    // Handle Submit Review
+    const handleSubmit = async () => {
+      if (!userId) {
+        toast.error("User not logged in!");
+        return;
+      }
 
-    try {
-      const reviewRef = doc(db, "reviews", userId); // Store reviews with userId as the document ID
+      try {
+        const reviewRef = doc(db, "reviews", userId); // Store reviews with userId as the document ID
 
-      await setDoc(reviewRef, {
-        userId,
-        userName,
-        userType,
-        userImage,
-        organization: ratings.Organization,
-        communication: ratings.Communication,
-        honesty: ratings.Honesty,
-        description: ratings.Description,
-        createdAt: serverTimestamp(), // Store timestamp
-      });
+        await setDoc(reviewRef, {
+          userId,
+          userName,
+          userType,
+          userImage,
+          organization: ratings.Organization,
+          communication: ratings.Communication,
+          honesty: ratings.Honesty,
+          description: ratings.Description,
+          createdAt: serverTimestamp(), // Store timestamp
+        });
 
-      toast.success("Review submitted successfully!");
-
-      // Navigate to Properties Detail Page
-      localStorage.setItem("fromProfile", "true");
-      router.push("/Landing/Properties/PropertiesDetail");
-    } catch (error) {
-      console.error("Error submitting review:", error);
-      toast.error("Failed to submit review. Please try again.");
-    }
-  };
-
-  const handlenav = () => {
-    localStorage.setItem("fromProfile", "true");
-    router.push("/Landing/Properties/PropertiesDetail");
-  };
+        toast.success("Review submitted successfully!");
+        router.push("/Landing/Properties/PropertiesDetail");
+      } catch (error) {
+        console.error("Error submitting review:", error);
+        toast.error("Failed to submit review. Please try again.");
+      }
+    };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 lg:p-16 mb-10">
