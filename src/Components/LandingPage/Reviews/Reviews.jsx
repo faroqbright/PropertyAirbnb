@@ -1,15 +1,14 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { db } from "../../../firebase/firebaseConfig";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; // Import serverTimestamp
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 export default function WriteReview() {
   const reviewTitles = ["Organization", "Communication", "Honesty"];
-  const [user, setuser] = useState([]);
   const router = useRouter();
   const selector = useSelector((state) => state);
 
@@ -19,52 +18,72 @@ export default function WriteReview() {
   const userImage =
     selector?.auth?.userInfo?.personalInfo?.image || "/default-profile.png";
 
+  const [ratings, setRatings] = useState({
+    Organization: 0,
+    Communication: 0,
+    Honesty: 0,
+    Description: "",
+  });
+
+  // Redirect if userType is LandLord
+  useEffect(() => {
+    if (userType === "LandLord") {
+      router.push("/Landing/Profile/Details/Reviews");
+    }
+  }, [userType, router]);
+
+  const handleStarClick = (category, index) => {
+    setRatings((prevRatings) => ({
+      ...prevRatings,
+      [category]: index + 1, // Set clicked star rating
+    }));
+  };
+
+  // Handle Submit Review
+  const handleSubmit = async () => {
+    if (!userId) {
+      toast.error("User not logged in!");
+      return;
+    }
+
+    // Validate ratings and description
+    if (
+      ratings.Organization === 0 ||
+      ratings.Communication === 0 ||
+      ratings.Honesty === 0 ||
+      ratings.Description.trim() === ""
+    ) {
+      toast.error("Please fill all fields before submitting.");
+      return;
+    }
+
+    try {
+      const reviewRef = doc(db, "reviews", userId); // Store reviews with userId as the document ID
+
+      await setDoc(reviewRef, {
+        userId,
+        userName,
+        userType,
+        userImage,
+        organization: ratings.Organization,
+        communication: ratings.Communication,
+        honesty: ratings.Honesty,
+        description: ratings.Description,
+        createdAt: serverTimestamp(), // Store timestamp
+      });
+
+      toast.success("Review submitted successfully!");
+      router.push("/Landing/Properties/PropertiesDetail");
+      localStorage.setItem("fromProfile", "true");
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast.error("Failed to submit review. Please try again.");
+    }
+  };
+
+  // If userType is LandLord, render nothing (redirect happens in useEffect)
   if (userType === "LandLord") {
-    router.push("/Landing/Profile/Details/Reviews");
-  } else {
-    const [ratings, setRatings] = useState({
-      Organization: 0,
-      Communication: 0,
-      Honesty: 0,
-      Description: "",
-    });
-
-    const handleStarClick = (category, index) => {
-      setRatings((prevRatings) => ({
-        ...prevRatings,
-        [category]: index + 1, // Set clicked star rating
-      }));
-    };
-
-    // Handle Submit Review
-    const handleSubmit = async () => {
-      if (!userId) {
-        toast.error("User not logged in!");
-        return;
-      }
-
-      try {
-        const reviewRef = doc(db, "reviews", userId); // Store reviews with userId as the document ID
-
-        await setDoc(reviewRef, {
-          userId,
-          userName,
-          userType,
-          userImage,
-          organization: ratings.Organization,
-          communication: ratings.Communication,
-          honesty: ratings.Honesty,
-          description: ratings.Description,
-          createdAt: serverTimestamp(), // Store timestamp
-        });
-
-        toast.success("Review submitted successfully!");
-        router.push("/Landing/Properties/PropertiesDetail");
-      } catch (error) {
-        console.error("Error submitting review:", error);
-        toast.error("Failed to submit review. Please try again.");
-      }
-    };
+    return null;
   }
 
   return (

@@ -28,7 +28,7 @@ const CustomLayout = () => {
                 index === 3 ? "lg:hidden block" : ""
               }`}
             >
-              <Image
+              <img
                 src={src}
                 alt={`Image ${index + 1}`}
                 fill

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Star, User } from "lucide-react"; // ✅ Import User icon
 import { useRouter } from "next/navigation";
 import { db } from "@/firebase/firebaseConfig";
-import { collection, query, where, limit, getDocs } from "firebase/firestore";
+import { collection, query, limit, getDocs } from "firebase/firestore";
 import { useSelector } from "react-redux";
 
 export default function Reviews() {
@@ -12,46 +12,43 @@ export default function Reviews() {
   const [reviews, setReviews] = useState([]);
   const selector = useSelector((state) => state);
   const userType = selector?.auth?.userInfo?.userType;
-  const [step, setStep] = useState(null);
-
-  useEffect(() => {
-    if (userType) {
-      setStep(userType === "Landlord" ? 0 : 1);
-    }
-  }, [userType]);
+  console.log(userType);
+  
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const collectionName =
-          userType === "Landlord" ? "LandlordReviews" : "reviews";
+        // Determine the collection name based on userType
+        const collectionName = userType === "LandLord" ? "LandlordReviews" : "reviews";
 
-        const q = query(
-          collection(db, collectionName),
-          limit(6) // ✅ Removed where() to avoid filtering issues
-        );
+        // Create a query to fetch reviews
+        const q = query(collection(db, collectionName), limit(6));
 
-
+        // Execute the query
         const querySnapshot = await getDocs(q);
         const fetchedReviews = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
+        // Update the reviews state
         setReviews(fetchedReviews);
       } catch (error) {
         console.error("Error fetching reviews:", error);
       }
     };
 
+    // Fetch reviews only if userType is defined
     if (userType) fetchReviews();
-  }, [userType]);
+  }, [userType]); // Re-run when userType changes
+
+  console.log(reviews);
+  
 
   return (
     <div className="max-w-7xl mx-auto p-9">
       <h1 className="text-[28px] font-bold text-center text-black mb-6">
-        What {userType === "Landlord" ? "Landlords" : "Tenants"} say about this
-        place
+        What {userType === "Landlord" ? "Landlords" : "Tenants"} say about this place
       </h1>
 
       <div className="md:pl-24">
@@ -66,10 +63,10 @@ export default function Reviews() {
           {reviews.map((item) => (
             <div key={item.id} className="p-4 bg-white rounded-lg shadow">
               <div className="flex items-center space-x-4 mb-3">
-                {userType === "Landlord" ? (
+                {userType === "LandLord" ? (
                   <User className="w-14 h-14 text-gray-600 bg-gray-200 rounded-full p-2" />
                 ) : (
-                  <Image
+                  <img
                     src={item?.userImage || "/default-profile.png"}
                     alt={item.userName}
                     width={56}
@@ -92,7 +89,7 @@ export default function Reviews() {
               </div>
               <div>
                 <p className="text-gray-700 text-[15px] sm:text-[16px] md:text-[17px]">
-                  {item.description}
+                  {item?.ratings?.Description} {item?.description}
                 </p>
               </div>
             </div>

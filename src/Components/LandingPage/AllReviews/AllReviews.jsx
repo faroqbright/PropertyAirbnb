@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { Star, User } from "lucide-react";
 import { db } from "@/firebase/firebaseConfig";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
 import { useSelector } from "react-redux";
@@ -17,7 +17,7 @@ export default function Reviews() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const collectionName = userType === "Landlord" ? "LandlordReviews" : "reviews";
+        const collectionName = userType === "LandLord" ? "LandlordReviews" : "reviews";
 
         let q;
         if (userType === "Tenant") {
@@ -57,32 +57,36 @@ export default function Reviews() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {reviews.map((item, index) => (
-            <div key={index} className="p-4 bg-white">
+          {reviews.map((item) => (
+            <div key={item.id} className="p-4 bg-white rounded-lg shadow">
               <div className="flex items-center space-x-4 mb-3">
-                <img
-                  src={item.imageUrl}
-                  alt={item.name}
-                  width={56}
-                  height={56}
-                  className="rounded-full"
-                />
+                {userType === "LandLord" ? (
+                  <User className="w-14 h-14 text-gray-600 bg-gray-200 rounded-full p-2" />
+                ) : (
+                  <img
+                    src={item?.userImage || "/default-profile.png"}
+                    alt={item.userName}
+                    width={56}
+                    height={56}
+                    className="rounded-full"
+                  />
+                )}
                 <div>
                   <h3 className="font-semibold text-black">{item.userName}</h3>
                   <p className="text-gray-500 text-sm">
-                    {item.createdAt?.seconds
-                      ? new Date(item.createdAt.seconds * 1000).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })
-                      : "Unknown date"}
+                    {new Date(
+                      item.createdAt?.seconds * 1000
+                    ).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </p>
                 </div>
               </div>
               <div>
                 <p className="text-gray-700 text-[15px] sm:text-[16px] md:text-[17px]">
-                  {item.description || item.ratings?.Description || "No review text available"}
+                  {item?.ratings?.Description} {item?.description}
                 </p>
               </div>
             </div>
