@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -11,130 +11,12 @@ import {
   Heart,
   Star,
 } from "lucide-react";
-
-
-const properties = [
-  {
-    id: 1,
-    image: "/assets/Container.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 2,
-    image: "/assets/Container1.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: true,
-    isGuestFavorite: true,
-  },
-  {
-    id: 3,
-    image: "/assets/Container2.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 4,
-    image: "/assets/Container3.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 5,
-    image: "/assets/Container4.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: true,
-    isGuestFavorite: true,
-  },
-  {
-    id: 6,
-    image: "/assets/Container5.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: true,
-    isGuestFavorite: true,
-  },
-  {
-    id: 7,
-    image: "/assets/Container6.png",
-    location: "Moss Beach, California",
-    rooms: 6,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: true,
-    isGuestFavorite: true,
-  },
-  {
-    id: 8,
-    image: "/assets/Container7.png",
-    location: "Moss Beach, California",
-    rooms: 6,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 9,
-    image: "/assets/Container7.png",
-    location: "Moss Beach, California",
-    rooms: 6,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 10,
-    image: "/assets/Container7.png",
-    location: "Moss Beach, California",
-    rooms: 6,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 11,
-    image: "/assets/Container7.png",
-    location: "Moss Beach, California",
-    rooms: 6,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 12,
-    image: "/assets/Container7.png",
-    location: "Moss Beach, California",
-    rooms: 6,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-];
+import { db } from "../../../firebase/firebaseConfig"; // Import Firebase db
+import { collection, getDocs } from "firebase/firestore";
+import { Swiper, SwiperSlide } from "swiper/react"; // Import Swiper components
+import "swiper/css"; // Import Swiper styles
+import "swiper/css/pagination";
+import { Pagination } from "swiper/modules"; 
 
 export default function Card() {
   const router = useRouter();
@@ -146,6 +28,26 @@ export default function Card() {
       setCurrentPage(page);
     }
   };
+
+  const [properties, setProperties] = useState([]);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "properties"));
+        const propertiesList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setProperties(propertiesList);
+      } catch (error) {
+        console.error("Error fetching properties: ", error);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5 mb-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -153,15 +55,28 @@ export default function Card() {
           <div
             key={property.id}
             className="relative bg-white rounded-xl overflow-hidden cursor-pointer group"
-            onClick={() => router.push("/Landing/Properties/PropertiesDetail")}
+            onClick={() =>
+              router.push(
+                `/Landing/Properties/PropertiesDetail?id=${property.id}`
+              )
+            }
           >
             <div className="relative h-[270px] w-full overflow-hidden">
-              <img
-                src={property.image}
-                alt={property.location}
-                layout="fill"
-                className="rounded-xl group-hover:scale-105 transition-transform object-cover"
-              />
+              <Swiper
+                modules={[Pagination]}
+                pagination={{ clickable: true }}
+                className="h-full w-full"
+              >
+                {property.imageUrls.map((image, index) => (
+                  <SwiperSlide key={index}>
+                    <img
+                      src={image}
+                      alt={property.name}
+                      className="h-full w-full object-cover rounded-xl"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
               <Heart
                 className={`absolute top-2 right-2 h-6 w-6 text-white ${
                   property.favorite
@@ -169,25 +84,24 @@ export default function Card() {
                     : "fill-transparent/25"
                 }`}
               />
-              {property.isGuestFavorite && (
-                <div className="absolute top-2 left-2 text-black bg-white px-2 py-1 text-sm rounded-2xl font-medium text-[14px]">
-                  Guest Favourite
-                </div>
-              )}
             </div>
 
             <div className="py-4 space-y-1">
               <div className="flex items-center justify-between pr-1">
                 <h2 className="text-[16px] font-medium text-[#222222]">
-                  {property.location}
+                  {property.location || property.name}
                 </h2>
                 <div className="flex items-center gap-1 text-sm">
                   <Star className="h-[15px] w-[15px] text-black fill-black" />
-                  <span>{property.rating}</span>
+                  <span>{property.rating || "N/A"}</span>
                 </div>
               </div>
-              <p className="text-sm text-[#6A6A6A]">{property.rooms} rooms</p>
-              <p className="text-sm text-[#222222]">{property.price}</p>
+              <p className="text-sm text-[#6A6A6A]">
+                {property.rooms?.length || 0} rooms
+              </p>
+              <p className="text-sm text-[#222222]">
+                ${property.pricePerMonth}/month
+              </p>
             </div>
           </div>
         ))}
