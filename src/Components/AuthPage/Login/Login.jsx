@@ -47,16 +47,6 @@ const Login = () => {
       const userData = userDocSnap.data();
       const userRole = userData.role;
 
-      if (activeTab === "LandLord" && userRole !== "LandLord") {
-        toast.error("You are not registered as a LandLord.");
-        return;
-      }
-
-      if (activeTab === "Tenant" && userRole !== "Tenant") {
-        toast.error("You are not registered as a Tenant.");
-        return;
-      }
-
       toast.success("Login successful!");
       dispatch(setUserInfo(userData));
       router.push("/Landing/Home");
@@ -173,30 +163,6 @@ const Login = () => {
   return (
     <div className="flex mx-auto justify-center min-h-screen p-4">
       <div className="bg-white rounded-2xl border-[1.5px] border-gray-200 w-full max-w-3xl px-10 lg:px-20 py-20">
-        <div className="flex justify-center mb-8">
-          <div className="flex bg-gray-200 rounded-full w-2/3 max-w-md">
-            <button
-              onClick={() => setActiveTab("LandLord")}
-              className={`flex-1 py-2 px-4 text-sm font-medium transition ${
-                activeTab === "LandLord"
-                  ? "bg-[#B19BD9] text-white rounded-full"
-                  : "text-gray-600"
-              }`}
-            >
-              LandLord
-            </button>
-            <button
-              onClick={() => setActiveTab("Tenant")}
-              className={`flex-1 py-2 px-4 text-sm font-medium transition ${
-                activeTab === "Tenant"
-                  ? "bg-[#B19BD9] text-white rounded-full"
-                  : "text-gray-600"
-              }`}
-            >
-              Tenant
-            </button>
-          </div>
-        </div>
         <h1 className="text-center text-xl font-semibold text-gray-800 mb-8">
           Welcome Back!
         </h1>
