@@ -3,92 +3,7 @@
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Heart, Star } from "lucide-react";
-import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-
-const properties = [
-  {
-    id: 1,
-    image: "/assets/Container.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 2,
-    image: "/assets/Container1.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: true,
-    isGuestFavorite: true,
-  },
-  {
-    id: 3,
-    image: "/assets/Container2.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 4,
-    image: "/assets/Container3.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-  {
-    id: 5,
-    image: "/assets/Container4.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: true,
-    isGuestFavorite: true,
-  },
-  {
-    id: 6,
-    image: "/assets/Container5.png",
-    location: "Moss Beach, California",
-    rooms: 5,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: true,
-    isGuestFavorite: true,
-  },
-  {
-    id: 7,
-    image: "/assets/Container6.png",
-    location: "Moss Beach, California",
-    rooms: 6,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: true,
-    isGuestFavorite: true,
-  },
-  {
-    id: 8,
-    image: "/assets/Container7.png",
-    location: "Moss Beach, California",
-    rooms: 6,
-    price: "$39/month",
-    rating: 4.92,
-    favorite: false,
-    isGuestFavorite: false,
-  },
-];
-
 import { db } from "../../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/react"; // Import Swiper components
@@ -164,8 +79,8 @@ export default function Card() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {properties.map((property) => (
-          <div key={property.id} className="relative bg-white rounded-xl overflow-hidden cursor-pointer group">
-            <div className="relative h-[270px] w-full overflow-hidden">
+          <div key={property.id} className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border">
+            <div className="relative h-[170px] w-full overflow-hidden">
               <Swiper
                 modules={[Pagination]}
                 pagination={{ clickable: true }}
@@ -194,7 +109,7 @@ export default function Card() {
               )}
             </div>
 
-            <div className="py-4 space-y-1">
+            <div className="py-4 space-y-1 px-4">
               <div className="flex items-center justify-between pr-1">
                 <h2 className="text-[16px] font-medium text-[#222222]">
                   {property.location || property.name}

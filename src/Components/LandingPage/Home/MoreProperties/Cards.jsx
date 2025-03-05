@@ -25,27 +25,27 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState("Rating highest to lowest");
   const [currentPage, setCurrentPage] = useState(1);
-  const [properties, setProperties] = useState([]); // State to store fetched properties
+  const [properties, setProperties] = useState([]); 
 
-  // Fetch properties from Firestore
+  
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "properties")); // Fetch data from Firestore
+        const querySnapshot = await getDocs(collection(db, "properties"));  
         const propertiesData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data(), // Spread the document data
+          ...doc.data(),
         }));
-        setProperties(propertiesData); // Update state with fetched data
+        setProperties(propertiesData); 
       } catch (error) {
         console.error("Error fetching properties:", error);
       }
     };
 
-    fetchProperties(); // Call the fetch function
+    fetchProperties(); 
   }, []);
 
-  const totalPages = Math.ceil(properties.length / 6); // Calculate total pages
+  const totalPages = Math.ceil(properties.length / 6); 
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -53,9 +53,9 @@ export default function Header() {
     }
   };
 
-  const startIndex = (currentPage - 1) * 6; // Calculate start index
-  const endIndex = startIndex + 6; // Calculate end index
-  const propertiesToShow = properties.slice(startIndex, endIndex); // Slice properties
+  const startIndex = (currentPage - 1) * 6;
+  const endIndex = startIndex + 6; 
+  const propertiesToShow = properties.slice(startIndex, endIndex); 
 
   const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
 
@@ -191,7 +191,7 @@ export default function Header() {
             {properties.length} Search Results
           </h1>
           {propertiesToShow.map((property) => (
-            <div key={property.id} className="w-full bg-white overflow-hidden mb-6">
+            <div key={property.id} className="w-full bg-white overflow-hidden mb-6 border rounded-xl">
               <div className="flex flex-col sm:flex-row">
                 <div className="relative h-[270px] w-full overflow-hidden">
                 <Swiper
@@ -204,13 +204,13 @@ export default function Header() {
                     <img
                       src={image}
                       alt={property.name}
-                      className="h-full w-full object-cover rounded-xl"
+                      className="h-full w-full object-cover rounded-xl py-2"
                     />
                   </SwiperSlide>
                 ))}
               </Swiper>
                 </div>
-                <div className="p-4 sm:w-1/2">
+                <div className="py-4 sm:w-1/2 px-5">
                   <div className="flex items-center justify-between">
                     <h2 className="text-[16px] font-medium text-[#222222]">
                       {property.location || property.name}  {/* Use property name from Firestore */}
@@ -229,7 +229,7 @@ export default function Header() {
                   <div className="block border-b border-gray-300 w-10 pt-2"></div>
 
                   <p className="text-[13px] text-[#6A6A6A] pt-2">
-                    {property.rooms.length} rooms {/* Use rooms array length from Firestore */}
+                    {property.rooms.length} rooms
                   </p>
                   <div className="block border-b border-gray-300 w-10 pt-2"></div>
                   <div className="flex items-center justify-between pt-2">

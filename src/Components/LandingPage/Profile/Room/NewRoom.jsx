@@ -375,7 +375,7 @@ const Properties = () => {
                 <br />
                 <input
                   type="text"
-                  placeholder="Write Here"
+                  placeholder="Enter your Property Name"
                   className="border-2 py-2 rounded-full w-full pl-5 mt-3 text-textclr"
                   value={propertyData.name}
                   onChange={(e) =>
@@ -389,7 +389,7 @@ const Properties = () => {
                 <br />
                 <input
                   type="text"
-                  placeholder="Write Here"
+                  placeholder="Enter the Location of Property"
                   className="border-2 py-2 rounded-full w-full pl-5 mt-3 text-textclr"
                   value={propertyData.location}
                   onChange={(e) =>
@@ -407,7 +407,7 @@ const Properties = () => {
                   <br />
                   <textarea
                     rows="5"
-                    placeholder="Write Here"
+                    placeholder="Enter the Description of your Property"
                     className="border-2 py-2 rounded-xl w-full pl-5 mt-3"
                     value={propertyData.description}
                     onChange={(e) =>
@@ -425,8 +425,8 @@ const Properties = () => {
                   Property Longitude
                   <br />
                   <input
-                    type="text"
-                    placeholder="Write Here"
+                    type="number"
+                    placeholder="Enter Property Longitude Here"
                     className="border-2 py-2 rounded-3xl w-full pl-5 mt-3"
                     value={propertyData.longitude}
                     onChange={(e) =>
@@ -442,8 +442,8 @@ const Properties = () => {
                   Property Latitude
                   <br />
                   <input
-                    type="text"
-                    placeholder="Write Here"
+                    type="number"
+                    placeholder="Enter Property Latitude Here"
                     className="border-2 py-2 rounded-3xl w-full pl-5 mt-3"
                     value={propertyData.latitude}
                     onChange={(e) =>
@@ -480,8 +480,8 @@ const Properties = () => {
                 <label className="text-textclr mb-5">Price Per Month</label>
                 <br />
                 <input
-                  type="text"
-                  placeholder="Write Here"
+                  type="number"
+                  placeholder="Enter Per Month Prize of Property"
                   className="border-2 py-2 rounded-full w-full pl-5 mt-3 text-textclr"
                   value={propertyData.pricePerMonth}
                   onChange={(e) =>
@@ -506,7 +506,7 @@ const Properties = () => {
                       name="name"
                       value={formInput.name}
                       onChange={handleChange}
-                      placeholder="Write Here"
+                      placeholder="Enter Name of the Additional Service"
                       className="border-2 py-2 rounded-3xl w-full pl-5 mt-3 bg-slate-100 px-3"
                     />
                   </label>
@@ -515,11 +515,11 @@ const Properties = () => {
                     Cost
                     <br />
                     <input
-                      type="text"
+                      type="number"
                       name="cost"
                       value={formInput.cost}
                       onChange={handleChange}
-                      placeholder="Write Here"
+                      placeholder="Enter the Price"
                       className="border-2 py-2 rounded-3xl w-full pl-5 mt-3 bg-slate-100"
                     />
                   </label>
@@ -579,7 +579,7 @@ const Properties = () => {
                   key={index}
                   className={`border rounded-3xl py-2 w-full my-2 transition-all duration-300 ${
                     clickedButtons.includes(index)
-                      ? "bg-[#B19BD91A] text-[#B19BD9]" // Pink background and text when clicked
+                      ? "bg-[#B19BD91A] text-[#B19BD9]" 
                       : "bg-white text-[#828282]"
                   }`}
                   onClick={() => handleButtonClick(index)}
@@ -646,8 +646,8 @@ const Properties = () => {
                     Cost
                   </label>
                   <input
-                    type="text"
-                    placeholder="Write here"
+                    type="number"
+                    placeholder="Enter Your Room Price"
                     name="price"
                     value={roomInput.price}
                     onChange={handleRoomChange}

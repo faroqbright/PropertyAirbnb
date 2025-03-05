@@ -11,10 +11,10 @@ import {
   Heart,
   Star,
 } from "lucide-react";
-import { db } from "../../../firebase/firebaseConfig"; // Import Firebase db
+import { db } from "../../../firebase/firebaseConfig"; 
 import { collection, getDocs } from "firebase/firestore";
-import { Swiper, SwiperSlide } from "swiper/react"; // Import Swiper components
-import "swiper/css"; // Import Swiper styles
+import { Swiper, SwiperSlide } from "swiper/react"; 
+import "swiper/css"; 
 import "swiper/css/pagination";
 import { Pagination } from "swiper/modules"; 
 
@@ -54,7 +54,7 @@ export default function Card() {
         {properties.map((property) => (
           <div
             key={property.id}
-            className="relative bg-white rounded-xl overflow-hidden cursor-pointer group"
+            className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"
             onClick={() =>
               router.push(
                 `/Landing/Properties/PropertiesDetail?id=${property.id}`
@@ -86,7 +86,7 @@ export default function Card() {
               />
             </div>
 
-            <div className="py-4 space-y-1">
+            <div className="py-4 space-y-1 px-4">
               <div className="flex items-center justify-between pr-1">
                 <h2 className="text-[16px] font-medium text-[#222222]">
                   {property.location || property.name}
