@@ -1,15 +1,14 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import { db } from "@/firebase/firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
+import { useSelector } from "react-redux";
+import { db } from "../../../firebase/firebaseConfig";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 export default function WriteReview() {
   const reviewTitles = ["Organization", "Communication", "Honesty"];
-  const [user, setuser] = useState([]);
   const router = useRouter();
   const selector = useSelector((state) => state);
 
@@ -26,6 +25,13 @@ export default function WriteReview() {
     Description: "",
   });
 
+  // Redirect if userType is LandLord
+  useEffect(() => {
+    if (userType === "LandLord") {
+      router.push("/Landing/Profile/Details/Reviews");
+    }
+  }, [userType, router]);
+
   const handleStarClick = (category, index) => {
     setRatings((prevRatings) => ({
       ...prevRatings,
@@ -37,6 +43,17 @@ export default function WriteReview() {
   const handleSubmit = async () => {
     if (!userId) {
       toast.error("User not logged in!");
+      return;
+    }
+
+    // Validate ratings and description
+    if (
+      ratings.Organization === 0 ||
+      ratings.Communication === 0 ||
+      ratings.Honesty === 0 ||
+      ratings.Description.trim() === ""
+    ) {
+      toast.error("Please fill all fields before submitting.");
       return;
     }
 
@@ -56,20 +73,18 @@ export default function WriteReview() {
       });
 
       toast.success("Review submitted successfully!");
-
-      // Navigate to Properties Detail Page
-      localStorage.setItem("fromProfile", "true");
       router.push("/Landing/Properties/PropertiesDetail");
+      localStorage.setItem("fromProfile", "true");
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review. Please try again.");
     }
   };
 
-  const handlenav = () => {
-    localStorage.setItem("fromProfile", "true");
-    router.push("/Landing/Properties/PropertiesDetail");
-  };
+  // If userType is LandLord, render nothing (redirect happens in useEffect)
+  if (userType === "LandLord") {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 lg:p-16 mb-10">

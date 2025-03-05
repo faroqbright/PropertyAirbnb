@@ -20,6 +20,8 @@ export default function WriteReview() {
   const userName = selector?.auth?.userInfo?.FullName;
   const category = "rating";
 
+  console.log(selector)
+
   const [ratings, setRatings] = useState({
     Description: "",
   });

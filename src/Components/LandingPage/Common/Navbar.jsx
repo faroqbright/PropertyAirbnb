@@ -39,10 +39,7 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     }
@@ -58,6 +55,51 @@ export default function Navbar() {
     { name: "Properties", href: "/Landing/Properties" },
     { name: "Contact", href: "/Landing/Contact" },
   ];
+
+  // const fullName = userInfo?.FullName ? String(userInfo.FullName) : "";
+  // const displayName = userInfo?.displayName ? String(userInfo.displayName) : "";
+
+  // const getShortName = (name) => (name ? name.split(" ").slice(0, 2).join(" ") : ""); 
+  
+  // const shortName = getShortName(fullName) || getShortName(displayName);
+  
+  // console.log("Short Name:", shortName);
+
+  const useResponsiveName = (fullName, displayName) => {
+    const [shortName, setShortName] = useState("");
+  
+    useEffect(() => {
+      const handleResize = () => {
+        const screenWidth = window.innerWidth;
+  
+        const getShortName = (name) =>
+          name ? name.split(" ").slice(0, 2).join(" ") : "";
+  
+        const getInitials = (name) => {
+          if (!name) return "";
+          const words = name.split(" ");
+          return words.length >= 2
+            ? words[0][0] + words[1][0] // First letter of first & second words
+            : words[0][0]; // If only one word, show its first letter
+        };
+  
+        const fullNameStr = fullName ? String(fullName) : "";
+        const displayNameStr = displayName ? String(displayName) : "";
+        const name = getShortName(fullNameStr) || getShortName(displayNameStr);
+  
+        setShortName(screenWidth <= 640 ? getInitials(name) : name);
+      };
+  
+      handleResize(); // Run on mount
+      window.addEventListener("resize", handleResize);
+  
+      return () => window.removeEventListener("resize", handleResize);
+    }, [fullName, displayName]);
+  
+    return shortName;
+  };
+
+  const shortName = useResponsiveName(userInfo?.FullName, userInfo?.displayName);
 
   return (
     <nav className="w-full p-6 bg-white border-b">
@@ -117,7 +159,7 @@ export default function Navbar() {
                   <User size={17} className="text-bluebutton" />
                 </div>
                 <span className="-mb-[3px]">
-                  {userInfo?.FullName?.split(" ").slice(0, 9).join(" ") || userInfo?.displayName?.split(" ").slice(0, 9).join(" ")}
+                  {shortName}
                 </span>
               </button>
             </div>

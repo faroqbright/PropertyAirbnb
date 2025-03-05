@@ -1,47 +1,112 @@
 "use client";
 
-import {
-  Bath,
-  BedDouble,
-  BicepsFlexed,
-  Bolt,
-  Cat,
-  ChartArea,
-  CircleParking,
-  Dog,
-  Dumbbell,
-  Flower2,
-  HeartHandshake,
-  House,
-  Settings,
-  Shield,
-  Trash2,
-  WashingMachine,
-  WavesLadder
-} from "lucide-react";
+import { Bath, BedDouble, BicepsFlexed, Bolt, Cat, ChartArea, CircleParking, Dog, Dumbbell, Flower2, HeartHandshake, House, Settings, Shield, Trash2, WashingMachine, WavesLadder, } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
+import { db } from "../../../../firebase/firebaseConfig";
+import { collection, addDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { toast } from "react-toastify";
 
 const Properties = () => {
   const [step, setstep] = useState(1);
   const router = useRouter();
-  const [selectedImage, setSelectedImage] = useState(null);
-
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setSelectedImage(URL.createObjectURL(file));
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    document.getElementById("image-upload").value = "";
-  };
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [propertyData, setPropertyData] = useState({
+    name: "",
+    description: "",
+    longitude: "",
+    latitude: "",
+    pricePerMonth: "",
+    additionalCosts: [],
+    amenities: [],
+    rooms: [],
+  });
 
   const [additionalCosts, setAdditionalCosts] = useState([]);
   const [formInput, setFormInput] = useState({ name: "", cost: "" });
+  const [additionalRoomPrice, setAdditionalRoomPrice] = useState([]);
+  const [roomInput, setRoomInput] = useState({ img: "", price: "" });
+  const fileInputRef = useRef(null);
+  const [clickedButtons, setClickedButtons] = useState([]);
+
+  const uploadImage = async (file) => {
+    try {
+      if (!file) {
+        throw new Error("No image selected");
+      }
+
+      const storage = getStorage();
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `property_images/${fileName}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            console.log(`Upload is ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}% done`);
+          },
+          (error) => {
+            reject(error);
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          }
+        );
+      });
+    } catch (error) {
+      toast.error("Error uploading image:", error);
+      throw error;
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const imageUrls = await Promise.all(selectedFiles.map(file => uploadImage(file)));
+
+      const dataToSave = {
+        name: propertyData.name,
+        description: propertyData.description,
+        longitude: propertyData.longitude,
+        latitude: propertyData.latitude,
+        pricePerMonth: propertyData.pricePerMonth,
+        additionalCosts: additionalCosts,
+        amenities: clickedButtons.map((index) => namesArray[index]),
+        rooms: additionalRoomPrice,
+        imageUrls: imageUrls,
+        status: "Approved"
+      };
+
+      const docRef = await addDoc(collection(db, "properties"), dataToSave);
+      toast.success("Property Created Successfully");
+
+      console.log("data is:", dataToSave)
+      router.push("/Landing/Home");
+    } catch (e) {
+      toast.error("Error adding document: ", e);
+    }
+  };
+
+  const handleImageChange = (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length + selectedFiles.length <= 5) {
+      const newFiles = files.map(file => URL.createObjectURL(file));
+      setSelectedImages(prev => [...prev, ...newFiles]);
+      setSelectedFiles(prev => [...prev, ...files]);
+    } else {
+      toast.error("You can only upload up to 5 images.");
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    const updatedImages = selectedImages.filter((_, i) => i !== index);
+    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
+    setSelectedImages(updatedImages);
+    setSelectedFiles(updatedFiles);
+  };
 
   const handleChange = (e) => {
     setFormInput({ ...formInput, [e.target.name]: e.target.value });
@@ -52,6 +117,8 @@ const Properties = () => {
     if (formInput.name && formInput.cost) {
       setAdditionalCosts([...additionalCosts, formInput]);
       setFormInput({ name: "", cost: "" });
+    } else {
+      toast.error("Please fill all fields in the Additional Costs section.");
     }
   };
 
@@ -59,10 +126,6 @@ const Properties = () => {
     const updatedCosts = additionalCosts.filter((_, i) => i !== index);
     setAdditionalCosts(updatedCosts);
   };
-
-  const [additionalRoomPrice, setAdditionalRoomPrice] = useState([]);
-  const [roomInput, setRoomInput] = useState({ img: "", price: "" });
-  const fileInputRef = useRef(null);
 
   const handleClick = () => {
     if (fileInputRef.current) {
@@ -74,23 +137,22 @@ const Properties = () => {
     setRoomInput({ ...roomInput, [e.target.name]: e.target.value });
   };
 
-  const handleImageChangeRoom = (e) => {
+  const handleImageChangeRoom = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setRoomInput((prev) => ({ ...prev, img: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      const imageUrl = await uploadImage(file);
+      setRoomInput((prev) => ({ ...prev, img: imageUrl }));
     }
     e.target.value = "";
   };
 
-  const handleAddRoom = (e) => {
+  const handleAddRoom = async (e) => {
     e.preventDefault();
     if (roomInput.price && roomInput.img) {
       setAdditionalRoomPrice([...additionalRoomPrice, roomInput]);
       setRoomInput({ img: "", price: "" });
+    } else {
+      toast.error("Please fill all fields in the Room section.");
     }
   };
 
@@ -105,83 +167,84 @@ const Properties = () => {
   };
 
   const namesArray = [
-    "Primary Services",
-    "Swimming Pool",
-    "Vigilance",
-    "Maintenance",
-    "House Keeping",
-    "Parking",
-    "Own Bathroom",
-    "Roof Garden",
-    "Cat Friendly",
-    "Laundry",
-    "Common Areas",
-    "Gym",
-    "Co Working",
-    "Dog",
-    "LGBT+coLivers",
-    "Double Bed",
+    "Primary Services", "Swimming Pool", "Vigilance", "Maintenance", "House Keeping", "Parking", "Own Bathroom", "Roof Garden", "Cat Friendly", "Laundry", "Common Areas", "Gym", "Co Working", "Dog", "LGBT+coLivers", "Double Bed",
   ];
 
   const iconsArray = [
-    <Settings size={18} />,
-    <WavesLadder size={18} />,
-    <Shield size={18} />,
-    <Bolt size={18} />,
-    <House size={18} />,
-    <CircleParking size={18} />,
-    <Bath size={18} />,
-    <Flower2 size={18} />,
-    <Cat size={18} />,
-    <WashingMachine size={18} />,
-    <ChartArea size={18} />,
-    <Dumbbell size={18} />,
-    <BicepsFlexed size={18} />,
-    <Dog size={18} />,
-    <HeartHandshake size={18} />,
-    <BedDouble size={18} />,
+    <Settings size={18} />, <WavesLadder size={18} />, <Shield size={18} />, <Bolt size={18} />, <House size={18} />, <CircleParking size={18} />, <Bath size={18} />, <Flower2 size={18} />, <Cat size={18} />, <WashingMachine size={18} />, <ChartArea size={18} />, <Dumbbell size={18} />, <BicepsFlexed size={18} />, <Dog size={18} />, <HeartHandshake size={18} />, <BedDouble size={18} />,
   ];
 
-  const [clickedButtons, setClickedButtons] = useState([]);
-
   const handleButtonClick = (index) => {
-    setClickedButtons((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-    );
+    setClickedButtons((prev) => prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]);
+  };
+
+  const validateStep1 = () => {
+    if (!propertyData.name || !propertyData.description || !propertyData.longitude || !propertyData.latitude || selectedFiles.length === 0) {
+      toast.error("Please fill all fields in Step 1.");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = () => {
+    if (!propertyData.pricePerMonth) {
+      toast.error("Please fill all fields in Step 2.");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep3 = () => {
+    if (clickedButtons.length === 0) {
+      toast.error("Please select at least one amenity.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleNextStep = (e) => {
+    e.preventDefault();
+    if (step === 1 && !validateStep1()) return;
+    if (step === 2 && !validateStep2()) return;
+    if (step === 3 && !validateStep3()) return;
+    setstep(step + 1);
+  };
+
+  const handleStepChange = (newStep) => {
+    if (newStep < step) {
+      setstep(newStep);
+      return;
+    }
+    if (newStep === 2 && !validateStep1()) return;
+    if (newStep === 3 && !validateStep2()) return;
+    if (newStep === 4 && !validateStep3()) return;
+    setstep(newStep);
   };
 
   return (
     <div className="w-full bg-white rounded-xl border-[1.5px] border-gray-200 px-4 mt-10 sm:mt-0 pt-1 pb-4 mb-1">
       <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-5 items-center mb-5 mt-5">
         <button
-          className={`border-slate-300 border-[1px] text-center py-2 rounded-3xl text-textclr ${
-            step === 1 ? "bg-purplebutton text-white" : ""
-          }`}
-          onClick={() => setstep(1)}
+          className={`border-slate-300 border-[1px] text-center py-2 rounded-3xl text-textclr ${step === 1 ? "bg-purplebutton text-white" : ""}`}
+          onClick={() => handleStepChange(1)}
         >
           Info
         </button>
         <button
-          onClick={() => setstep(2)}
-          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr  ${
-            step === 2 ? "bg-purplebutton text-white" : ""
-          }`}
+          onClick={() => handleStepChange(2)}
+          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${step === 2 ? "bg-purplebutton text-white" : ""}`}
         >
           Pricing
         </button>
         <button
-          onClick={() => setstep(3)}
-          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr  ${
-            step === 3 ? "bg-purplebutton text-white" : ""
-          }`}
+          onClick={() => handleStepChange(3)}
+          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${step === 3 ? "bg-purplebutton text-white" : ""}`}
         >
           Amenities
         </button>
         <button
-          onClick={() => setstep(4)}
-          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${
-            step === 4 ? "bg-purplebutton text-white" : ""
-          }`}
+          onClick={() => handleStepChange(4)}
+          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${step === 4 ? "bg-purplebutton text-white" : ""}`}
         >
           Room
         </button>
@@ -203,25 +266,28 @@ const Properties = () => {
                     id="image-upload"
                     type="file"
                     accept="image/*"
+                    multiple
                     className="hidden"
-                    onChange={handleImageChangeRoom}
+                    onChange={handleImageChange}
                   />
                 </div>
-                {roomInput.img && (
-                  <div className="relative items-center">
-                    <img
-                      src={roomInput.img}
-                      alt="Room Preview"
-                      className="h-28 rounded-xl sm:min-w-full object-cover md:w-full"
-                    />
-                    <button
-                      onClick={handleRemoveImageRoom}
-                      className="absolute top-[-15px] right-[-10px] bg-slate-500 text-white rounded-full px-2.5"
-                    >
-                      <p className="mb-1">x</p>
-                    </button>
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-3">
+                  {selectedImages.map((image, index) => (
+                    <div key={index} className="relative items-center">
+                      <img
+                        src={image}
+                        alt={`Property Preview ${index + 1}`}
+                        className="h-28 rounded-xl sm:min-w-full object-cover md:w-full"
+                      />
+                      <button
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-[-15px] right-[-10px] bg-slate-500 text-white rounded-full px-2.5"
+                      >
+                        <p className="mb-1">x</p>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -234,6 +300,10 @@ const Properties = () => {
                   type="text"
                   placeholder="Write Here"
                   className="border-2 py-2 rounded-full w-full pl-5 mt-3 text-textclr"
+                  value={propertyData.name}
+                  onChange={(e) =>
+                    setPropertyData({ ...propertyData, name: e.target.value })
+                  }
                 />
               </div>
 
@@ -245,6 +315,13 @@ const Properties = () => {
                     rows="5"
                     placeholder="Write Here"
                     className="border-2 py-2 rounded-xl w-full pl-5 mt-3"
+                    value={propertyData.description}
+                    onChange={(e) =>
+                      setPropertyData({
+                        ...propertyData,
+                        description: e.target.value,
+                      })
+                    }
                   />
                 </label>
               </div>
@@ -257,6 +334,13 @@ const Properties = () => {
                     type="text"
                     placeholder="Write Here"
                     className="border-2 py-2 rounded-3xl w-full pl-5 mt-3"
+                    value={propertyData.longitude}
+                    onChange={(e) =>
+                      setPropertyData({
+                        ...propertyData,
+                        longitude: e.target.value,
+                      })
+                    }
                   />
                 </label>
 
@@ -267,6 +351,13 @@ const Properties = () => {
                     type="text"
                     placeholder="Write Here"
                     className="border-2 py-2 rounded-3xl w-full pl-5 mt-3"
+                    value={propertyData.latitude}
+                    onChange={(e) =>
+                      setPropertyData({
+                        ...propertyData,
+                        latitude: e.target.value,
+                      })
+                    }
                   />
                 </label>
               </div>
@@ -278,7 +369,7 @@ const Properties = () => {
 
               <div className="w-full flex justify-center mt-6 mb-7">
                 <button
-                  onClick={() => setstep(2)}
+                  onClick={handleNextStep}
                   className="text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full"
                 >
                   Next
@@ -298,6 +389,13 @@ const Properties = () => {
                   type="text"
                   placeholder="Write Here"
                   className="border-2 py-2 rounded-full w-full pl-5 mt-3 text-textclr"
+                  value={propertyData.pricePerMonth}
+                  onChange={(e) =>
+                    setPropertyData({
+                      ...propertyData,
+                      pricePerMonth: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -366,7 +464,7 @@ const Properties = () => {
 
               <div className="w-full flex justify-center mb-5">
                 <button
-                  onClick={() => setstep(3)}
+                  onClick={handleNextStep}
                   className="mt-10 text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full"
                 >
                   Next
@@ -402,7 +500,7 @@ const Properties = () => {
 
             <div className="w-full flex justify-center mb-5">
               <button
-                onClick={() => setstep(4)}
+                onClick={handleNextStep}
                 className="mt-10 text-center items-center bg-bluebutton px-16 py-2 rounded-full text-white"
               >
                 Next
@@ -499,7 +597,7 @@ const Properties = () => {
               ))}
               <div className="w-full flex justify-center">
                 <button
-                  onClick={() => router.push("/Landing/Home")}
+                  onClick={handleSave}
                   className="text-center items-center bg-bluebutton px-20 mt-24 py-3 rounded-full text-white"
                 >
                   Save
