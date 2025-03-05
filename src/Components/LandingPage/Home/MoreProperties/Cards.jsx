@@ -1,11 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import L from "leaflet";
-import {
-  MapContainer,
-  TileLayer,
-  useMap,
-} from "react-leaflet";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   ChevronDown,
@@ -17,13 +13,39 @@ import {
   ChevronRight,
   ChevronsRight,
 } from "lucide-react";
+import { db } from "../../../../firebase/firebaseConfig"; // Import Firebase db
+import { collection, getDocs } from "firebase/firestore"; // Import Firestore functions
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css"; // Import Swiper styles
+import "swiper/css/pagination";
+import { Pagination } from "swiper/modules";
 
 export default function Header() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState("Rating highest to lowest");
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 10;
+  const [properties, setProperties] = useState([]); // State to store fetched properties
+
+  // Fetch properties from Firestore
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "properties")); // Fetch data from Firestore
+        const propertiesData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(), // Spread the document data
+        }));
+        setProperties(propertiesData); // Update state with fetched data
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+      }
+    };
+
+    fetchProperties(); // Call the fetch function
+  }, []);
+
+  const totalPages = Math.ceil(properties.length / 6); // Calculate total pages
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -31,35 +53,9 @@ export default function Header() {
     }
   };
 
-  const properties = [
-    {
-      id: 1,
-      image: "/assets/Container.png",
-      location: "Moss Beach, California",
-      rooms: 5,
-      price: "$39/month",
-      rating: 4.92,
-      favorite: false,
-    },
-    {
-      id: 2,
-      image: "/assets/Container1.png",
-      location: "Moss Beach, California",
-      rooms: 5,
-      price: "$39/month",
-      rating: 4.92,
-      favorite: true,
-    },
-    {
-      id: 3,
-      image: "/assets/Container1.png",
-      location: "Moss Beach, California",
-      rooms: 5,
-      price: "$39/month",
-      rating: 4.92,
-      favorite: true,
-    },
-  ];
+  const startIndex = (currentPage - 1) * 6; // Calculate start index
+  const endIndex = startIndex + 6; // Calculate end index
+  const propertiesToShow = properties.slice(startIndex, endIndex); // Slice properties
 
   const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
 
@@ -192,25 +188,32 @@ export default function Header() {
             )}
           </div>
           <h1 className="text-gray-500 border-b mb-5 border-gray-300 pb-2">
-            200+ Search Results
+            {properties.length} Search Results
           </h1>
-          {properties.map((property) => (
-            <div
-              key={property.id}
-              className="w-full bg-white overflow-hidden mb-6"
-            >
+          {propertiesToShow.map((property) => (
+            <div key={property.id} className="w-full bg-white overflow-hidden mb-6">
               <div className="flex flex-col sm:flex-row">
-                <div className="relative sm:w-1/2">
-                  <img
-                    src={property.image}
-                    alt={property.location}
-                    className="rounded-l-xl rounded-r-xl object-cover w-full h-40"
-                  />
+                <div className="relative h-[270px] w-full overflow-hidden">
+                <Swiper
+                modules={[Pagination]}
+                pagination={{ clickable: true }}
+                className="h-full w-full"
+              >
+                {property.imageUrls.map((image, index) => (
+                  <SwiperSlide key={index}>
+                    <img
+                      src={image}
+                      alt={property.name}
+                      className="h-full w-full object-cover rounded-xl"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
                 </div>
                 <div className="p-4 sm:w-1/2">
                   <div className="flex items-center justify-between">
                     <h2 className="text-[16px] font-medium text-[#222222]">
-                      {property.location}
+                      {property.location || property.name}  {/* Use property name from Firestore */}
                     </h2>
                     <div className="flex items-center gap-1 text-sm -mr-3">
                       <Heart
@@ -222,11 +225,11 @@ export default function Header() {
                       />
                     </div>
                   </div>
-                  <p className="text-[16px] font-medium text-[#222222]">Home</p>
+                  
                   <div className="block border-b border-gray-300 w-10 pt-2"></div>
 
                   <p className="text-[13px] text-[#6A6A6A] pt-2">
-                    {property.rooms} rooms
+                    {property.rooms.length} rooms {/* Use rooms array length from Firestore */}
                   </p>
                   <div className="block border-b border-gray-300 w-10 pt-2"></div>
                   <div className="flex items-center justify-between pt-2">
@@ -237,9 +240,9 @@ export default function Header() {
                     </div>
                     <p className="text-sm text-[#222222] -mr-3">
                       <span className="font-medium text-[16px]">
-                        {property.price.split("/")[0]}
+                        ${property.pricePerMonth} {/* Use pricePerMonth from Firestore */}
                       </span>{" "}
-                      <span>/{property.price.split("/")[1]}</span>
+                      <span>/month</span>
                     </p>
                   </div>
                 </div>
@@ -259,17 +262,17 @@ export default function Header() {
             >
               <ChevronLeft size={18} />
             </button>
-            {[1, 2, 3].map((page) => (
+            {[...Array(totalPages)].map((_, index) => (
               <button
-                key={page}
+                key={index + 1}
                 className={`w-8 h-8 rounded-full border ${
-                  currentPage === page
+                  currentPage === index + 1
                     ? "bg-teal-400 text-white"
                     : "border-gray-300 bg-white hover:bg-gray-100"
                 }`}
-                onClick={() => goToPage(page)}
+                onClick={() => goToPage(index + 1)}
               >
-                {page}
+                {index + 1}
               </button>
             ))}
             <span className="px-2">...</span>
@@ -308,7 +311,7 @@ export default function Header() {
                 position={tooltip.position}
                 text={tooltip.text}
               />
-            ))}{" "}
+            ))}
             <AddZoomControl />
           </MapContainer>
           <div className="absolute top-2 right-2 bg-white pt-1 pb-2 px-2 rounded-md shadow-lg text-left z-50 border border-gray-200">

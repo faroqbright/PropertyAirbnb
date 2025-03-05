@@ -1,11 +1,34 @@
 "use client";
 
-import { Bath, BedDouble, BicepsFlexed, Bolt, Cat, ChartArea, CircleParking, Dog, Dumbbell, Flower2, HeartHandshake, House, Settings, Shield, Trash2, WashingMachine, WavesLadder, } from "lucide-react";
+import {
+  Bath,
+  BedDouble,
+  BicepsFlexed,
+  Bolt,
+  Cat,
+  ChartArea,
+  CircleParking,
+  Dog,
+  Dumbbell,
+  Flower2,
+  HeartHandshake,
+  House,
+  Settings,
+  Shield,
+  Trash2,
+  WashingMachine,
+  WavesLadder,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState, useRef } from "react";
 import { db } from "../../../../firebase/firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import { toast } from "react-toastify";
 
 const Properties = () => {
@@ -15,6 +38,7 @@ const Properties = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [propertyData, setPropertyData] = useState({
     name: "",
+    location: "",
     description: "",
     longitude: "",
     latitude: "",
@@ -46,7 +70,11 @@ const Properties = () => {
         uploadTask.on(
           "state_changed",
           (snapshot) => {
-            console.log(`Upload is ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}% done`);
+            console.log(
+              `Upload is ${
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+              }% done`
+            );
           },
           (error) => {
             reject(error);
@@ -65,10 +93,13 @@ const Properties = () => {
 
   const handleSave = async () => {
     try {
-      const imageUrls = await Promise.all(selectedFiles.map(file => uploadImage(file)));
+      const imageUrls = await Promise.all(
+        selectedFiles.map((file) => uploadImage(file))
+      );
 
       const dataToSave = {
         name: propertyData.name,
+        location: propertyData.location,
         description: propertyData.description,
         longitude: propertyData.longitude,
         latitude: propertyData.latitude,
@@ -77,12 +108,12 @@ const Properties = () => {
         amenities: clickedButtons.map((index) => namesArray[index]),
         rooms: additionalRoomPrice,
         imageUrls: imageUrls,
-        status: "Approved"
+        status: "Approved",
       };
 
       const docRef = await addDoc(collection(db, "properties"), dataToSave);
       toast.success("Property Created Successfully");
-      console.log("data is:", dataToSave)
+      console.log("data is:", dataToSave);
       router.push("/Landing/Home");
     } catch (e) {
       toast.error("Error adding document: ", e);
@@ -92,9 +123,9 @@ const Properties = () => {
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files);
     if (files.length + selectedFiles.length <= 5) {
-      const newFiles = files.map(file => URL.createObjectURL(file));
-      setSelectedImages(prev => [...prev, ...newFiles]);
-      setSelectedFiles(prev => [...prev, ...files]);
+      const newFiles = files.map((file) => URL.createObjectURL(file));
+      setSelectedImages((prev) => [...prev, ...newFiles]);
+      setSelectedFiles((prev) => [...prev, ...files]);
     } else {
       toast.error("You can only upload up to 5 images.");
     }
@@ -166,19 +197,58 @@ const Properties = () => {
   };
 
   const namesArray = [
-    "Primary Services", "Swimming Pool", "Vigilance", "Maintenance", "House Keeping", "Parking", "Own Bathroom", "Roof Garden", "Cat Friendly", "Laundry", "Common Areas", "Gym", "Co Working", "Dog", "LGBT+coLivers", "Double Bed",
+    "Primary Services",
+    "Swimming Pool",
+    "Vigilance",
+    "Maintenance",
+    "House Keeping",
+    "Parking",
+    "Own Bathroom",
+    "Roof Garden",
+    "Cat Friendly",
+    "Laundry",
+    "Common Areas",
+    "Gym",
+    "Co Working",
+    "Dog",
+    "LGBT+coLivers",
+    "Double Bed",
   ];
 
   const iconsArray = [
-    <Settings size={18} />, <WavesLadder size={18} />, <Shield size={18} />, <Bolt size={18} />, <House size={18} />, <CircleParking size={18} />, <Bath size={18} />, <Flower2 size={18} />, <Cat size={18} />, <WashingMachine size={18} />, <ChartArea size={18} />, <Dumbbell size={18} />, <BicepsFlexed size={18} />, <Dog size={18} />, <HeartHandshake size={18} />, <BedDouble size={18} />,
+    <Settings size={18} />,
+    <WavesLadder size={18} />,
+    <Shield size={18} />,
+    <Bolt size={18} />,
+    <House size={18} />,
+    <CircleParking size={18} />,
+    <Bath size={18} />,
+    <Flower2 size={18} />,
+    <Cat size={18} />,
+    <WashingMachine size={18} />,
+    <ChartArea size={18} />,
+    <Dumbbell size={18} />,
+    <BicepsFlexed size={18} />,
+    <Dog size={18} />,
+    <HeartHandshake size={18} />,
+    <BedDouble size={18} />,
   ];
 
   const handleButtonClick = (index) => {
-    setClickedButtons((prev) => prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]);
+    setClickedButtons((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
   };
 
   const validateStep1 = () => {
-    if (!propertyData.name || !propertyData.description || !propertyData.longitude || !propertyData.latitude || selectedFiles.length === 0) {
+    if (
+      !propertyData.name ||
+      !propertyData.location ||
+      !propertyData.description ||
+      !propertyData.longitude ||
+      !propertyData.latitude ||
+      selectedFiles.length === 0
+    ) {
       toast.error("Please fill all fields in Step 1.");
       return false;
     }
@@ -224,26 +294,34 @@ const Properties = () => {
     <div className="w-full bg-white rounded-xl border-[1.5px] border-gray-200 px-4 mt-10 sm:mt-0 pt-1 pb-4 mb-1">
       <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-5 items-center mb-5 mt-5">
         <button
-          className={`border-slate-300 border-[1px] text-center py-2 rounded-3xl text-textclr ${step === 1 ? "bg-purplebutton text-white" : ""}`}
+          className={`border-slate-300 border-[1px] text-center py-2 rounded-3xl text-textclr ${
+            step === 1 ? "bg-purplebutton text-white" : ""
+          }`}
           onClick={() => handleStepChange(1)}
         >
           Info
         </button>
         <button
           onClick={() => handleStepChange(2)}
-          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${step === 2 ? "bg-purplebutton text-white" : ""}`}
+          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${
+            step === 2 ? "bg-purplebutton text-white" : ""
+          }`}
         >
           Pricing
         </button>
         <button
           onClick={() => handleStepChange(3)}
-          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${step === 3 ? "bg-purplebutton text-white" : ""}`}
+          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${
+            step === 3 ? "bg-purplebutton text-white" : ""
+          }`}
         >
           Amenities
         </button>
         <button
           onClick={() => handleStepChange(4)}
-          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${step === 4 ? "bg-purplebutton text-white" : ""}`}
+          className={`border-slate-300 border-[1px] py-2 text-center rounded-3xl text-textclr ${
+            step === 4 ? "bg-purplebutton text-white" : ""
+          }`}
         >
           Room
         </button>
@@ -302,6 +380,23 @@ const Properties = () => {
                   value={propertyData.name}
                   onChange={(e) =>
                     setPropertyData({ ...propertyData, name: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="mb-5 mt-5  sm:mt-8">
+                <label className="text-textclr mb-5">Location</label>
+                <br />
+                <input
+                  type="text"
+                  placeholder="Write Here"
+                  className="border-2 py-2 rounded-full w-full pl-5 mt-3 text-textclr"
+                  value={propertyData.location}
+                  onChange={(e) =>
+                    setPropertyData({
+                      ...propertyData,
+                      location: e.target.value,
+                    })
                   }
                 />
               </div>
