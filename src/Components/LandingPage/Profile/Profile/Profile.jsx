@@ -29,6 +29,7 @@ export default function Bookings() {
   const [loadingSave, setLoadingSave] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [userType, setUserType] = useState("");
+  const router = useRouter();
 
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.auth.userInfo);
@@ -264,7 +265,7 @@ export default function Bookings() {
                   : value;
 
                 return (
-                  shouldRender && ( 
+                  shouldRender && (
                     <div key={key} className="w-full sm:w-[48%]">
                       <h2 className="text-[15px] font-semibold flex items-center capitalize">
                         <span className="w-2 h-2 bg-bluebutton rounded-full inline-block mr-2 mb-0.5"></span>
