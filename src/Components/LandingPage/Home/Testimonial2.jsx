@@ -27,7 +27,7 @@ export default function Testimonial2() {
           </p>
           <button
             className="bg-bluebutton text-white px-6 py-2 rounded-full font-medium shadow-md"
-            onClick={() => router.push("/Landing/Home")}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             Find Your CoLivers Home
           </button>

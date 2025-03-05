@@ -144,13 +144,6 @@ export default function Card() {
           Rent New Properties
         </button>
       )}
-
-      <button
-        onClick={() => router.push("/Landing/Home/MoreProperties")}
-        className="bg-bluebutton mt-16 text-white px-6 py-2 rounded-full font-medium text-[14px] block mx-auto"
-      >
-        Rent New Properties
-      </button>
     </div>
   );
 }
