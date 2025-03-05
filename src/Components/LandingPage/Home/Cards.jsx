@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Heart, Star } from "lucide-react";
-<<<<<<< HEAD
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 
@@ -89,14 +88,14 @@ const properties = [
     isGuestFavorite: false,
   },
 ];
-=======
+
 import { db } from "../../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/react"; // Import Swiper components
 import "swiper/css"; // Import Swiper styles
 import "swiper/css/pagination";
 import { Pagination } from "swiper/modules"; // Import pagination module
->>>>>>> ba9786685cffec74e39af5fe7850baf964ac12b9
+
 
 const countries = [
   "France",
@@ -114,10 +113,8 @@ const countries = [
 export default function Card() {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(null);
-<<<<<<< HEAD
   const [userType, setUserType] = useState("");
   const userInfo = useSelector((state) => state.auth.userInfo);
-=======
   const [properties, setProperties] = useState([]);
 
   useEffect(() => {
@@ -137,7 +134,6 @@ export default function Card() {
     fetchProperties();
   }, []);
 
->>>>>>> ba9786685cffec74e39af5fe7850baf964ac12b9
   const handleButtonClick = (index) => {
     setActiveIndex(index);
   };
@@ -218,7 +214,7 @@ export default function Card() {
           </div>
         ))}
       </div>
-<<<<<<< HEAD
+
       {userType !== "LandLord" && (
         <button
           onClick={() => router.push("/Landing/Home/MoreProperties")}
@@ -227,7 +223,6 @@ export default function Card() {
           Rent New Properties
         </button>
       )}
-=======
 
       <button
         onClick={() => router.push("/Landing/Home/MoreProperties")}
@@ -235,7 +230,6 @@ export default function Card() {
       >
         Rent New Properties
       </button>
->>>>>>> ba9786685cffec74e39af5fe7850baf964ac12b9
     </div>
   );
 }
