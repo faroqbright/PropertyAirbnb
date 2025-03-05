@@ -1,6 +1,9 @@
+"use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export default function Testimonial() {
+  const router = useRouter();
   return (
     <div className="flex flex-col min-[990px]:flex-row items-center justify-between px-6 min-[990px]:px-16 py-16">
       <div className="min-[990px]:w-1/2 text-center min-[990px]:text-left">
@@ -16,10 +19,16 @@ export default function Testimonial() {
           property, CoLivers makes the process easy, secure, and efficient.
         </p>
         <div className="mt-6 flex flex-col sm:flex-row min-[450px]:px-14 sm:px-0 justify-center gap-4">
-          <button className="bg-bluebutton text-white px-6 py-2 rounded-full font-medium shadow-sm">
+          <button
+            className="bg-bluebutton text-white px-6 py-2 rounded-full font-medium shadow-sm"
+            onClick={() => router.push("/Landing/Home")}
+          >
             Find Your CoLivers Home
           </button>
-          <button className="bg-purplebutton text-white px-6 py-2 rounded-full font-medium shadow-sm">
+          <button
+            className="bg-purplebutton text-white px-6 py-2 rounded-full font-medium shadow-sm"
+            onClick={() => router.push("/Landing/Properties")}
+          >
             List Your Property
           </button>
         </div>

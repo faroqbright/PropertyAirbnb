@@ -15,7 +15,7 @@ const CustomLayout = () => {
           Start your journey by exploring these regions{" "}
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:grid-cols-3 mb-12 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:grid-cols-3 mb-6 relative z-10">
           {[
             "/assets/image4.png",
             "/assets/image5.png",
@@ -31,8 +31,7 @@ const CustomLayout = () => {
               <img
                 src={src}
                 alt={`Image ${index + 1}`}
-                fill
-                className="object-cover rounded-3xl"
+                className="object-cover w-full h-full rounded-3xl"
               />
               <p className="absolute bottom-0 w-full text-white pl-7 pb-4 text-[18px] font-semibold py-1 rounded-b-3xl z-10">
                 {index === 0
@@ -44,7 +43,7 @@ const CustomLayout = () => {
                   : "South America"}
               </p>
               <div
-                className="absolute inset-x-0 bottom-0 h-[80px] rounded-3xl"
+                className="absolute inset-x-0 bottom-0 h-[100px] w-full rounded-3xl" 
                 style={{
                   backgroundImage: `linear-gradient(to top, ${
                     index === 1
@@ -83,7 +82,7 @@ const CustomLayout = () => {
                   : "North America"}
               </p>
               <div
-                className="absolute inset-x-0 bottom-0 h-[80px] rounded-3xl"
+                className="absolute inset-x-0 bottom-0 h-[100px] w-full rounded-3xl" 
                 style={{
                   backgroundImage: `linear-gradient(to top, ${
                     index === 1

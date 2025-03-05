@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import Image from "next/image";
 import { Heart, Star } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 
 const properties = [
   {
@@ -89,14 +90,33 @@ const properties = [
   },
 ];
 
-const countries = ["France", "Finland", "Cyprus", "Poland", "Germany", "Spain", "Italy", "Sweden", "Denmark", "Hungary"];
+const countries = [
+  "France",
+  "Finland",
+  "Cyprus",
+  "Poland",
+  "Germany",
+  "Spain",
+  "Italy",
+  "Sweden",
+  "Denmark",
+  "Hungary",
+];
 
 export default function Card() {
   const router = useRouter();
-  const [activeIndex, setActiveIndex] = useState(null); // State to track the active button
+  const [activeIndex, setActiveIndex] = useState(null);
+  const [userType, setUserType] = useState("");
+  const userInfo = useSelector((state) => state.auth.userInfo);
   const handleButtonClick = (index) => {
-    setActiveIndex(index); // Set the clicked button as active
+    setActiveIndex(index);
   };
+
+  useEffect(() => {
+    if (userInfo) {
+      setUserType(userInfo?.userType);
+    }
+  }, [userInfo]);
 
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5">
@@ -160,12 +180,14 @@ export default function Card() {
           </div>
         ))}
       </div>
-      <button
-        onClick={() => router.push("/Landing/Home/MoreProperties")}
-        className="bg-bluebutton mt-16 text-white px-6 py-2 rounded-full font-medium text-[14px] block mx-auto"
-      >
-        Rent New Properties
-      </button>
+      {userType !== "LandLord" && (
+        <button
+          onClick={() => router.push("/Landing/Home/MoreProperties")}
+          className="bg-bluebutton mt-16 text-white px-6 py-2 rounded-full font-medium text-[14px] block mx-auto"
+        >
+          Rent New Properties
+        </button>
+      )}
     </div>
   );
 }

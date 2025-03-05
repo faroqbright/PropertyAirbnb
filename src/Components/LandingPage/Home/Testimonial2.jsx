@@ -1,7 +1,11 @@
+"use client";
 import Image from "next/image";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export default function Testimonial2() {
+  const router = useRouter();
+
   return (
     <div className="relative flex flex-col md:flex-row items-center py-12">
       <div className="md:w-[40%] w-full relative">
@@ -21,7 +25,10 @@ export default function Testimonial2() {
             luxurious house, our platform ensures a smooth and secure experience
             for both tenants and landlords.
           </p>
-          <button className="bg-bluebutton text-white px-6 py-2 rounded-full font-medium shadow-md">
+          <button
+            className="bg-bluebutton text-white px-6 py-2 rounded-full font-medium shadow-md"
+            onClick={() => router.push("/Landing/Home")}
+          >
             Find Your CoLivers Home
           </button>
         </div>

@@ -1,6 +1,11 @@
+"use client";
+
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export default function HeroSection() {
+  const router = useRouter();
+
   return (
     <div className="p-6 max-w-[920px] mx-auto py-20 relative">
       <h1 className="text-3xl sm:text-4xl mb-7 text-center font-semibold">
@@ -14,10 +19,16 @@ export default function HeroSection() {
         you covered.
       </p>
       <div className="mt-6 flex flex-col min-[500px]:flex-row gap-4 justify-center">
-        <button className="bg-bluebutton text-white font-medium text-[14px] px-5 py-2 rounded-full">
+        <button
+          className="bg-bluebutton text-white font-medium text-[14px] px-5 py-2 rounded-full"
+          onClick={() => router.push("/Landing/Home")}
+        >
           Find Your CoLivers Home
         </button>
-        <button className="bg-purplebutton text-white font-medium text-[14px] px-5 py-2 rounded-full">
+        <button
+          className="bg-purplebutton text-white font-medium text-[14px] px-5 py-2 rounded-full"
+          onClick={() => router.push("/Landing/Properties")}
+        >
           List Your Property
         </button>
       </div>

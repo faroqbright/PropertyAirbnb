@@ -1,7 +1,10 @@
 "use client";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 const Testimonial4 = () => {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col lg:flex-row justify-end w-full py-12 lg:pl-4">
       <div className="flex flex-col lg:flex-row lg:w-[85%] justify-end lg:items-center relative">
@@ -26,13 +29,22 @@ const Testimonial4 = () => {
           </p>
 
           <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-            <button className="px-6 py-3 bg-teal-500 text-white rounded-xl shadow-md hover:bg-teal-600 transition">
+            <button
+              className="px-6 py-3 bg-teal-500 text-white rounded-xl shadow-md hover:bg-teal-600 transition"
+              onClick={() => router.push("/Landing/Profile")}
+            >
               Secure Transactions
             </button>
-            <button className="px-6 py-3 bg-purple-500 text-white rounded-xl shadow-md hover:bg-purple-600 transition">
+            <button
+              className="px-6 py-3 bg-purple-500 text-white rounded-xl shadow-md hover:bg-purple-600 transition"
+              onClick={() => router.push("/Landing/Profile")}
+            >
               Tailored Options
             </button>
-            <button className="px-6 py-3 bg-gray-700 text-white rounded-xl shadow-md hover:bg-gray-800 transition">
+            <button
+              className="px-6 py-3 bg-gray-700 text-white rounded-xl shadow-md hover:bg-gray-800 transition"
+              onClick={() => router.push("/Landing/Profile")}
+            >
               Communication
             </button>
           </div>

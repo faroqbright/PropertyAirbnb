@@ -51,7 +51,7 @@ export default function Bookings() {
         "Current personalInfo keys:",
         Object.keys(userInfo.personalInfo)
       );
-    } 
+    }
   }, [userInfo]);
 
   const handleToggle = (newStatus) => {
@@ -259,53 +259,59 @@ export default function Bookings() {
                 const unselectableKeys = ["birth", "gender", "sexOrientation"];
                 const isUnselectable = unselectableKeys.includes(key);
 
+                const shouldRender = Array.isArray(value)
+                  ? value.length > 0
+                  : value;
+
                 return (
-                  <div key={key} className="w-full sm:w-[48%]">
-                    <h2 className="text-[15px] font-semibold flex items-center capitalize">
-                      <span className="w-2 h-2 bg-bluebutton rounded-full inline-block mr-2 mb-0.5"></span>
-                      {key.replace(/([A-Z])/g, " $1")}
-                    </h2>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {Array.isArray(value) ? (
-                        value.map((item, index) => (
+                  shouldRender && ( 
+                    <div key={key} className="w-full sm:w-[48%]">
+                      <h2 className="text-[15px] font-semibold flex items-center capitalize">
+                        <span className="w-2 h-2 bg-bluebutton rounded-full inline-block mr-2 mb-0.5"></span>
+                        {key.replace(/([A-Z])/g, " $1")}
+                      </h2>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {Array.isArray(value) ? (
+                          value.map((item, index) => (
+                            <div
+                              key={index}
+                              className={`text-[15px] rounded-full border-[1.5px] px-5 py-1 ${
+                                isUnselectable
+                                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                  : selectedTabs.includes(item)
+                                  ? "bg-purplebutton text-white border-purplebutton cursor-pointer"
+                                  : "bg-gray-100 text-gray-500 border-gray-200 cursor-pointer"
+                              }`}
+                              onClick={
+                                !isUnselectable
+                                  ? () => handleSelect(item)
+                                  : undefined
+                              }
+                            >
+                              {item}
+                            </div>
+                          ))
+                        ) : (
                           <div
-                            key={index}
                             className={`text-[15px] rounded-full border-[1.5px] px-5 py-1 ${
                               isUnselectable
                                 ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                : selectedTabs.includes(item)
+                                : selectedTabs.includes(value)
                                 ? "bg-purplebutton text-white border-purplebutton cursor-pointer"
                                 : "bg-gray-100 text-gray-500 border-gray-200 cursor-pointer"
                             }`}
                             onClick={
                               !isUnselectable
-                                ? () => handleSelect(item)
+                                ? () => handleSelect(value)
                                 : undefined
                             }
                           >
-                            {item}
+                            {value}
                           </div>
-                        ))
-                      ) : (
-                        <div
-                          className={`text-[15px] rounded-full border-[1.5px] px-5 py-1 ${
-                            isUnselectable
-                              ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                              : selectedTabs.includes(value)
-                              ? "bg-purplebutton text-white border-purplebutton cursor-pointer"
-                              : "bg-gray-100 text-gray-500 border-gray-200 cursor-pointer"
-                          }`}
-                          onClick={
-                            !isUnselectable
-                              ? () => handleSelect(value)
-                              : undefined
-                          }
-                        >
-                          {value}
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )
                 );
               })}
           </div>
