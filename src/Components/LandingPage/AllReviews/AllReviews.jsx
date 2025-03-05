@@ -1,6 +1,5 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import { Star, User } from "lucide-react";
 import { db } from "@/firebase/firebaseConfig";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
@@ -11,8 +10,6 @@ export default function Reviews() {
   const [reviews, setReviews] = useState([]);
 
   
-
-  // Get userType from Redux state
   const userType = useSelector((state) => state?.auth?.userInfo?.userType);
 
   useEffect(() => {
@@ -22,7 +19,6 @@ export default function Reviews() {
 
         let q;
         if (userType === "Tenant") {
-          // Explicitly filter for Tenant users
           q = query(collection(db, collectionName), where("userType", "==", "Tenant"), limit(6));
         } else {
           q = query(collection(db, collectionName), limit(6));

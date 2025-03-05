@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Star, User } from "lucide-react"; // ✅ Import User icon
+import { Star, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { db } from "@/firebase/firebaseConfig";
 import { collection, query, limit, getDocs } from "firebase/firestore";
