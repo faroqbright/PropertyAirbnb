@@ -11,7 +11,6 @@ import "swiper/css"; // Import Swiper styles
 import "swiper/css/pagination";
 import { Pagination } from "swiper/modules"; // Import pagination module
 
-
 const countries = [
   "France",
   "Finland",
@@ -68,7 +67,9 @@ export default function Card() {
               key={index}
               onClick={() => handleButtonClick(index)}
               className={`px-10 py-3 rounded-full border ${
-                activeIndex === index ? "bg-[#3CD9C8] text-white" : "bg-white text-black"
+                activeIndex === index
+                  ? "bg-[#3CD9C8] text-white"
+                  : "bg-white text-black"
               }`}
             >
               {country}
@@ -79,7 +80,10 @@ export default function Card() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {properties.map((property) => (
-          <div key={property.id} className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border">
+          <div
+            key={property.id}
+            className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"
+          >
             <div className="relative h-[200px] w-full overflow-hidden">
               <Swiper
                 modules={[Pagination]}
@@ -99,7 +103,9 @@ export default function Card() {
 
               <Heart
                 className={`absolute top-2 right-2 h-6 w-6 text-black ${
-                  property.favorite ? "fill-[#FDA4AF] text-[#F86D83]" : "fill-transparent/25"
+                  property.favorite
+                    ? "fill-[#FDA4AF] text-[#F86D83]"
+                    : "fill-transparent/25"
                 }`}
               />
               {property.isGuestFavorite && (
