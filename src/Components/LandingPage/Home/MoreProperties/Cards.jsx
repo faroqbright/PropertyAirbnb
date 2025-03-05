@@ -213,7 +213,7 @@ export default function Header() {
                 <div className="py-4 sm:w-1/2 px-5">
                   <div className="flex items-center justify-between">
                     <h2 className="text-[16px] font-medium text-[#222222]">
-                      {property.location || property.name}  {/* Use property name from Firestore */}
+                      {property.location || property.name}
                     </h2>
                     <div className="flex items-center gap-1 text-sm -mr-3">
                       <Heart
@@ -240,7 +240,7 @@ export default function Header() {
                     </div>
                     <p className="text-sm text-[#222222] -mr-3">
                       <span className="font-medium text-[16px]">
-                        ${property.pricePerMonth} {/* Use pricePerMonth from Firestore */}
+                        ${property.pricePerMonth}
                       </span>{" "}
                       <span>/month</span>
                     </p>

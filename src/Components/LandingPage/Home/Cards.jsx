@@ -6,10 +6,10 @@ import { Heart, Star } from "lucide-react";
 import { useSelector } from "react-redux";
 import { db } from "../../../firebase/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
-import { Swiper, SwiperSlide } from "swiper/react"; // Import Swiper components
-import "swiper/css"; // Import Swiper styles
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
 import "swiper/css/pagination";
-import { Pagination } from "swiper/modules"; // Import pagination module
+import { Pagination } from "swiper/modules";
 
 const countries = [
   "France",
@@ -95,7 +95,7 @@ export default function Card() {
                     <img
                       src={image}
                       alt={property.name}
-                      className="h-full w-full object-cover rounded-xl"
+                      className="h-full w-full object-cover rounded-t-xl"
                     />
                   </SwiperSlide>
                 ))}
@@ -115,7 +115,7 @@ export default function Card() {
               )}
             </div>
 
-            <div className="py-4 space-y-1 px-4">
+            <div className="py-6 space-y-1 px-4">
               <div className="flex items-center justify-between pr-1">
                 <h2 className="text-[16px] font-medium text-[#222222]">
                   {property.location || property.name}

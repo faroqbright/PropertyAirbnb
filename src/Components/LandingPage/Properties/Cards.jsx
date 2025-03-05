@@ -20,7 +20,7 @@ import { Pagination } from "swiper/modules";
 export default function Card() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const propertiesPerPage = 12; // Number of properties to display per page
+  const propertiesPerPage = 12;
   const [properties, setProperties] = useState([]);
   const [totalProperties, setTotalProperties] = useState(0);
 
@@ -33,7 +33,7 @@ export default function Card() {
           ...doc.data(),
         }));
         setProperties(propertiesList);
-        setTotalProperties(propertiesList.length); // Set total properties count
+        setTotalProperties(propertiesList.length);
       } catch (error) {
         console.error("Error fetching properties: ", error);
       }
@@ -42,7 +42,6 @@ export default function Card() {
     fetchProperties();
   }, []);
 
-  // Calculate the properties to display based on the current page
   const indexOfLastProperty = currentPage * propertiesPerPage;
   const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
   const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
@@ -78,7 +77,7 @@ export default function Card() {
                     <img
                       src={image}
                       alt={property.name}
-                      className="h-full w-full object-cover rounded-xl"
+                      className="h-full w-full object-cover rounded-t-xl"
                     />
                   </SwiperSlide>
                 ))}
@@ -92,7 +91,7 @@ export default function Card() {
               />
             </div>
 
-            <div className="py-4 space-y-1 px-4">
+            <div className="py-6 space-y-1 px-4">
               <div className="flex items-center justify-between pr-1">
                 <h2 className="text-[16px] font-medium text-[#222222]">
                   {property.location || property.name}
