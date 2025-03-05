@@ -11,7 +11,12 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
 } from "firebase/auth";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import { getAuth } from "firebase/auth";
 import { auth } from "../../../firebase/firebaseConfig";
 import { signInWithPopup, FacebookAuthProvider } from "firebase/auth";
@@ -40,6 +45,7 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [defaultCountry, setDefaultCountry] = useState("");
+  const [errors, setErrors] = useState({});
 
   const getUserIP = async () => {
     try {
@@ -81,40 +87,36 @@ const Signup = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (event, setFile) => {
+  const handleFileChange = (event) => {
     const file = event.target.files[0];
-    if (file) {
-      setFile(file);
+
+    if (!file) {
+      console.error("No file selected.");
+      return;
     }
+
+    const fileURL = URL.createObjectURL(file);
+    setSelectedImage(file);
+    console.log("File URL:", fileURL);
   };
 
-  const uploadImage = async (uri, folder) => {
+  const uploadImage = async (file, folder) => {
     try {
-      const auth = getAuth();
+      if (!file) throw new Error("No file selected for upload.");
+
       const storage = getStorage();
-      const userId = auth.currentUser?.uid;
-  
-      if (!userId) {
-        throw new Error("User not authenticated");
-      }
-      
-      if (!uri) {
-        throw new Error("No image selected");
-      }
-  
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const fileName = `${Date.now()}.jpg`;
-      const storageRef = ref(storage, `users/${userId}/${folder}/${fileName}`);
-  
-      const uploadTask = uploadBytesResumable(storageRef, blob);
-  
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `users/${folder}/${fileName}`);
+
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
       return new Promise((resolve, reject) => {
         uploadTask.on(
           "state_changed",
           (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log("Upload is " + progress + "% done");
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload is ${progress}% done`);
           },
           (error) => {
             reject(error);
@@ -127,12 +129,12 @@ const Signup = () => {
         );
       });
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error uploading file:", error);
       throw error;
     }
   };
 
-  const handleSignUpClick = async () => {        
+  const handleSignUpClick = async () => {
     if (
       !formData.FullName ||
       !formData.Email ||
@@ -143,17 +145,12 @@ const Signup = () => {
       toast.error("Please fill in all fields.");
       return;
     }
-  
-    if (!formData.Number) {
-      toast.error("Phone number is required.");
-      return;
-    }
-  
+
     if (formData.Password.length < 8) {
       toast.error("Password must be at least 8 characters long.");
       return;
     }
-  
+
     if (formData.Password !== formData.ConfirmPassword) {
       toast.error("Passwords do not match.");
       return;
@@ -168,14 +165,14 @@ const Signup = () => {
       toast.error("Owner document upload is required.");
       return;
     }
-  
+
     if (!termsAccepted) {
       toast.error("You must accept the terms and conditions.");
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -183,10 +180,13 @@ const Signup = () => {
         formData.Password
       );
       const user = userCredential.user;
-  
-      const cnicUrl = selectedImage ? await uploadImage(selectedImage, "cnic") : null;
-      const ownerDocUrl = step === 2 && selectedOwnerDoc ? await uploadImage(selectedOwnerDoc, "owner_docs") : null;
-  
+
+      const cnicUrl = await uploadImage(selectedImage, "cnic");
+      const ownerDocUrl =
+        step === 2 && selectedOwnerDoc
+          ? await uploadImage(selectedOwnerDoc, "OwnerDoc")
+          : null;
+
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         FullName: formData.FullName,
@@ -197,13 +197,13 @@ const Signup = () => {
         cnicUrl,
         ownerDocUrl,
       });
-  
+
       if (activeTab === "Tenant") {
         localStorage.setItem("userUID", user.uid);
       }
-  
+
       toast.success("Signup successful!");
-  
+
       setFormData({
         FullName: "",
         Email: "",
@@ -212,28 +212,30 @@ const Signup = () => {
         ConfirmPassword: "",
         role: "LandLord",
       });
-  
+
       setSelectedImage(null);
       setSelectedOwnerDoc(null);
       setTermsAccepted(false);
       setShowPassword(false);
       setShowConfirmPassword(false);
-  
       setLoading(false);
-  
-      await router.push(activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal");
+
+      await router.push(
+        activeTab === "LandLord" ? "/Auth/Login" : "/Auth/Personal"
+      );
     } catch (error) {
       console.log(error);
-  
+
       let errorMessage = error.code
         ? error.code.split("/")[1].replace(/-/g, " ")
         : "Something went wrong";
-      errorMessage = errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
+      errorMessage =
+        errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
       toast.error(errorMessage);
-  
+
       setLoading(false);
     }
-  };  
+  };
 
   const signInWithFacebook = async () => {
     try {
@@ -266,7 +268,8 @@ const Signup = () => {
 
       toast.success("Logged in successfully with Facebook!");
       router.push("/Landing/Home");
-      dispatch(setUserInfo(user));
+      const serializableUser = JSON.parse(JSON.stringify(user));
+      dispatch(setUserInfo(serializableUser));
       document.cookie = `uid=${user.uid}; path=/; max-age=${
         7 * 24 * 60 * 60
       }; Secure; SameSite=Lax`;
@@ -307,7 +310,8 @@ const Signup = () => {
 
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
-      dispatch(setUserInfo(user));
+      const serializableUser = JSON.parse(JSON.stringify(user));
+      dispatch(setUserInfo(serializableUser));
       document.cookie = `uid=${user.uid}; path=/; max-age=${
         7 * 24 * 60 * 60
       }; Secure; SameSite=Lax`;
@@ -378,7 +382,7 @@ const Signup = () => {
                     console.log("PhoneInput value:", num);
                     setFormData((prev) => ({ ...prev, Number: num }));
                   }}
-                                    buttonClass="px-2"
+                  buttonClass="px-2"
                   inputClass="w-full !border-0 text-gray-900 placeholder-gray-400 focus:outline-none"
                   dropdownClass="max-h-48 bg-black overflow-y-auto bg-white"
                   containerClass="flex items-center"
@@ -437,19 +441,28 @@ const Signup = () => {
           ))}
 
           <div className="mt-5 flex flex-col lg:flex-row gap-5">
-            <FileUpload
-              label="Upload CNIC"
-              file={selectedImage}
-              setFile={setSelectedImage}
-              handleFileChange={handleFileChange}
-            />
-            {step === 2 && (
+            <div>
               <FileUpload
-                label="Upload Owner Docs"
-                file={selectedOwnerDoc}
-                setFile={setSelectedOwnerDoc}
-                handleFileChange={handleFileChange}
+                label="Upload CNIC"
+                file={selectedImage}
+                setFile={setSelectedImage}
               />
+              {errors.cnic && (
+                <p className="text-red-500 text-sm">{errors.cnic}</p>
+              )}
+            </div>
+            {step === 2 && (
+              <div>
+                <FileUpload
+                  label="Upload Owner Docs"
+                  file={selectedOwnerDoc}
+                  setFile={setSelectedOwnerDoc}
+                  handleFileChange={(file) => setSelectedOwnerDoc(file)}
+                />
+                {errors.ownerDoc && (
+                  <p className="text-red-500 text-sm">{errors.ownerDoc}</p>
+                )}
+              </div>
             )}
           </div>
           <div className="mt-5 flex">
@@ -525,7 +538,7 @@ const Signup = () => {
   );
 };
 
-const FileUpload = ({ label, file, setFile, handleFileChange }) => (
+const FileUpload = ({ label, file, setFile }) => (
   <label className="flex flex-col items-center justify-center border rounded-xl cursor-pointer w-48 h-40">
     {!file ? (
       <>
@@ -551,7 +564,12 @@ const FileUpload = ({ label, file, setFile, handleFileChange }) => (
       type="file"
       accept="image/*"
       className="hidden"
-      onChange={(e) => handleFileChange(e, setFile)}
+      onChange={(e) => {
+        const selectedFile = e.target.files[0];
+        if (selectedFile) {
+          setFile(selectedFile);
+        }
+      }}
     />
   </label>
 );

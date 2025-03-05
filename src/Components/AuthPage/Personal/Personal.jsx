@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { Camera, Check, Plus } from "lucide-react";
+import { Camera, Check, Plus, Pencil } from "lucide-react";
 import { toast } from "react-toastify";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../../../firebase/firebaseConfig";
@@ -43,10 +43,10 @@ const Personal = () => {
     }
   };
 
-  const [selectedFile, setSelectedFile] = useState(null);  
+  const [selectedFile, setSelectedFile] = useState(null);
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-  
+
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -55,24 +55,28 @@ const Personal = () => {
       };
       reader.readAsDataURL(file);
     }
-  };  
+  };
 
   const uploadImage = async () => {
     try {
       if (!selectedFile) {
         throw new Error("No image selected");
       }
-  
+
       const storage = getStorage();
       const fileName = `${Date.now()}_${selectedFile.name}`;
       const storageRef = ref(storage, `profile_pictures/${fileName}`);
       const uploadTask = uploadBytesResumable(storageRef, selectedFile);
-  
+
       return new Promise((resolve, reject) => {
         uploadTask.on(
           "state_changed",
           (snapshot) => {
-            console.log(`Upload is ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}% done`);
+            console.log(
+              `Upload is ${
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+              }% done`
+            );
           },
           (error) => {
             reject(error);
@@ -88,7 +92,7 @@ const Personal = () => {
       console.error("Error uploading image:", error);
       throw error;
     }
-  };  
+  };
 
   const getTodayDate = () => {
     const today = new Date();
@@ -140,7 +144,7 @@ const Personal = () => {
         setUserData((prevData) => ({
           ...prevData,
           drinkingHabits: activeDrinkButtons.map(
-            (index) => ["Outside", "InHouse"][index]
+            (index) => ["Outsides", "InHouse", "No"][index]
           ),
         }));
       }
@@ -152,7 +156,7 @@ const Personal = () => {
         setUserData((prevData) => ({
           ...prevData,
           smokingHabits: activeSmokeButtons.map(
-            (index) => ["Outside", "InHouse"][index]
+            (index) => ["Outside", "InHouses", "No"][index]
           ),
         }));
       }
@@ -187,7 +191,11 @@ const Personal = () => {
             if (selectedFile) {
               uploadedImageUrl = await uploadImage();
             }
-            await setDoc(userRef, { personalInfo: { ...userData, image: uploadedImageUrl } },{ merge: true });
+            await setDoc(
+              userRef,
+              { personalInfo: { ...userData, image: uploadedImageUrl } },
+              { merge: true }
+            );
             uploadImage(selectedOwnerDoc, "owner_docs");
             toast.success("Personal data updated successfully!");
             setStep(step + 1);
@@ -209,11 +217,11 @@ const Personal = () => {
     "Gym",
     "Running",
     "Moving",
-    "Moving",
-    "Running",
-    "Moving",
-    "Gym",
-    "Martail",
+    "Martial",
+    "Cycling",
+    "Swimming",
+    "Hiking",
+    "Yoga",
   ];
 
   const handleClick = (index) => {
@@ -269,7 +277,7 @@ const Personal = () => {
           <div className="flex flex-col items-center justify-center h-full mt-10 text-textclr">
             <div
               onClick={handleIconClick}
-              className="w-[100px] h-[100px] flex items-center justify-center bg-gray-300 rounded-full cursor-pointer overflow-hidden relative"
+              className="relative w-[100px] h-[100px] flex items-center justify-center bg-gray-300 rounded-full cursor-pointer"
             >
               {uploading ? (
                 <span className="text-sm text-gray-700">Uploading...</span>
@@ -277,21 +285,24 @@ const Personal = () => {
                 <img
                   src={image}
                   alt="Uploaded"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-full"
                 />
               ) : (
                 <Camera className="p-7 text-textclr" size={90} />
               )}
+
+              <div className="absolute bottom-3 right-5 bg-purplebutton p-1.5 rounded-full shadow-md border border-gray-300 z-[999] translate-x-1/2 translate-y-1/2">
+                <Pencil size={16} className="text-white" />
+              </div>
             </div>
 
             <input
-  type="file"
-  accept="image/*"
-  ref={fileInputRef}
-  style={{ display: "none" }}
-  onChange={handleFileChange}
-/>
-
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
           </div>
 
           <div className="mt-10">

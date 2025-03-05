@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Star, User } from "lucide-react"; // ✅ Import User icon
+import { Star, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { db } from "@/firebase/firebaseConfig";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
@@ -15,6 +15,7 @@ export default function Reviews() {
   const [step, setStep] = useState(null);
 
   useEffect(() => {
+    console.log("User Type:", userType);
     if (userType) {
       setStep(userType === "Landlord" ? 0 : 1);
     }
@@ -26,11 +27,7 @@ export default function Reviews() {
         const collectionName =
           userType === "Landlord" ? "LandlordReviews" : "reviews";
 
-        const q = query(
-          collection(db, collectionName),
-          limit(6) // ✅ Removed where() to avoid filtering issues
-        );
-
+        const q = query(collection(db, collectionName), limit(6));
 
         const querySnapshot = await getDocs(q);
         const fetchedReviews = querySnapshot.docs.map((doc) => ({
@@ -69,7 +66,7 @@ export default function Reviews() {
                 {userType === "Landlord" ? (
                   <User className="w-14 h-14 text-gray-600 bg-gray-200 rounded-full p-2" />
                 ) : (
-                  <Image
+                  <img
                     src={item?.userImage || "/default-profile.png"}
                     alt={item.userName}
                     width={56}
