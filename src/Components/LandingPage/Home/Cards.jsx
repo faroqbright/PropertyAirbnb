@@ -80,7 +80,7 @@ export default function Card() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {properties.map((property) => (
           <div key={property.id} className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border">
-            <div className="relative h-[170px] w-full overflow-hidden">
+            <div className="relative h-[200px] w-full overflow-hidden">
               <Swiper
                 modules={[Pagination]}
                 pagination={{ clickable: true }}
@@ -98,7 +98,7 @@ export default function Card() {
               </Swiper>
 
               <Heart
-                className={`absolute top-2 right-2 h-6 w-6 text-white ${
+                className={`absolute top-2 right-2 h-6 w-6 text-black ${
                   property.favorite ? "fill-[#FDA4AF] text-[#F86D83]" : "fill-transparent/25"
                 }`}
               />
@@ -116,7 +116,7 @@ export default function Card() {
                 </h2>
                 <div className="flex items-center gap-1 text-sm">
                   <Star className="h-[15px] w-[15px] text-black fill-black" />
-                  <span>{property.rating}</span>
+                  <span>4.92</span>
                 </div>
               </div>
               <p className="text-sm text-[#6A6A6A]">

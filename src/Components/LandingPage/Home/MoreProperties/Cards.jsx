@@ -193,11 +193,11 @@ export default function Header() {
           {propertiesToShow.map((property) => (
             <div key={property.id} className="w-full bg-white overflow-hidden mb-6 border rounded-xl">
               <div className="flex flex-col sm:flex-row">
-                <div className="relative h-[270px] w-full overflow-hidden">
+                <div className="relative h-[200px] overflow-hidden">
                 <Swiper
                 modules={[Pagination]}
                 pagination={{ clickable: true }}
-                className="h-full w-full"
+                className="h-full w-[300px]"
               >
                 {property.imageUrls.map((image, index) => (
                   <SwiperSlide key={index}>
@@ -234,7 +234,7 @@ export default function Header() {
                   <div className="block border-b border-gray-300 w-10 pt-2"></div>
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-1 text-[13px]">
-                      <span>{property.rating}</span>
+                      <span>4.92</span>
                       <Star className="h-[15px] w-[15px] text-[#F5A10F] fill-[#FAC941]" />
                       (318 reviews)
                     </div>

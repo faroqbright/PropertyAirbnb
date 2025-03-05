@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,24 +11,18 @@ import {
   Star,
 } from "lucide-react";
 import { db } from "../../../firebase/firebaseConfig"; 
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore"; 
 import { Swiper, SwiperSlide } from "swiper/react"; 
 import "swiper/css"; 
-import "swiper/css/pagination";
+import "swiper/css/pagination"; 
 import { Pagination } from "swiper/modules"; 
 
 export default function Card() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 10;
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
+  const propertiesPerPage = 12; // Number of properties to display per page
   const [properties, setProperties] = useState([]);
+  const [totalProperties, setTotalProperties] = useState(0);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -40,6 +33,7 @@ export default function Card() {
           ...doc.data(),
         }));
         setProperties(propertiesList);
+        setTotalProperties(propertiesList.length); // Set total properties count
       } catch (error) {
         console.error("Error fetching properties: ", error);
       }
@@ -48,10 +42,22 @@ export default function Card() {
     fetchProperties();
   }, []);
 
+  // Calculate the properties to display based on the current page
+  const indexOfLastProperty = currentPage * propertiesPerPage;
+  const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
+  const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
+  const totalPages = Math.ceil(totalProperties / propertiesPerPage);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5 mb-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {properties.map((property) => (
+        {currentProperties.map((property) => (
           <div
             key={property.id}
             className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"
@@ -61,7 +67,7 @@ export default function Card() {
               )
             }
           >
-            <div className="relative h-[270px] w-full overflow-hidden">
+            <div className="relative h-[200px] w-full overflow-hidden">
               <Swiper
                 modules={[Pagination]}
                 pagination={{ clickable: true }}
@@ -78,7 +84,7 @@ export default function Card() {
                 ))}
               </Swiper>
               <Heart
-                className={`absolute top-2 right-2 h-6 w-6 text-white ${
+                className={`absolute top-2 right-2 h-6 w-6 text-black ${
                   property.favorite
                     ? "fill-[#FDA4AF] text-[#F86D83]"
                     : "fill-transparent/25"
@@ -93,7 +99,7 @@ export default function Card() {
                 </h2>
                 <div className="flex items-center gap-1 text-sm">
                   <Star className="h-[15px] w-[15px] text-black fill-black" />
-                  <span>{property.rating || "N/A"}</span>
+                  <span>{property.rating || "4.92"}</span>
                 </div>
               </div>
               <p className="text-sm text-[#6A6A6A]">
@@ -110,44 +116,50 @@ export default function Card() {
         <button
           className="p-2 hidden sm:block rounded-full border border-gray-300 bg-white hover:bg-gray-100"
           onClick={() => goToPage(1)}
+          disabled={currentPage === 1}
         >
           <ChevronsLeft size={18} />
         </button>
         <button
           className="p-2 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
           onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 1}
         >
           <ChevronLeft size={18} />
         </button>
-        {[1, 2, 3].map((page) => (
+        {[...Array(totalPages).keys()].slice(0, 12).map((page) => (
           <button
-            key={page}
+            key={page + 1}
             className={`w-8 h-8 rounded-full border ${
-              currentPage === page
+              currentPage === page + 1
                 ? "bg-teal-400 text-white"
                 : "border-gray-300 bg-white hover:bg-gray-100"
             }`}
-            onClick={() => goToPage(page)}
+            onClick={() => goToPage(page + 1)}
           >
-            {page}
+            {page + 1}
           </button>
         ))}
-        <span className="px-2">...</span>
-        <button
-          className="w-8 h-8 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
-          onClick={() => goToPage(totalPages)}
-        >
-          {totalPages}
-        </button>
+        {totalPages > 3 && <span className="px-2">...</span>}
+        {totalPages > 3 && (
+          <button
+            className="w-8 h-8 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
+            onClick={() => goToPage(totalPages)}
+          >
+            {totalPages}
+          </button>
+        )}
         <button
           className="p-2 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
           onClick={() => goToPage(currentPage + 1)}
+          disabled={currentPage === totalPages}
         >
           <ChevronRight size={18} />
         </button>
         <button
           className="p-2 hidden sm:block rounded-full border border-gray-300 bg-white hover:bg-gray-100"
           onClick={() => goToPage(totalPages)}
+          disabled={currentPage === totalPages}
         >
           <ChevronsRight size={18} />
         </button>
