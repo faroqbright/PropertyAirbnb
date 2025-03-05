@@ -23,17 +23,17 @@ import {
 
 export default function Bookings() {
   const [status, setStatus] = useState("Info");
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [uploadedOtherImage, setOtherUploadedImage] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [number, setNumber] = useState("");
   const [loadingSave, setLoadingSave] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
+  const [userType, setUserType] = useState("");
 
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.auth.userInfo);
   const [selectedTabs, setSelectedTabs] = useState([]);
+  console.log(userInfo);
 
   useEffect(() => {
     if (userInfo) {
@@ -41,86 +41,21 @@ export default function Bookings() {
       setEmail(userInfo.email || "");
       setNumber(userInfo.number || "");
       setProfileImage(userInfo?.personalInfo?.image || null);
-      setUploadedImage(userInfo?.cnicUrl || "");
-      setOtherUploadedImage(userInfo?.ownerDocUrl || "");
+      setUserType(userInfo?.userType);
     }
   }, [userInfo]);
 
   useEffect(() => {
-    console.log(
-      "Current personalInfo keys:",
-      Object.keys(userInfo.personalInfo)
-    );
+    if (userInfo && userInfo.personalInfo) {
+      console.log(
+        "Current personalInfo keys:",
+        Object.keys(userInfo.personalInfo)
+      );
+    } 
   }, [userInfo]);
 
   const handleToggle = (newStatus) => {
     setStatus(newStatus);
-  };
-
-  const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const storageRef = ref(storage, `users/cnic/${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log(`Upload is ${progress}% done`);
-        },
-        (error) => {
-          console.error("Error uploading file:", error);
-          toast.error("Failed to upload CNIC image.");
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          setUploadedImage(downloadURL);
-
-          const userDocRef = doc(db, "users", userInfo.uid);
-          await updateDoc(userDocRef, { cnicUrl: downloadURL });
-          dispatch(setUserInfo({ ...userInfo, cnicUrl: downloadURL }));
-        }
-      );
-    }
-  };
-
-  const handleOtherImageUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const storageRef = ref(storage, `users/otherDocs/${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log(`Upload is ${progress}% done`);
-        },
-        (error) => {
-          console.error("Error uploading file:", error);
-          toast.error("Failed to upload other document image.");
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          setOtherUploadedImage(downloadURL);
-
-          const userDocRef = doc(db, "users", userInfo.uid);
-          await updateDoc(userDocRef, { ownerDocUrl: downloadURL });
-          dispatch(setUserInfo({ ...userInfo, ownerDocUrl: downloadURL }));
-        }
-      );
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setUploadedImage(null);
-  };
-
-  const handleOtherRemoveImage = () => {
-    setOtherUploadedImage(null);
   };
 
   const handleImageChange = async (event) => {
@@ -301,22 +236,24 @@ export default function Bookings() {
         >
           Info
         </button>
-        <button
-          className={`px-4 w-32 py-2.5 text-sm font-medium rounded-full ${
-            status === "Lifestyle"
-              ? "bg-purplebutton text-white"
-              : "bg-gray-200 text-black"
-          }`}
-          onClick={() => handleToggle("Lifestyle")}
-        >
-          Lifestyle
-        </button>
+        {userType !== "LandLord" && (
+          <button
+            className={`px-4 w-32 py-2.5 text-sm font-medium rounded-full ${
+              status === "Lifestyle"
+                ? "bg-purplebutton text-white"
+                : "bg-gray-200 text-black"
+            }`}
+            onClick={() => handleToggle("Lifestyle")}
+          >
+            Lifestyle
+          </button>
+        )}
       </div>
 
       {status === "Lifestyle" && userInfo?.personalInfo ? (
         <div className="w-full bg-white rounded-xl border-[1.5px] border-gray-200 px-6 pt-2 pb-5 sm:pb-10 sm:pt-5">
           <div className="flex flex-wrap px-4 mt-6 w-full justify-between gap-4">
-            {Object.entries(userInfo.personalInfo)
+            {Object.entries(userInfo?.personalInfo)
               .filter(([key]) => key !== "image")
               .map(([key, value]) => {
                 const unselectableKeys = ["birth", "gender", "sexOrientation"];
@@ -371,6 +308,15 @@ export default function Bookings() {
                   </div>
                 );
               })}
+          </div>
+          <div className="flex justify-center mt-10">
+            <button
+              className="bg-bluebutton text-white hover:bluebutton py-2 px-8 rounded-full"
+              onClick={handleSaveLifestyle}
+              disabled={loadingSave}
+            >
+              {loadingSave ? "Saving..." : "Save changes"}
+            </button>
           </div>
         </div>
       ) : (
@@ -451,62 +397,6 @@ export default function Bookings() {
                   onChange={(e) => setNumber(e.target.value)}
                 />
               </div>
-            </div>
-
-            <div className="flex space-x-4">
-              <label className="border-[1px] w-[200px] rounded-lg p-4 flex flex-col items-center justify-center gap-2 cursor-pointer">
-                <Plus className="w-6 h-6 text-gray-400" />
-                <span className="text-sm font-medium">Upload CNIC</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                />
-              </label>
-              {uploadedImage && (
-                <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden">
-                  <img
-                    src={uploadedImage}
-                    alt="CNIC Preview"
-                    className="object-cover h-[120px] w-[200px]"
-                  />
-                  <button
-                    onClick={handleRemoveImage}
-                    className="absolute top-2 right-2 bg-white p-1 rounded-full shadow-md hover:bg-gray-100"
-                  >
-                    <X className="w-5 h-5 text-gray-700" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="flex space-x-4">
-              <label className="border-[1px] w-[200px] rounded-lg p-4 flex flex-col items-center justify-center gap-2 cursor-pointer">
-                <Plus className="w-6 h-6 text-gray-400" />
-                <span className="text-sm font-medium">Upload Other Doc</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleOtherImageUpload}
-                />
-              </label>
-              {uploadedOtherImage && (
-                <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden">
-                  <img
-                    src={uploadedOtherImage}
-                    alt="Other Document Preview"
-                    className="object-cover h-[120px] w-[200px]"
-                  />
-                  <button
-                    onClick={handleOtherRemoveImage}
-                    className="absolute top-2 right-2 bg-white p-1 rounded-full shadow-md hover:bg-gray-100"
-                  >
-                    <X className="w-5 h-5 text-gray-700" />
-                  </button>
-                </div>
-              )}
             </div>
 
             <div className="flex justify-center ">
