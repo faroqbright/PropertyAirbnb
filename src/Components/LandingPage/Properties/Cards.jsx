@@ -156,7 +156,7 @@ export default function Card() {
             onClick={() => router.push("/Landing/Properties/PropertiesDetail")}
           >
             <div className="relative h-[270px] w-full overflow-hidden">
-              <Image
+              <img
                 src={property.image}
                 alt={property.location}
                 layout="fill"

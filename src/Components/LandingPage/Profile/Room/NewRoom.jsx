@@ -82,7 +82,6 @@ const Properties = () => {
 
       const docRef = await addDoc(collection(db, "properties"), dataToSave);
       toast.success("Property Created Successfully");
-
       console.log("data is:", dataToSave)
       router.push("/Landing/Home");
     } catch (e) {

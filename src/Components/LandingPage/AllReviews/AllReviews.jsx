@@ -5,10 +5,11 @@ import { Star, User } from "lucide-react";
 import { db } from "@/firebase/firebaseConfig";
 import { collection, query, where, limit, getDocs } from "firebase/firestore";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 export default function Reviews() {
   const [reviews, setReviews] = useState([]);
-  console.log(reviews);
+
   
 
   // Get userType from Redux state
@@ -35,7 +36,7 @@ export default function Reviews() {
 
         setReviews(fetchedReviews);
       } catch (error) {
-        console.error("Error fetching reviews:", error);
+        toast.error("Error fetching reviews:", error);
       }
     };
 
@@ -53,7 +54,9 @@ export default function Reviews() {
       <div className="md:pl-24">
         <div className="flex items-start space-x-2 mb-8 pl-7">
           <Star fill="#FFBF2B" className="w-5 h-5 text-[#FFBF2B]" />
-          <span className="font-semibold">5.0  &bull;  7 reviews</span>
+          <span className="font-semibold">
+            5.0 &bull; {reviews.length} reviews
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

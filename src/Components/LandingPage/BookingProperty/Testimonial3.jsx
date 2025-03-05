@@ -42,13 +42,13 @@ export default function Reviews() {
     if (userType) fetchReviews();
   }, [userType]); // Re-run when userType changes
 
-  console.log(reviews);
+
   
 
   return (
     <div className="max-w-7xl mx-auto p-9">
       <h1 className="text-[28px] font-bold text-center text-black mb-6">
-        What {userType === "Landlord" ? "Landlords" : "Tenants"} say about this place
+        What {userType === "LandLord" ? "Landlords" : "Tenants"} say about this place
       </h1>
 
       <div className="md:pl-24">
