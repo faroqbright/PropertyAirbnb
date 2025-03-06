@@ -337,7 +337,9 @@ export default function Bookings() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center cursor-pointer justify-center overflow-hidden"
+                  onClick={() => document.getElementById('fileInput')?.click()}
+                  >
                     {profileImage ? (
                       <img
                         src={profileImage}
@@ -354,6 +356,7 @@ export default function Bookings() {
                           className="text-white cursor-pointer"
                         />
                         <input
+                          id="fileInput"
                           type="file"
                           accept="image/*"
                           className="hidden"
