@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { Search } from "lucide-react";
-import { Check } from "lucide-react";
+import { Search, Check } from "lucide-react";
 
 export default function Header() {
   const [budget, setBudget] = useState(0);
   const [showSlider, setShowSlider] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const [location, setLocation] = useState('');  
+  const [rooms, setRooms] = useState(''); 
   const dialogRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -61,6 +62,53 @@ export default function Header() {
   const sliderBackground = `linear-gradient(90deg, #3cd9c8 ${
     (budget / 10000) * 100
   }%, #ddd ${(budget / 10000) * 100}%)`;
+
+  const handleSearch = () => {
+    const filters = {
+      location,
+      budget,
+      amenities: selectedAmenities,
+      Rooms
+    };
+    
+    if (onSearch) {
+      onSearch(filters);
+    }
+    
+    console.log("Search filters:", filters);
+  };
+
+  const locationInput = (
+    <input
+      id="location"
+      type="text"
+      placeholder="Where are you going?"
+      value={location}
+      onChange={(e) => setLocation(e.target.value)}
+      className="text-sm text-gray-200 placeholder:text-slate-200 text-[12px] sm:text-[13px] bg-transparent border-none outline-none w-full"
+    />
+  );
+
+  const roomsInput = (
+    <input
+      id="rooms"
+      type="text"
+      placeholder="Add here"
+      value={rooms}
+      onChange={(e) => setRooms(e.target.value)}
+      className="text-sm text-gray-200 placeholder:text-slate-200 bg-transparent border-none outline-none w-full"
+    />
+  );
+
+  const searchButton = (
+    <button
+      className="p-3 bg-white rounded-full absolute bottom-4 right-4 lg:right-5 lg:bottom-auto lg:top-auto lg:translate-y-0 flex-shrink-0 hover:bg-gray-50 transition-colors"
+      onClick={handleSearch}
+      aria-label="Search"
+    >
+      <Search className="w-5 h-5 text-gray-600" />
+    </button>
+  );
 
   return (
     <div className="relative">
@@ -204,12 +252,12 @@ export default function Header() {
           <div className="flex-1 min-w-0">
             <label
               className="block text-white font-semibold  text-[12px] sm:text-[15px]"
-              htmlFor="coLivers"
+              htmlFor="rooms"
             >
-              #coLivers
+              Rooms
             </label>
             <input
-              id="coLivers"
+              id="rooms"
               type="text"
               placeholder="Add here"
               className="text-sm text-gray-200 placeholder:text-slate-200 bg-transparent border-none outline-none w-full"
