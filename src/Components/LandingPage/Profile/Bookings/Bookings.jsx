@@ -123,7 +123,7 @@ export default function Bookings() {
 
   useEffect(() => {
     if (userInfo?.role === "LandLord") {
-      setIsAdmin(true); 
+      setIsAdmin(true);
     } else {
       setIsAdmin(false);
     }
@@ -175,11 +175,20 @@ export default function Bookings() {
         </button>
       </div>
 
-      <div className="w-full bg-white rounded-xl border-[1.5px] border-gray-200 px-6 pt-1 pb-4">
-        {filteredBookings.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No bookings available for this status.
-          </p>
+      <div className={`w-full ${userInfo.email ? "bg-[#f8f8f8]" : "bg-white"} rounded-xl border-[1.5px] border-gray-200 px-6 pt-1 pb-4`}>
+        {userInfo.email ? (
+          <div className="flex flex-col items-center justify-center py-20 ">
+            <Image
+              src="/assets/NoBookings.jpeg"
+              alt="No Bookings"
+              width={300}
+              height={300}
+              className="object-contain"
+            />
+            <p className="mt-4 text-lg font-semibold text-gray-600">
+              No Bookings Found
+            </p>
+          </div>
         ) : (
           filteredBookings.map((booking) => (
             <div

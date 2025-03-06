@@ -16,12 +16,14 @@ const countries = [
   "Finland",
   "Cyprus",
   "Poland",
-  "Germany",
+  "Germany",  
   "Spain",
   "Italy",
   "Sweden",
   "Denmark",
   "Hungary",
+  "Gujranwala",
+  "All",
 ];
 
 export default function Card() {
@@ -30,6 +32,8 @@ export default function Card() {
   const [userType, setUserType] = useState("");
   const userInfo = useSelector((state) => state.auth.userInfo);
   const [properties, setProperties] = useState([]);
+  console.log(properties);
+
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -39,7 +43,7 @@ export default function Card() {
           id: doc.id,
           ...doc.data(),
         }));
-        setProperties(propertiesData.slice(0, 8));
+        setProperties(propertiesData.slice(0, 8));        
       } catch (error) {
         console.error("Error fetching properties:", error);
       }
@@ -49,7 +53,11 @@ export default function Card() {
   }, []);
 
   const handleButtonClick = (index) => {
+    if(countries[index] === "All") {
+      setActiveIndex(index);
+    }else{
     setActiveIndex(index);
+    }
   };
 
   useEffect(() => {
@@ -57,6 +65,12 @@ export default function Card() {
       setUserType(userInfo?.userType);
     }
   }, [userInfo]);
+
+  const selectedCountry = activeIndex !== null ? countries[activeIndex] : null;
+  
+  const findProperties = selectedCountry && selectedCountry !== "All"
+    ? properties.filter((property) => property.location === selectedCountry)
+    : properties;
 
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5">
@@ -79,7 +93,7 @@ export default function Card() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {properties.map((property) => (
+        {findProperties.map((property) => (
           <div
             key={property.id}
             className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"

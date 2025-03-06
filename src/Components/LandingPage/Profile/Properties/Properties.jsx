@@ -5,6 +5,7 @@ import { Edit2, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import NewRoom from "../Room/NewRoom";
+import { useSelector } from "react-redux";
 
 const properties = [
   {
@@ -35,6 +36,7 @@ const properties = [
 
 export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const [action, setAction] = useState("View");
+  const userInfo = useSelector((state) => state.auth.userInfo);
   const router = useRouter();
 
   const handleActionChange = (newAction) => {
@@ -139,16 +141,29 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                 }`}
                 onClick={() => handleActionChange("Add New Room")}
               >
-                Add New Room
+                Add New Property
               </button>
             </div>
           </div>
 
-          <div className="w-full bg-white rounded-xl border-[1.5px] border-gray-200 px-4 pt-1 pb-4">
-            {properties.length === 0 ? (
-              <p className="text-center text-gray-500">
-                No properties available.
-              </p>
+          <div
+            className={`w-full ${
+              userInfo.email ? "bg-[#f8f8f8]" : "bg-while"
+            } bg-white rounded-xl border-[1.5px] border-gray-200 px-4 pt-1 pb-4`}
+          >
+            {userInfo.email ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Image
+                  src="/assets/NoBookings.jpeg"
+                  alt="No Properties"
+                  width={300}
+                  height={300}
+                  className="object-contain"
+                />
+                <p className="mt-4 text-lg font-semibold text-gray-600">
+                  No Properties Exist
+                </p>
+              </div>
             ) : (
               properties.map((property) => (
                 <div

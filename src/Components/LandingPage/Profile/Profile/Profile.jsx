@@ -1,5 +1,5 @@
 "use client";
-import { CameraIcon, Plus, Star, X, Pencil } from "lucide-react";
+import { CameraIcon, Star, Pencil } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -8,18 +8,8 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { deletePersonalInfo, setUserInfo } from "@/features/auth/authSlice";
 import { toast } from "react-toastify";
 import { auth } from "@/firebase/firebaseConfig";
-import {
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-  updateEmail,
-} from "firebase/auth";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-} from "firebase/storage";
+import { sendSignInLinkToEmail } from "firebase/auth";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 export default function Bookings() {
   const [status, setStatus] = useState("Info");
@@ -29,6 +19,11 @@ export default function Bookings() {
   const [loadingSave, setLoadingSave] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [userType, setUserType] = useState("");
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [uploadedOtherImage, setOtherUploadedImage] = useState(null);
+  const [countries, setCountries] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const router = useRouter();
 
   const dispatch = useDispatch();
@@ -43,6 +38,8 @@ export default function Bookings() {
       setNumber(userInfo.number || "");
       setProfileImage(userInfo?.personalInfo?.image || null);
       setUserType(userInfo?.userType);
+      setUploadedImage(userInfo?.cnicUrl || "");
+      setOtherUploadedImage(userInfo?.ownerDocUrl || "");
     }
   }, [userInfo]);
 
@@ -103,7 +100,6 @@ export default function Bookings() {
   };
 
   const handleSaveChanges = async () => {
-
     try {
       if (!userInfo || !userInfo.uid || !auth.currentUser) {
         toast.error("User  information not found. Please login again.");
@@ -134,33 +130,6 @@ export default function Bookings() {
       setLoadingSave(false);
     }
   };
-
-  const checkEmailVerification = async () => {
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      let email = localStorage.getItem("newEmail");
-
-      if (!email) {
-        email = prompt("Please enter your email to confirm:");
-      }
-
-      if (email) {
-        await signInWithEmailLink(auth, email, window.location.href);
-        await updateEmail(auth.currentUser, email);
-
-        const userDocRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userDocRef, { email });
-
-        dispatch(setUserInfo((prev) => ({ ...prev, email })));
-
-        localStorage.removeItem("newEmail");
-        toast.success("Email updated successfully!");
-      }
-    }
-  };
-
-  useEffect(() => {
-    checkEmailVerification();
-  }, []);
 
   const handleSelect = (key) => {
     setSelectedTabs((prev) =>
@@ -218,6 +187,47 @@ export default function Bookings() {
       throw error;
     }
   };
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch("https://restcountries.com/v3.1/all");
+        const data = await response.json();
+        const countryList = data
+          .filter((c) => c.idd?.root && c.idd?.suffixes)
+          .map((c) => ({
+            code: c.cca2,
+            dialCode: `${c.idd.root}${c.idd.suffixes[0] || ""}`.replace(
+              "+",
+              ""
+            ),
+            flag: c.flags?.png,
+          }));
+        setCountries(countryList);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  const handleCountrySelect = (country) => {
+    setSelectedCountry(country);
+    setNumber(country.dialCode);
+    setDropdownOpen(false);
+  };
+
+  useEffect(() => {
+    if (number.length > 0) {
+      const matchedCountry = countries.find((c) =>
+        number.startsWith(c.dialCode)
+      );
+      if (matchedCountry) {
+        setSelectedCountry(matchedCountry);
+      }
+    }
+  }, [number, countries]);
 
   return (
     <>
@@ -384,21 +394,95 @@ export default function Bookings() {
                     className="border p-2 rounded-full w-full"
                     placeholder="Write here"
                     type="email"
+                    disabled
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+
+              <div className="space-y-2 relative ">
                 <label className="text-sm font-medium">Number</label>
-                <input
-                  className="border p-2 rounded-full w-full"
-                  placeholder="Write here"
-                  type="number"
-                  value={number}
-                  onChange={(e) => setNumber(e.target.value)}
-                />
+                <div className="flex items-center border p-2 rounded-full w-full relative">
+                  <div
+                    className="flex items-center cursor-pointer pr-2"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                  >
+                    {selectedCountry && (
+                      <>
+                        <img
+                          src={selectedCountry.flag}
+                          alt="Flag"
+                          className="w-8 h-6 rounded-sm"
+                        />
+                      </>
+                    )}
+                  </div>
+
+                  <input
+                    className="flex-1 outline-none ml-2"
+                    placeholder="Enter your phone number"
+                    type="text"
+                    value={number}
+                    onChange={(e) => setNumber(e.target.value)}
+                  />
+                </div>
+
+                {dropdownOpen && (
+                  <div className="absolute top-14 left-0 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto w-full z-50">
+                    {countries.map((country) => (
+                      <div
+                        key={country.code}
+                        className="flex items-center px-3 py-2 cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleCountrySelect(country)}
+                      >
+                        <img
+                          src={country.flag}
+                          alt="Flag"
+                          className="w-6 h-4 mr-2"
+                        />
+                        <span className="text-gray-700">
+                          +{country.dialCode}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+            </div>
+
+            <div className="flex flex-row gap-16 ">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">CNIC</label>
+                <div className="flex space-x-4">
+                  {uploadedImage && (
+                    <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden border-[1px]">
+                      <img
+                        src={uploadedImage}
+                        alt="CNIC"
+                        className="object-cover h-full w-full"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {userType !== "LandLord" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Other Document</label>
+                  <div className="flex space-x-4">
+                    {uploadedOtherImage && (
+                      <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden border-[1px]">
+                        <img
+                          src={uploadedOtherImage}
+                          alt="Other Doc"
+                          className="object-cover h-full w-full"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-center ">
