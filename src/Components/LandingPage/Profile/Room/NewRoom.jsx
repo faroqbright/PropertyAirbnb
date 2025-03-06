@@ -32,7 +32,7 @@ import {
 import { toast } from "react-toastify";
 
 const Properties = () => {
-  const [step, setstep] = useState(1);
+  const [step, setStep] = useState(1);
   const router = useRouter();
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -71,9 +71,7 @@ const Properties = () => {
           "state_changed",
           (snapshot) => {
             console.log(
-              `Upload is ${
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-              }% done`
+              `Upload is ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}% done`
             );
           },
           (error) => {
@@ -276,18 +274,18 @@ const Properties = () => {
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
     if (step === 3 && !validateStep3()) return;
-    setstep(step + 1);
+    setStep(step + 1);
   };
 
   const handleStepChange = (newStep) => {
     if (newStep < step) {
-      setstep(newStep);
+      setStep(newStep);
       return;
     }
     if (newStep === 2 && !validateStep1()) return;
     if (newStep === 3 && !validateStep2()) return;
     if (newStep === 4 && !validateStep3()) return;
-    setstep(newStep);
+    setStep(newStep);
   };
 
   return (
@@ -328,7 +326,7 @@ const Properties = () => {
       </div>
 
       {step === 1 ? (
-        <div>
+        <div className="overflow-y-auto h-[600px] scrollbar-hide">
           <div className="flex lg:flex-row flex-col gap-3 my-5">
             <div className="lg:flex gap-10 md:flex-wrap py-3 px-7 pt-5">
               <div className="flex lg:flex-row flex-col gap-3 mt-5">
@@ -426,7 +424,7 @@ const Properties = () => {
                   <br />
                   <input
                     type="number"
-                    placeholder="Enter Property Longitude Here"
+                    placeholder="Enter Property Longitude"
                     className="border-2 py-2 rounded-3xl w-full pl-5 mt-3"
                     value={propertyData.longitude}
                     onChange={(e) =>
@@ -443,7 +441,7 @@ const Properties = () => {
                   <br />
                   <input
                     type="number"
-                    placeholder="Enter Property Latitude Here"
+                    placeholder="Enter Property Latitude"
                     className="border-2 py-2 rounded-3xl w-full pl-5 mt-3"
                     value={propertyData.latitude}
                     onChange={(e) =>
@@ -459,21 +457,11 @@ const Properties = () => {
               <button className="bg-slate-200 md:px-14 sm:px-10 py-2 rounded-3xl mt-4 font-semibold text-textclr w-full lg:w-fit mb-7">
                 Select From Map
               </button>
-              <br />
-
-              <div className="w-full flex justify-center mt-6 mb-7">
-                <button
-                  onClick={handleNextStep}
-                  className="text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full"
-                >
-                  Next
-                </button>
-              </div>
             </form>
           </div>
         </div>
       ) : step === 2 ? (
-        <>
+        <div className="overflow-y-auto h-[600px] scrollbar-hide">
           <div className="flex flex-col">
             <form>
               <div className="mb-5 mt-5">
@@ -555,55 +543,35 @@ const Properties = () => {
                   </div>
                 ))}
               </div>
-
-              <div className="w-full flex justify-center mb-5">
-                <button
-                  onClick={handleNextStep}
-                  className="mt-10 text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full"
-                >
-                  Next
-                </button>
-              </div>
             </form>
           </div>
-        </>
+        </div>
       ) : step === 3 ? (
-        <>
-          <div className="overflow-y-auto scrollbar-hide h-[800px] lg:h-auto">
-            <h1 className="text-textclr font-semibold mb-3">
-              Select the Amenities
-            </h1>
-            <div className="grid lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-5 my-4 px-7 mb-9">
-              {iconsArray.map((icon, index) => (
-                <button
-                  key={index}
-                  className={`border rounded-3xl py-2 w-full my-2 transition-all duration-300 ${
-                    clickedButtons.includes(index)
-                      ? "bg-[#B19BD91A] text-[#B19BD9]" 
-                      : "bg-white text-[#828282]"
-                  }`}
-                  onClick={() => handleButtonClick(index)}
-                >
-                  <div className="flex items-center justify-center gap-3">
-                    <div>{icon}</div>
-                    <p>{namesArray[index]}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className="w-full flex justify-center mb-5">
+        <div className="overflow-y-auto h-[600px] scrollbar-hide">
+          <h1 className="text-textclr font-semibold mb-3">
+            Select the Amenities
+          </h1>
+          <div className="grid lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-5 my-4 px-7 mb-9">
+            {iconsArray.map((icon, index) => (
               <button
-                onClick={handleNextStep}
-                className="mt-10 text-center items-center bg-bluebutton px-16 py-2 rounded-full text-white"
+                key={index}
+                className={`border rounded-3xl py-2 w-full my-2 transition-all duration-300 ${
+                  clickedButtons.includes(index)
+                    ? "bg-[#B19BD91A] text-[#B19BD9]" // Pink background and text when clicked
+                    : "bg-white text-[#828282]"
+                }`}
+                onClick={() => handleButtonClick(index)}
               >
-                Next
+                <div className="flex items-center justify-center gap-3">
+                  <div>{icon}</div>
+                  <p>{namesArray[index]}</p>
+                </div>
               </button>
-            </div>
+            ))}
           </div>
-        </>
+        </div>
       ) : step === 4 ? (
-        <>
+        <div className="overflow-y-auto h-[600px] scrollbar-hide">
           <div>
             <div className="bg-purple-50 mb-20 rounded-xl">
               <div className="lg:flex gap-10 md:flex-wrap py-3 px-7 mb-5 pt-5">
@@ -689,18 +657,29 @@ const Properties = () => {
                   />
                 </div>
               ))}
-              <div className="w-full flex justify-center">
-                <button
-                  onClick={handleSave}
-                  className="text-center items-center bg-bluebutton px-20 mt-24 py-3 rounded-full text-white"
-                >
-                  Save
-                </button>
-              </div>
             </div>
           </div>
-        </>
+        </div>
       ) : null}
+
+      <div className="w-full flex justify-center mt-6 mb-7">
+        {step < 4 && (
+          <button
+            onClick={handleNextStep}
+            className="text-center text-white items-center bg-bluebutton px-16 py-2 rounded-full"
+          >
+            Next
+          </button>
+        )}
+        {step === 4 && (
+          <button
+            onClick={handleSave}
+            className="text-center items-center bg-bluebutton px-20 py-3 rounded-full text-white"
+          >
+            Save
+          </button>
+        )}
+      </div>
     </div>
   );
 };
