@@ -467,20 +467,22 @@ export default function Bookings() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Other Document</label>
-                <div className="flex space-x-4">
-                  {uploadedOtherImage && (
-                    <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden border-[1px]">
-                      <img
-                        src={uploadedOtherImage}
-                        alt="Other Doc"
-                        className="object-cover h-full w-full"
-                      />
-                    </div>
-                  )}
+              {userType !== "LandLord" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Other Document</label>
+                  <div className="flex space-x-4">
+                    {uploadedOtherImage && (
+                      <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden border-[1px]">
+                        <img
+                          src={uploadedOtherImage}
+                          alt="Other Doc"
+                          className="object-cover h-full w-full"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="flex justify-center ">
