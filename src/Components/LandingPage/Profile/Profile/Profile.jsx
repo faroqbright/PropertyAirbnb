@@ -103,11 +103,6 @@ export default function Bookings() {
   };
 
   const handleSaveChanges = async () => {
-    if (!uploadedImage || !uploadedOtherImage) {
-      toast.error("Please upload all required images before saving.");
-      return;
-    }
-    setLoadingSave(true);
 
     try {
       if (!userInfo || !userInfo.uid || !auth.currentUser) {

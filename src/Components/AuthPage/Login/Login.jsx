@@ -162,7 +162,7 @@ const Login = () => {
   
   return (
     <div className="flex mx-auto justify-center min-h-screen p-4">
-      <div className="bg-white rounded-2xl border-[1.5px] border-gray-200 w-full max-w-3xl px-10 lg:px-20 py-20">
+      <div className="bg-white rounded-2xl border-[1.5px] border-gray-200 w-full max-w-2xl px-10 lg:px-20 py-20">
         <h1 className="text-center text-xl font-semibold text-gray-800 mb-8">
           Welcome Back!
         </h1>
