@@ -83,6 +83,11 @@ export default function Card() {
           <div
             key={property.id}
             className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"
+            onClick={() =>
+              router.push(
+                `/Landing/Properties/PropertiesDetail?id=${property.id}`
+              )
+            }
           >
             <div className="relative h-[200px] w-full overflow-hidden">
               <Swiper
@@ -102,7 +107,7 @@ export default function Card() {
               </Swiper>
 
               <Heart
-                className={`absolute top-2 right-2 h-6 w-6 text-black ${
+                className={`absolute top-2 right-2 h-6 w-6 text-black z-50 ${
                   property.favorite
                     ? "fill-[#FDA4AF] text-[#F86D83]"
                     : "fill-transparent/25"

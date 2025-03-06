@@ -20,7 +20,7 @@ import {
   WavesLadder,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { db } from "../../../../firebase/firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
 import {
@@ -30,6 +30,7 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 
 const Properties = () => {
   const [step, setStep] = useState(1);
@@ -54,6 +55,7 @@ const Properties = () => {
   const [roomInput, setRoomInput] = useState({ img: "", price: "" });
   const fileInputRef = useRef(null);
   const [clickedButtons, setClickedButtons] = useState([]);
+  const userId = useSelector((state) => state?.auth?.userInfo?.uid);
 
   const uploadImage = async (file) => {
     try {
@@ -96,6 +98,7 @@ const Properties = () => {
       );
 
       const dataToSave = {
+        userId: userId,
         name: propertyData.name,
         location: propertyData.location,
         description: propertyData.description,
@@ -111,7 +114,6 @@ const Properties = () => {
 
       const docRef = await addDoc(collection(db, "properties"), dataToSave);
       toast.success("Property Created Successfully");
-      console.log("data is:", dataToSave);
       router.push("/Landing/Home");
     } catch (e) {
       toast.error("Error adding document: ", e);

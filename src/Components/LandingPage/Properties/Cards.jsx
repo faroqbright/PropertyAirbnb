@@ -83,7 +83,7 @@ export default function Card() {
                 ))}
               </Swiper>
               <Heart
-                className={`absolute top-2 right-2 h-6 w-6 text-black ${
+                className={`absolute top-2 right-2 h-6 w-6 text-black z-50 ${
                   property.favorite
                     ? "fill-[#FDA4AF] text-[#F86D83]"
                     : "fill-transparent/25"

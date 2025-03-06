@@ -1,19 +1,84 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight, Star, Check } from "lucide-react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { db } from "../../../firebase/firebaseConfig";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { set } from "date-fns";
 
 export default function Context() {
   const [selectedRooms, setSelectedRooms] = useState("room1");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const propertyId = searchParams.get("id");
   const [selectedServices, setSelectedServices] = useState([]);
   const [buttonText, setButtonText] = useState("Reserve");
   const [fromProfile, setFromProfile] = useState(false);
-  const user = useSelector((state) => state.auth.userInfo);
-  console.log(user);
+  const [property, setProperty] = useState(null);
+  const [rooms, setRooms] = useState([]);
+  const [services, setServices] = useState([]);
+  const [user, setuser] = useState([]);
+  const [userDetails, setUserDetails] = useState(null);
+
+  const userType = useSelector((state) => state.auth.userInfo?.userType);
+ 
+
+  useEffect(() => {
+    if (!propertyId) {
+      console.log("Error Fetching the Property");
+      return;
+    }
+    const fetchProperty = async () => {
+      try {
+        const propertyRef = doc(db, "properties", propertyId);
+        const propertySnap = await getDoc(propertyRef);
+
+        if (propertySnap.exists()) {
+          const propertyData = { id: propertySnap.id, ...propertySnap.data() };
+          setProperty(propertyData);
+          setRooms(propertyData.rooms || []);
+          setServices(propertyData.services || []);
+          setuser(propertyData.userId || null);
+
+          console.log("Property Data:", propertyData);
+        } else {
+          console.error("Property not found!");
+        }
+      } catch (error) {
+        console.error("Error fetching property:", error);
+      }
+    };
+
+    fetchProperty();
+  }, [propertyId]);
+
+  useEffect(() => {
+    if (!user) {
+      console.log("No user ID found.");
+      return;
+    }
+  
+    const fetchUserDetails = async () => {
+      try {
+        const userRef = doc(db, "users", user);
+        const userSnap = await getDoc(userRef);
+  
+        if (userSnap.exists()) {
+          setUserDetails(userSnap.data());
+          console.log("User Details:", userSnap.data());
+        } else {
+          console.error("User not found!");
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
+    };
+  
+    fetchUserDetails();
+  }, [user]); // Runs when user (userId) changes
 
   useEffect(() => {
     if (localStorage.getItem("fromProfile")) {
@@ -49,17 +114,17 @@ export default function Context() {
     localStorage.removeItem("fromProfile");
   };
 
-  const rooms = [
-    { id: "room1", name: "Room 1", price: 555 },
-    { id: "room2", name: "Room 2", price: 62 },
-    { id: "room3", name: "Room 3", price: 83 },
-  ];
+  // const rooms = [
+  //   { id: "room1", name: "Room 1", price: 555 },
+  //   { id: "room2", name: "Room 2", price: 62 },
+  //   { id: "room3", name: "Room 3", price: 83 },
+  // ];
 
-  const services = [
-    { id: "parking", name: "Parking lot", price: 555 },
-    { id: "primary", name: "Primary Services", price: 62 },
-    { id: "maintenance", name: "Maintenance", price: 83 },
-  ];
+  // const services = [
+  //   { id: "parking", name: "Parking lot", price: 555 },
+  //   { id: "primary", name: "Primary Services", price: 62 },
+  //   { id: "maintenance", name: "Maintenance", price: 83 },
+  // ];
 
   const calculateTotal = () => {
     const roomsTotal = rooms
@@ -199,12 +264,15 @@ export default function Context() {
           <span className="text-xl font-bold">${calculateTotal()}</span>
         </div>
 
-        <button
-          onClick={handleButtonClick}
-          className="w-full cursor-pointer bg-bluebutton text-white rounded-full py-2"
-        >
-          {buttonText}
-        </button>
+        {/* Conditionally render the button based on userDetails */}
+        {userType !== "LandLord" && (
+          <button
+            onClick={handleButtonClick}
+            className="w-full cursor-pointer bg-bluebutton text-white rounded-full py-2"
+          >
+            {buttonText}
+          </button>
+        )}
       </div>
     </div>
   );
