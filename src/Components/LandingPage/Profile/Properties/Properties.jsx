@@ -152,6 +152,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
       setCurrentPage(page);
     }
   };
+  
 
   return (
     <>
