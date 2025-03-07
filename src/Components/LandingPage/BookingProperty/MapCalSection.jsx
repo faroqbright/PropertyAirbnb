@@ -23,7 +23,11 @@ import {
   Star,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSelector } from "react-redux";
+import { db } from "../../../firebase/firebaseConfig";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 export default function Header() {
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -64,6 +68,73 @@ export default function Header() {
   const weekStart = startOfWeek(monthStart);
   const weekEnd = endOfWeek(monthEnd);
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  const [property, setProperty] = useState(null);
+  const [rooms, setRooms] = useState([]);
+  const [services, setServices] = useState([]);
+  const [user, setuser] = useState([]);
+  const [userDetails, setUserDetails] = useState(null);
+  const [description, setdescription] = useState(null);
+  const [name, setname] = useState(null);
+  const [price, setprice] = useState(null);
+  const [location, setlocation] = useState(null);
+  const userType = useSelector((state) => state.auth.userInfo?.userType);
+  const searchParams = useSearchParams();
+  const propertyId = searchParams.get("id");
+
+  useEffect(() => {
+    if (!propertyId) {
+      toast.error("Error Fetching the Property");
+      return;
+    }
+    const fetchProperty = async () => {
+      try {
+        const propertyRef = doc(db, "properties", propertyId);
+        const propertySnap = await getDoc(propertyRef);
+
+        if (propertySnap.exists()) {
+          const propertyData = { id: propertySnap.id, ...propertySnap.data() };
+          setProperty(propertyData);
+          setuser(propertyData?.userId || null);
+        } else {
+          toast.error("Property not found!");
+        }
+      } catch (error) {
+        toast.error("Error fetching property:", error);
+      }
+    };
+
+    fetchProperty();
+  }, [propertyId]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!user) {
+        toast.error("No user ID found.");
+        return;
+      }
+  
+      const fetchUserDetails = async () => {
+        try {
+          const userRef = doc(db, "users", user);
+          const userSnap = await getDoc(userRef);
+  
+          if (userSnap.exists()) {
+            setUserDetails(userSnap.data());
+          } else {
+            console.error("User not found!");
+          }
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+        }
+      };
+  
+      fetchUserDetails();
+    }, 2000); // Delay the effect by 5 seconds
+  
+    return () => clearTimeout(timeoutId);
+  }, [user]);
+   
 
   const AddZoomControl = () => {
     const map = useMap();
@@ -136,8 +207,18 @@ export default function Header() {
     };
   }, [router]);
 
+  const convertTimestampToMonthYear = (timestamp) => {
+    if (!timestamp?.seconds) return "Invalid Date";
+
+    const date = new Date(timestamp.seconds * 1000); // Convert seconds to milliseconds
+    return new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  };
+
   return (
-    <div className="bg-white px-2.5 flex flex-col items-center lg:mb-4 lg:ml-16 lg:mr-4 sm:mx-20 lg:-mt-40">
+    <div className="bg-white px-2.5 flex flex-col items-center lg:mb-4 lg:ml-16 lg:mr-4 sm:mx-20">
       <div className="flex flex-col lg:flex-row items-center lg:items-start p-4 lg:py-6 lg:pl-16 gap-8 lg:gap-24 w-full max-w-screen-2xl mx-auto">
         <div className="w-full lg:w-[50%] md:space-x-4 lg:space-x-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 mx-auto lg:mr-10 order-2 mt-10 lg:mt-60">
           {fromProfile === true ? (
@@ -303,8 +384,8 @@ export default function Header() {
           </div>
           <div className="flex items-start space-x-4 py-6 border-b">
             <div className="relative w-12 h-12 sm:w-14 sm:h-14">
-              <Image
-                src="/assets/Small.png"
+              <img
+                src={userDetails?.personalInfo?.image || "/default-profile.png"}
                 alt="Host Profile"
                 width={56}
                 height={56}
@@ -314,7 +395,7 @@ export default function Header() {
             <div className="flex-1">
               <div className="flex items-center space-x-2">
                 <h2 className="sm:text-[20px] text-[16px] font-semibold sm:mr-4">
-                  Hosted by Ghazal
+                  Hosted by {userDetails?.FullName}
                 </h2>
                 <div className="sm:flex hidden items-center sm:text-[13px] text-[11px] text-gray-500">
                   <Star className="sm:w-4 sm:h-4 w-3 h-3 text-purple-500 mr-1 mb-0.5" />
@@ -336,19 +417,15 @@ export default function Header() {
                 </div>
               </div>
               <p className="text-sm text-gray-400 font-medium">
-                Joined May 2021
+                Joined{" "}
+                {userDetails?.joinedAt
+                  ? convertTimestampToMonthYear(userDetails.joinedAt)
+                  : "Unknown"}
               </p>
+
               <div className="flex -ml-8 sm:-ml-0 space-x-4 text-xs sm:text-sm text-gray-500 mt-3 mb-4">
                 <span>Response rate: 100%</span>
                 <span>Response time: within an hour</span>
-              </div>
-              <div className="flex space-x-2 mt-2 -ml-12 sm:-ml-0">
-                <button className="px-8 py-1.5 border rounded-full text-gray-500">
-                  Gym
-                </button>
-                <button className="px-6 py-1.5 border rounded-full text-gray-500">
-                  Running
-                </button>
               </div>
             </div>
           </div>

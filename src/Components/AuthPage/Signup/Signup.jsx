@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "../../../firebase/firebaseConfig";
-import { setDoc, doc, getDoc } from "firebase/firestore";
+import { setDoc, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -37,6 +37,7 @@ const Signup = () => {
     Password: "",
     ConfirmPassword: "",
     role: "LandLord",
+    joinedAt: serverTimestamp(),
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedOwnerDoc, setSelectedOwnerDoc] = useState(null);
@@ -194,6 +195,7 @@ const Signup = () => {
         number: formData.Number,
         userType: activeTab,
         role: formData.role,
+        joinedAt: serverTimestamp(),
         cnicUrl,
         ownerDocUrl,
       });

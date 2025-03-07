@@ -110,6 +110,7 @@ const Properties = () => {
         rooms: additionalRoomPrice,
         imageUrls: imageUrls,
         status: "Approved",
+        active: 1,
       };
 
       const docRef = await addDoc(collection(db, "properties"), dataToSave);

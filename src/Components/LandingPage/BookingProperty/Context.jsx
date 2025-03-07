@@ -22,13 +22,15 @@ export default function Context() {
   const [services, setServices] = useState([]);
   const [user, setuser] = useState([]);
   const [userDetails, setUserDetails] = useState(null);
-
+  const [description, setdescription] = useState(null);
+  const [name, setname] = useState(null);
+  const [price, setprice] = useState(null);
+  const [location, setlocation] = useState(null);
   const userType = useSelector((state) => state.auth.userInfo?.userType);
- 
 
   useEffect(() => {
     if (!propertyId) {
-      console.log("Error Fetching the Property");
+      toast.error("Error Fetching the Property");
       return;
     }
     const fetchProperty = async () => {
@@ -39,11 +41,27 @@ export default function Context() {
         if (propertySnap.exists()) {
           const propertyData = { id: propertySnap.id, ...propertySnap.data() };
           setProperty(propertyData);
-          setRooms(propertyData.rooms || []);
-          setServices(propertyData.services || []);
-          setuser(propertyData.userId || null);
+          setRooms(
+            propertyData.rooms.map((room, index) => ({
+              ...room,
+              id: `room-${index + 1}`,
+              name: `Room ${index + 1}`,
+            }))
+          );
+          setServices(
+            propertyData.additionalCosts.map((service, index) => ({
+              ...service,
+              id: `service-${index + 1}`,
+              name: service.name, // Keep the original name
+              price: service.cost, // Rename cost to price
+            }))
+          );
+          setname(propertyData?.name || null);
+          setdescription(propertyData?.description || null);
+          setprice(propertyData?.pricePerMonth || null);
+          setlocation(propertyData?.location || null);
+          setuser(propertyData?.userId || null);
 
-          console.log("Property Data:", propertyData);
         } else {
           console.error("Property not found!");
         }
@@ -56,29 +74,32 @@ export default function Context() {
   }, [propertyId]);
 
   useEffect(() => {
-    if (!user) {
-      console.log("No user ID found.");
-      return;
-    }
-  
-    const fetchUserDetails = async () => {
-      try {
-        const userRef = doc(db, "users", user);
-        const userSnap = await getDoc(userRef);
-  
-        if (userSnap.exists()) {
-          setUserDetails(userSnap.data());
-          console.log("User Details:", userSnap.data());
-        } else {
-          console.error("User not found!");
-        }
-      } catch (error) {
-        console.error("Error fetching user details:", error);
+    const timeoutId = setTimeout(() => {
+      if (!user) {
+        toast.error("No user ID found.");
+        return;
       }
-    };
   
-    fetchUserDetails();
-  }, [user]); // Runs when user (userId) changes
+      const fetchUserDetails = async () => {
+        try {
+          const userRef = doc(db, "users", user);
+          const userSnap = await getDoc(userRef);
+  
+          if (userSnap.exists()) {
+            setUserDetails(userSnap.data());
+          } else {
+            console.error("User not found!");
+          }
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+        }
+      };
+  
+      fetchUserDetails();
+    }, 2000); // Delay the effect by 5 seconds
+  
+    return () => clearTimeout(timeoutId);
+  }, [user]);
 
   useEffect(() => {
     if (localStorage.getItem("fromProfile")) {
@@ -129,11 +150,11 @@ export default function Context() {
   const calculateTotal = () => {
     const roomsTotal = rooms
       .filter((room) => selectedRooms.includes(room.id))
-      .reduce((sum, room) => sum + room.price, 0);
+      .reduce((sum, room) => sum + Number(room.price), 0); // Convert price to number
 
     const servicesTotal = services
       .filter((service) => selectedServices.includes(service.id))
-      .reduce((sum, service) => sum + service.price, 0);
+      .reduce((sum, service) => sum + Number(service.price), 0); // Convert price to number
 
     return roomsTotal + servicesTotal;
   };
@@ -142,21 +163,16 @@ export default function Context() {
     <div className="w-full flex flex-col lg:flex-row gap-10 lg:pr-20 lg:pl-32 min-[450px]:px-8 px-4 sm:px-28 pb-10 md:pb-0 lg:mx-0">
       <div className="lg:w-[60%] w-full px-3">
         <h1 className="font-bold text-black text-[24px] sm:text-[26px]">
-          Entire loft in Florence, Italy
+          {location}
         </h1>
         <div className="mt-2">
           <p className="font-medium text-gray-600 text-[16px] sm:text-[18px]">
-            The House of Books, chic with City View
+            {name}
           </p>
         </div>
         <div className="mt-8">
           <p className="text-gray-600 sm:text-[14px] text-[13px]">
-            Come and stay in this superb duplex T2, in the heart of the historic
-            center of Bordeaux. Spacious and bright, in a real Bordeaux building
-            in exposed stone, you will enjoy all the charms of the city thanks
-            to its ideal location. Close to many shops, bars and restaurants,
-            you can access the apartment by tram A and C and bus routes 27 and
-            44. ...
+            {description}
           </p>
         </div>
 
@@ -171,7 +187,7 @@ export default function Context() {
       <div className="lg:w-[40%] w-full bg-[#B19BD9] text-white rounded-2xl p-6 relative">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-gray-300">
           <div className="text-2xl font-medium">
-            $75{" "}
+            {price}{" "}
             <span className="text-lg text-gray-200 font-normal">/ month</span>
           </div>
           <div className="flex items-center gap-2 mt-2 md:mt-0">
