@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,19 +11,22 @@ import {
   Heart,
   Star,
 } from "lucide-react";
-import { db } from "../../../firebase/firebaseConfig"; 
-import { collection, getDocs } from "firebase/firestore"; 
-import { Swiper, SwiperSlide } from "swiper/react"; 
-import "swiper/css"; 
-import "swiper/css/pagination"; 
-import { Pagination } from "swiper/modules"; 
+import { db } from "../../../firebase/firebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/pagination";
+import { Pagination } from "swiper/modules";
 
-export default function Card() {
+export default function Card({ filters = {} }) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const propertiesPerPage = 12;
   const [properties, setProperties] = useState([]);
   const [totalProperties, setTotalProperties] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(null);
+  const [userType, setUserType] = useState("");
+  const userInfo = useSelector((state) => state.auth.userInfo);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -42,10 +46,45 @@ export default function Card() {
     fetchProperties();
   }, []);
 
+  useEffect(() => {
+    if (userInfo) {
+      setUserType(userInfo?.userType);
+    }
+  }, [userInfo]);
+
+  const { location = "", budget = 0, amenities = [], rooms = "" } = filters;
+
+  const filteredProperties = properties.filter((property) => {
+    const matchesLocation = location
+      ? property.location?.toLowerCase().includes(location.toLowerCase())
+      : true;
+
+    const propertyPrice = Number(property.pricePerMonth) || 0;
+    const filterBudget = Number(budget) || 0;
+    const matchesBudget =
+      filterBudget > 0 ? propertyPrice <= filterBudget : true;
+
+    const matchesAmenities =
+      amenities.length > 0
+        ? amenities.every((amenityId) =>
+            property.amenities?.includes(amenityId)
+          )
+        : true;
+
+    const propertyRooms = Number(property.rooms?.length) || 0;
+    const filterRooms = Number(rooms) || 0;
+    const matchesRooms = filterRooms > 0 ? propertyRooms === filterRooms : true;
+
+    return matchesLocation && matchesBudget && matchesAmenities && matchesRooms;
+  });
+
   const indexOfLastProperty = currentPage * propertiesPerPage;
   const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
-  const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
-  const totalPages = Math.ceil(totalProperties / propertiesPerPage);
+  const currentProperties = filteredProperties.slice(
+    indexOfFirstProperty,
+    indexOfLastProperty
+  );
+  const totalPages = Math.ceil(filteredProperties.length / propertiesPerPage);
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -83,7 +122,7 @@ export default function Card() {
                 ))}
               </Swiper>
               <Heart
-                className={`absolute top-2 right-2 h-6 w-6 text-black z-50 ${
+                className={`absolute top-2 right-2 h-6 w-6 text-black z-10 ${
                   property.favorite
                     ? "fill-[#FDA4AF] text-[#F86D83]"
                     : "fill-transparent/25"
