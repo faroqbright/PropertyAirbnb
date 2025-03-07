@@ -3,13 +3,13 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Search, Check } from "lucide-react";
 
-export default function Header() {
+export default function Header({ onSearch }) {
   const [budget, setBudget] = useState(0);
   const [showSlider, setShowSlider] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
-  const [location, setLocation] = useState('');  
-  const [rooms, setRooms] = useState(''); 
+  const [location, setLocation] = useState("");
+  const [rooms, setRooms] = useState("");
   const dialogRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -36,13 +36,21 @@ export default function Header() {
 
   const amenitiesOptions = [
     { id: 1, name: "Primary Services" },
-    { id: 2, name: "Own Bathroom" },
-    { id: 3, name: "Swimming" },
-    { id: 4, name: "Roof Garden" },
-    { id: 5, name: "Swimming" },
-    { id: 6, name: "Roof Garden" },
-    { id: 7, name: "Swimming" },
+    { id: 2, name: "Swimming Pool" },
+    { id: 3, name: "Vigilance" },
+    { id: 4, name: "Maintenance" },
+    { id: 5, name: "House Keeping" },
+    { id: 6, name: "Parking" },
+    { id: 7, name: "Own Bathroom" },
     { id: 8, name: "Roof Garden" },
+    { id: 9, name: "Cat Friendly" },
+    { id: 10, name: "Laundry" },
+    { id: 11, name: "Common Areas" },
+    { id: 12, name: "Gym" },
+    { id: 13, name: "Co Working" },
+    { id: 14, name: "Dog" },
+    { id: 15, name: "LGBT+coLivers" },
+    { id: 16, name: "Double Bed" },
   ];
 
   const toggleSelection = (id) => {
@@ -64,51 +72,26 @@ export default function Header() {
   }%, #ddd ${(budget / 10000) * 100}%)`;
 
   const handleSearch = () => {
+    const selectedAmenityNames = selectedAmenities
+      .map((id) => {
+        const amenity = amenitiesOptions.find((option) => option.id === id);
+        return amenity ? amenity.name : null;
+      })
+      .filter((name) => name !== null); 
+
     const filters = {
       location,
       budget,
-      amenities: selectedAmenities,
-      Rooms
+      amenities: selectedAmenityNames, 
+      rooms,
     };
-    
+
     if (onSearch) {
       onSearch(filters);
     }
-    
+
     console.log("Search filters:", filters);
   };
-
-  const locationInput = (
-    <input
-      id="location"
-      type="text"
-      placeholder="Where are you going?"
-      value={location}
-      onChange={(e) => setLocation(e.target.value)}
-      className="text-sm text-gray-200 placeholder:text-slate-200 text-[12px] sm:text-[13px] bg-transparent border-none outline-none w-full"
-    />
-  );
-
-  const roomsInput = (
-    <input
-      id="rooms"
-      type="text"
-      placeholder="Add here"
-      value={rooms}
-      onChange={(e) => setRooms(e.target.value)}
-      className="text-sm text-gray-200 placeholder:text-slate-200 bg-transparent border-none outline-none w-full"
-    />
-  );
-
-  const searchButton = (
-    <button
-      className="p-3 bg-white rounded-full absolute bottom-4 right-4 lg:right-5 lg:bottom-auto lg:top-auto lg:translate-y-0 flex-shrink-0 hover:bg-gray-50 transition-colors"
-      onClick={handleSearch}
-      aria-label="Search"
-    >
-      <Search className="w-5 h-5 text-gray-600" />
-    </button>
-  );
 
   return (
     <div className="relative">
@@ -135,6 +118,8 @@ export default function Header() {
               id="location"
               type="text"
               placeholder="Where are you going?"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
               className="text-sm text-gray-200 placeholder:text-slate-200 text-[12px] sm:text-[13px] bg-transparent border-none outline-none w-full"
             />
           </div>
@@ -260,12 +245,15 @@ export default function Header() {
               id="rooms"
               type="text"
               placeholder="Add here"
+              value={rooms}
+              onChange={(e) => setRooms(e.target.value)}
               className="text-sm text-gray-200 placeholder:text-slate-200 bg-transparent border-none outline-none w-full"
             />
           </div>
           <div className="w-full border-t border-gray-300 my-2 lg:hidden pb-14"></div>
           <button
             className="p-3 bg-white rounded-full absolute bottom-4 right-4 lg:right-5 lg:bottom-auto lg:top-auto lg:translate-y-0 flex-shrink-0 hover:bg-gray-50 transition-colors"
+            onClick={handleSearch}
             aria-label="Search"
           >
             <Search className="w-5 h-5 text-gray-600" />

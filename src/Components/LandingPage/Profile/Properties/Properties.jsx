@@ -149,7 +149,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
           <div
             className={`w-full ${
               userInfo.email ? "bg-[#f8f8f8]" : "bg-while"
-            } bg-white rounded-xl border-[1.5px] border-gray-200 px-4 pt-1 pb-4`}
+            } rounded-xl border-[1.5px] border-gray-200 px-4 pt-1 pb-4`}
           >
             {userInfo.email ? (
               <div className="flex flex-col items-center justify-center py-20">

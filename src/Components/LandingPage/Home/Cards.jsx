@@ -16,7 +16,7 @@ const countries = [
   "Finland",
   "Cyprus",
   "Poland",
-  "Germany",  
+  "Germany",
   "Spain",
   "Italy",
   "Sweden",
@@ -26,14 +26,12 @@ const countries = [
   "All",
 ];
 
-export default function Card() {
+export default function Card({ filters = {} }) {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(null);
   const [userType, setUserType] = useState("");
   const userInfo = useSelector((state) => state.auth.userInfo);
   const [properties, setProperties] = useState([]);
-  console.log(properties);
-
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -43,7 +41,8 @@ export default function Card() {
           id: doc.id,
           ...doc.data(),
         }));
-        setProperties(propertiesData.slice(0, 8));        
+        console.log("Raw properties data:", propertiesData); 
+        setProperties(propertiesData);
       } catch (error) {
         console.error("Error fetching properties:", error);
       }
@@ -53,10 +52,10 @@ export default function Card() {
   }, []);
 
   const handleButtonClick = (index) => {
-    if(countries[index] === "All") {
+    if (countries[index] === "All") {
       setActiveIndex(index);
-    }else{
-    setActiveIndex(index);
+    } else {
+      setActiveIndex(index);
     }
   };
 
@@ -67,10 +66,38 @@ export default function Card() {
   }, [userInfo]);
 
   const selectedCountry = activeIndex !== null ? countries[activeIndex] : null;
-  
+
   const findProperties = selectedCountry && selectedCountry !== "All"
     ? properties.filter((property) => property.location === selectedCountry)
     : properties;
+
+  const { location = "", budget = 0, amenities = [], rooms = "" } = filters;
+
+  const filteredProperties = findProperties.filter((property) => {
+    const matchesLocation = location
+      ? property.location?.toLowerCase().includes(location.toLowerCase())
+      : true;
+
+    const propertyPrice = Number(property.pricePerMonth) || 0;
+    const filterBudget = Number(budget) || 0;
+    const matchesBudget = filterBudget > 0 ? propertyPrice <= filterBudget : true;
+
+    const matchesAmenities =
+      amenities.length > 0
+        ? amenities.every((amenityId) =>
+            property.amenities?.includes(amenityId)
+          )
+        : true;
+
+    const propertyRooms = Number(property.rooms?.length) || 0;
+    const filterRooms = Number(rooms) || 0;
+    const matchesRooms = filterRooms > 0 ? propertyRooms === filterRooms : true;
+
+    return matchesLocation && matchesBudget && matchesAmenities && matchesRooms;
+  });
+
+  console.log("Filters:", filters); 
+  console.log("Filtered properties:", filteredProperties); 
 
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5">
@@ -93,7 +120,7 @@ export default function Card() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {findProperties.map((property) => (
+        {filteredProperties.map((property) => (
           <div
             key={property.id}
             className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"
@@ -121,7 +148,7 @@ export default function Card() {
               </Swiper>
 
               <Heart
-                className={`absolute top-2 right-2 h-6 w-6 text-black z-50 ${
+                className={`absolute top-2 right-2 h-6 w-6 text-black z-10 ${
                   property.favorite
                     ? "fill-[#FDA4AF] text-[#F86D83]"
                     : "fill-transparent/25"
