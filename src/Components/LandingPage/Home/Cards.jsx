@@ -41,7 +41,6 @@ export default function Card({ filters = {} }) {
           id: doc.id,
           ...doc.data(),
         }));
-        console.log("Raw properties data:", propertiesData); 
         setProperties(propertiesData);
       } catch (error) {
         console.error("Error fetching properties:", error);
@@ -95,9 +94,6 @@ export default function Card({ filters = {} }) {
 
     return matchesLocation && matchesBudget && matchesAmenities && matchesRooms;
   });
-
-  console.log("Filters:", filters); 
-  console.log("Filtered properties:", filteredProperties); 
 
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5">

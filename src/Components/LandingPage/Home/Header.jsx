@@ -90,7 +90,6 @@ export default function Header({ onSearch }) {
       onSearch(filters);
     }
 
-    console.log("Search filters:", filters);
   };
 
   return (
