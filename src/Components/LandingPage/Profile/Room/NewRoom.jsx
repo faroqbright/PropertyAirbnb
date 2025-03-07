@@ -20,7 +20,7 @@ import {
   WavesLadder,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { db } from "../../../../firebase/firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
 import {
@@ -37,6 +37,8 @@ const Properties = () => {
   const router = useRouter();
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [selectedRoomImages, setSelectedRoomImages] = useState([]);
+  const [selectedRoomFiles, setSelectedRoomFiles] = useState([]);
   const [propertyData, setPropertyData] = useState({
     name: "",
     location: "",
@@ -52,7 +54,7 @@ const Properties = () => {
   const [additionalCosts, setAdditionalCosts] = useState([]);
   const [formInput, setFormInput] = useState({ name: "", cost: "" });
   const [additionalRoomPrice, setAdditionalRoomPrice] = useState([]);
-  const [roomInput, setRoomInput] = useState({ img: "", price: "" });
+  const [roomInput, setRoomInput] = useState({ price: "" });
   const fileInputRef = useRef(null);
   const [clickedButtons, setClickedButtons] = useState([]);
   const userId = useSelector((state) => state?.auth?.userInfo?.uid);
@@ -73,7 +75,9 @@ const Properties = () => {
           "state_changed",
           (snapshot) => {
             console.log(
-              `Upload is ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}% done`
+              `Upload is ${
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+              }% done`
             );
           },
           (error) => {
@@ -93,10 +97,25 @@ const Properties = () => {
 
   const handleSave = async () => {
     try {
+      // Upload property images
       const imageUrls = await Promise.all(
         selectedFiles.map((file) => uploadImage(file))
       );
 
+      // Upload room images and update the additionalRoomPrice array
+      const updatedRooms = await Promise.all(
+        additionalRoomPrice.map(async (room) => {
+          const roomImageUrls = await Promise.all(
+            room.images.map((file) => uploadImage(file))
+          );
+          return {
+            ...room,
+            images: roomImageUrls, // Replace File objects with URLs
+          };
+        })
+      );
+
+      // Prepare the data to save
       const dataToSave = {
         userId: userId,
         name: propertyData.name,
@@ -107,29 +126,35 @@ const Properties = () => {
         pricePerMonth: propertyData.pricePerMonth,
         additionalCosts: additionalCosts,
         amenities: clickedButtons.map((index) => namesArray[index]),
-        rooms: additionalRoomPrice,
+        rooms: updatedRooms, // Use the updated rooms array
         imageUrls: imageUrls,
         status: "Approved",
         active: 1,
       };
 
+      // Save the data to Firestore
       const docRef = await addDoc(collection(db, "properties"), dataToSave);
       toast.success("Property Created Successfully");
       router.push("/Landing/Home");
+      // console.log("Document written with ID: ", dataToSave);
+      
     } catch (e) {
-      toast.error("Error adding document: ", e);
+      console.error("Error adding document: ", e); // Log the error
+      toast.error("Error adding document: " + e.message); // Show the error message
     }
   };
 
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files);
-    if (files.length + selectedFiles.length <= 5) {
-      const newFiles = files.map((file) => URL.createObjectURL(file));
-      setSelectedImages((prev) => [...prev, ...newFiles]);
-      setSelectedFiles((prev) => [...prev, ...files]);
-    } else {
-      toast.error("You can only upload up to 5 images.");
+
+    if (selectedFiles.length + files.length > 7) {
+      toast.error("You can only upload up to 7 images.");
+      return;
     }
+
+    const newFiles = files.map((file) => URL.createObjectURL(file));
+    setSelectedImages((prev) => [...prev, ...newFiles]);
+    setSelectedFiles((prev) => [...prev, ...files]);
   };
 
   const handleRemoveImage = (index) => {
@@ -137,6 +162,26 @@ const Properties = () => {
     const updatedFiles = selectedFiles.filter((_, i) => i !== index);
     setSelectedImages(updatedImages);
     setSelectedFiles(updatedFiles);
+  };
+
+  const handleImageChangeRoom = (event) => {
+    const files = Array.from(event.target.files);
+
+    if (selectedRoomFiles.length + files.length > 7) {
+      toast.error("You can only upload up to 7 images.");
+      return;
+    }
+
+    const newFiles = files.map((file) => URL.createObjectURL(file));
+    setSelectedRoomImages((prev) => [...prev, ...newFiles]);
+    setSelectedRoomFiles((prev) => [...prev, ...files]);
+  };
+
+  const handleRemoveRoomImage = (index) => {
+    const updatedImages = selectedRoomImages.filter((_, i) => i !== index);
+    const updatedFiles = selectedRoomFiles.filter((_, i) => i !== index);
+    setSelectedRoomImages(updatedImages);
+    setSelectedRoomFiles(updatedFiles);
   };
 
   const handleChange = (e) => {
@@ -168,28 +213,19 @@ const Properties = () => {
     setRoomInput({ ...roomInput, [e.target.name]: e.target.value });
   };
 
-  const handleImageChangeRoom = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageUrl = await uploadImage(file);
-      setRoomInput((prev) => ({ ...prev, img: imageUrl }));
-    }
-    e.target.value = "";
-  };
-
-  const handleAddRoom = async (e) => {
+  const handleAddRoom = (e) => {
     e.preventDefault();
-    if (roomInput.price && roomInput.img) {
-      setAdditionalRoomPrice([...additionalRoomPrice, roomInput]);
-      setRoomInput({ img: "", price: "" });
+    if (roomInput.price && selectedRoomFiles.length >= 5) {
+      setAdditionalRoomPrice([
+        ...additionalRoomPrice,
+        { ...roomInput, images: selectedRoomFiles },
+      ]);
+      setRoomInput({ price: "" });
+      setSelectedRoomImages([]);
+      setSelectedRoomFiles([]);
     } else {
-      toast.error("Please fill all fields in the Room section.");
+      toast.error("Please fill all fields and upload at least 5 images.");
     }
-  };
-
-  const handleRemoveImageRoom = () => {
-    setRoomInput((prev) => ({ ...prev, img: "" }));
-    document.getElementById("image-upload-room").value = "";
   };
 
   const handleDeleteRoom = (index) => {
@@ -248,9 +284,9 @@ const Properties = () => {
       !propertyData.description ||
       !propertyData.longitude ||
       !propertyData.latitude ||
-      selectedFiles.length === 0
+      selectedFiles.length < 5
     ) {
-      toast.error("Please fill all fields in Step 1.");
+      toast.error("Please fill all fields and upload at least 5 images.");
       return false;
     }
     return true;
@@ -272,11 +308,20 @@ const Properties = () => {
     return true;
   };
 
+  const validateStep4 = () => {
+    if (selectedRoomFiles.length < 5) {
+      toast.error("Please upload at least 5 images for the room.");
+      return false;
+    }
+    return true;
+  };
+
   const handleNextStep = (e) => {
     e.preventDefault();
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
     if (step === 3 && !validateStep3()) return;
+    if (step === 4 && !validateStep4()) return;
     setStep(step + 1);
   };
 
@@ -560,7 +605,7 @@ const Properties = () => {
                 key={index}
                 className={`border rounded-3xl py-2 w-full my-2 transition-all duration-300 ${
                   clickedButtons.includes(index)
-                    ? "bg-[#B19BD91A] text-[#B19BD9]" // Pink background and text when clicked
+                    ? "bg-[#B19BD91A] text-[#B19BD9]"
                     : "bg-white text-[#828282]"
                 }`}
                 onClick={() => handleButtonClick(index)}
@@ -581,34 +626,38 @@ const Properties = () => {
                 <div className="flex lg:flex-row flex-col gap-3 mt-5 mb-10">
                   <div
                     className="flex flex-col items-center justify-center border-[1.5px] rounded-xl cursor-pointer bg-white"
-                    onClick={handleClick}
+                    onClick={() =>
+                      document.getElementById("image-upload-room").click()
+                    }
                   >
                     <p className="pt-5 px-16 text-textclr">+</p>
                     <p className="pb-8 px-16 text-textclr">Upload Photos</p>
                     <input
-                      ref={fileInputRef}
-                      id="image-upload"
+                      id="image-upload-room"
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       onChange={handleImageChangeRoom}
                     />
                   </div>
-                  {roomInput.img && (
-                    <div className="relative items-center">
-                      <img
-                        src={roomInput.img}
-                        alt="Room Preview"
-                        className="h-28 rounded-xl sm:min-w-full object-cover md:w-full"
-                      />
-                      <button
-                        onClick={handleRemoveImageRoom}
-                        className="absolute top-[-15px] right-[-10px] bg-slate-500 text-white rounded-full px-2.5"
-                      >
-                        <p className="mb-1">x</p>
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-3">
+                    {selectedRoomImages.map((image, index) => (
+                      <div key={index} className="relative items-center">
+                        <img
+                          src={image}
+                          alt={`Room Preview ${index + 1}`}
+                          className="h-28 rounded-xl sm:min-w-full object-cover md:w-full"
+                        />
+                        <button
+                          onClick={() => handleRemoveRoomImage(index)}
+                          className="absolute top-[-15px] right-[-10px] bg-slate-500 text-white rounded-full px-2.5"
+                        >
+                          <p className="mb-1">x</p>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="lg:flex w-full items-center justify-between gap-8 pb-10 px-4 sm:px-8">
@@ -653,11 +702,16 @@ const Properties = () => {
                       <Trash2 className="text-red-700" size={18} />
                     </div>
                   </div>
-                  <img
-                    src={room.img}
-                    alt={`Room ${index + 1}`}
-                    className="h-28 rounded-xl"
-                  />
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {room.images.map((image, imgIndex) => (
+                      <img
+                        key={imgIndex}
+                        src={URL.createObjectURL(image)}
+                        alt={`Room ${index + 1} Image ${imgIndex + 1}`}
+                        className="h-28 rounded-xl"
+                      />
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

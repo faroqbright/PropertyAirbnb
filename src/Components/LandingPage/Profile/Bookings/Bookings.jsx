@@ -179,7 +179,7 @@ export default function Bookings() {
         {userInfo.email ? (
           <div className="flex flex-col items-center justify-center py-20 ">
             <Image
-              src="/assets/NoBookings.jpeg"
+              src="/assets/notFound.jpeg"
               alt="No Bookings"
               width={300}
               height={300}

@@ -154,7 +154,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
             {userInfo.email ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Image
-                  src="/assets/NoBookings.jpeg"
+                  src="/assets/notFound.jpeg"
                   alt="No Properties"
                   width={300}
                   height={300}

@@ -120,7 +120,7 @@ export default function Card({ filters = {} }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredProperties.map((property) => (
+        {filteredProperties.slice(0, 8).map((property) => (
           <div
             key={property.id}
             className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"
