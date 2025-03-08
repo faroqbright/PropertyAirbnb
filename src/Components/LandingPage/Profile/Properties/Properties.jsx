@@ -223,7 +223,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                       key={property.id}
                       className="flex flex-col md:flex-row justify-between items-start md:items-center py-4 border-b last:border-none"
                     >
-                      <div className="w-full md:w-64 h-48 mb-4 md:mb-0 overflow-hidden rounded-lg flex-shrink-0">
+                      <div className="w-full md:w-64 h-36 2xl:h-44 mb-4 md:mb-0 overflow-hidden rounded-lg flex-shrink-0">
                         {property?.imageUrls &&
                         Array.isArray(property.imageUrls) ? (
                           <Swiper
@@ -285,7 +285,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
               </>
             )}
           </div>
-          <div className="flex items-center justify-end space-x-1 sm:space-x-2 ">
+          <div className="flex items-center justify-end space-x-1 sm:space-x-2 mt-7">
             <button
               className="p-2 hidden sm:block rounded-full border border-gray-300 bg-white hover:bg-gray-100"
               onClick={() => goToPage(1)}
