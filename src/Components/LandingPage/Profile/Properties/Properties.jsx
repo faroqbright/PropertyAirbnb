@@ -50,7 +50,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const userInfo = useSelector((state) => state.auth.userInfo);
   const [properties, setProperties] = useState(initialProperties);
   const [userType, setUserType] = useState("");
-  const propertiesPerPage = 12;
+  const propertiesPerPage = 3;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProperties, setTotalProperties] = useState(0);
   const router = useRouter();
@@ -152,7 +152,10 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
       setCurrentPage(page);
     }
   };
-  
+
+  const startIndex = (currentPage - 1) * propertiesPerPage;
+  const endIndex = startIndex + propertiesPerPage;
+  const currentProperties = properties.slice(startIndex, endIndex);
 
   return (
     <>
@@ -174,7 +177,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
             <div className="flex space-x-2 w-full md:w-auto mt-2 md:mt-0">
               <button
                 className={`px-4 w-full md:w-40 py-2.5 text-sm font-medium rounded-full text-nowrap ${
-                  action === "Add New Room"
+                  action === "Add New Property"
                     ? "bg-bluebutton text-white"
                     : "bg-bluebutton text-white"
                 }`}
@@ -205,7 +208,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
               </div>
             ) : (
               <>
-                {properties.map((property) => {
+                {currentProperties.map((property) => {
                   const price =
                     typeof property.price === "object"
                       ? property.price.amount || "$0"
@@ -220,20 +223,20 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                       key={property.id}
                       className="flex flex-col md:flex-row justify-between items-start md:items-center py-4 border-b last:border-none"
                     >
-                      <div className="w-full md:w-auto mb-4 md:mb-0">
+                      <div className="w-full md:w-64 h-48 mb-4 md:mb-0 overflow-hidden rounded-lg flex-shrink-0">
                         {property?.imageUrls &&
                         Array.isArray(property.imageUrls) ? (
                           <Swiper
                             modules={[Pagination]}
                             pagination={{ clickable: true }}
-                            className="w-full md:w-64 h-48 rounded-lg overflow-hidden"
+                            className="w-full h-full rounded-lg"
                           >
                             {property?.imageUrls?.map((image, index) => (
                               <SwiperSlide key={index}>
                                 <img
                                   src={image}
                                   alt={property.name || "Property Image"}
-                                  className="h-full w-full object-cover"
+                                  className="w-full h-full object-cover"
                                 />
                               </SwiperSlide>
                             ))}
@@ -242,13 +245,13 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                           <img
                             src={img}
                             alt={property.name || "Property Image"}
-                            className="w-full md:w-64 h-48 object-cover rounded-lg"
+                            className="w-full h-full object-cover"
                           />
                         )}
                       </div>
                       <div className="flex-grow md:ml-4">
                         <div className="flex flex-col gap-2 w-full">
-                          <h3 className="text-lg font-semibold">
+                          <h3 className="text-lg font-semibold breal-words">
                             {property?.name || "No Title"}{" "}
                             {property?.location || "No Location"}
                           </h3>
@@ -279,62 +282,60 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                     </div>
                   );
                 })}
-                <div className="flex items-center justify-end space-x-1 sm:space-x-2 pt-10">
-                  <button
-                    className="p-2 hidden sm:block rounded-full border border-gray-300 bg-white hover:bg-gray-100"
-                    onClick={() => goToPage(1)}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronsLeft size={18} />
-                  </button>
-                  <button
-                    className="p-2 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  {[...Array(totalPages).keys()]
-                    .slice(0, 12)
-                    .map((page) => (
-                      <button
-                        key={page + 1}
-                        className={`w-8 h-8 rounded-full border ${
-                          currentPage === page + 1
-                            ? "bg-teal-400 text-white"
-                            : "border-gray-300 bg-white hover:bg-gray-100"
-                        }`}
-                        onClick={() => goToPage(page + 1)}
-                      >
-                        {page + 1}
-                      </button>
-                    ))}
-                  {totalPages > 3 && <span className="px-2">...</span>}
-                  {totalPages > 3 && (
-                    <button
-                      className="w-8 h-8 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
-                      onClick={() => goToPage(totalPages)}
-                    >
-                      {totalPages}
-                    </button>
-                  )}
-                  <button
-                    className="p-2 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                  <button
-                    className="p-2 hidden sm:block rounded-full border border-gray-300 bg-white hover:bg-gray-100"
-                    onClick={() => goToPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronsRight size={18} />
-                  </button>
-                </div>
               </>
             )}
+          </div>
+          <div className="flex items-center justify-end space-x-1 sm:space-x-2 ">
+            <button
+              className="p-2 hidden sm:block rounded-full border border-gray-300 bg-white hover:bg-gray-100"
+              onClick={() => goToPage(1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft size={18} />
+            </button>
+            <button
+              className="p-2 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            {[...Array(totalPages).keys()].slice(0, 5).map((page) => (
+              <button
+                key={page + 1}
+                className={`w-8 h-8 rounded-full border ${
+                  currentPage === page + 1
+                    ? "bg-teal-400 text-white"
+                    : "border-gray-300 bg-white hover:bg-gray-100"
+                }`}
+                onClick={() => goToPage(page + 1)}
+              >
+                {page + 1}
+              </button>
+            ))}
+            {totalPages > 5 && <span className="px-2">...</span>}
+            {totalPages > 5 && (
+              <button
+                className="w-8 h-8 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
+                onClick={() => goToPage(totalPages)}
+              >
+                {totalPages}
+              </button>
+            )}
+            <button
+              className="p-2 rounded-full border border-gray-300 bg-white hover:bg-gray-100"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight size={18} />
+            </button>
+            <button
+              className="p-2 hidden sm:block rounded-full border border-gray-300 bg-white hover:bg-gray-100"
+              onClick={() => goToPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronsRight size={18} />
+            </button>
           </div>
         </>
       )}
