@@ -457,7 +457,7 @@ export default function Bookings() {
               </div>
             </div>
 
-            {uploadedImage && uploadedOtherImage && (
+            {uploadedImage || uploadedOtherImage ? (
               <div className="flex flex-row gap-16 ">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">CNIC</label>
@@ -493,6 +493,8 @@ export default function Bookings() {
                   </div>
                 )}
               </div>
+            ) : (
+              ""
             )}
 
             <div className="flex justify-center ">
