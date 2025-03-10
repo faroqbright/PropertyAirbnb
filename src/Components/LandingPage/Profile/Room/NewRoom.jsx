@@ -85,12 +85,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
 
       if (initialPropertyData.imageUrls) {
         setSelectedImages(initialPropertyData.imageUrls);
-        setSelectedFiles(
-          initialPropertyData.imageUrls.map((url) => ({
-            url,
-            isFromFirebase: true,
-          }))
-        );
+        setSelectedFiles(initialPropertyData.imageUrls); // Store URLs directly
       }
     }
   }, [initialPropertyData]);
@@ -133,15 +128,23 @@ const Properties = ({ propertyData: initialPropertyData }) => {
 
   const handleSave = async () => {
     try {
-      // Upload images and get their URLs
+      // Upload property images
       const imageUrls = await Promise.all(
-        selectedFiles.map((file) => uploadImage(file))
+        selectedFiles.map(
+          (file) => (file instanceof File ? uploadImage(file) : file) // If it's already a URL, keep it
+        )
       );
 
+      // Update selectedFiles with the URLs from Firebase
+      setSelectedFiles(imageUrls);
+
+      // Upload room images
       const updatedRooms = await Promise.all(
         additionalRoomPrice.map(async (room) => {
           const roomImageUrls = await Promise.all(
-            room.images.map((file) => uploadImage(file))
+            room.images.map(
+              (file) => (file instanceof File ? uploadImage(file) : file) // If it's already a URL, keep it
+            )
           );
           return {
             ...room,
@@ -149,6 +152,9 @@ const Properties = ({ propertyData: initialPropertyData }) => {
           };
         })
       );
+
+      // Update selectedRoomFiles with the URLs from Firebase
+      setSelectedRoomFiles(updatedRooms.flatMap((room) => room.images));
 
       const dataToSave = {
         userId: userId,
@@ -161,7 +167,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
         additionalCosts: additionalCosts,
         amenities: clickedButtons.map((index) => namesArray[index]),
         rooms: updatedRooms,
-        imageUrls: imageUrls, // Ensure this is set correctly
+        imageUrls: imageUrls,
         status: "Approved",
         active: 1,
       };
@@ -190,9 +196,12 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       return;
     }
 
-    const newFiles = files.map((file) => URL.createObjectURL(file));
-    setSelectedImages((prev) => [...prev, ...newFiles]);
-    setSelectedFiles((prev) => [...prev, ...files]);
+    const newFiles = files.map((file) => file); // Store File objects directly
+    setSelectedImages((prev) => [
+      ...prev,
+      ...files.map((file) => URL.createObjectURL(file)),
+    ]);
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
   };
 
   const handleRemoveImage = (index) => {
@@ -210,9 +219,12 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       return;
     }
 
-    const newFiles = files.map((file) => URL.createObjectURL(file));
-    setSelectedRoomImages((prev) => [...prev, ...newFiles]);
-    setSelectedRoomFiles((prev) => [...prev, ...files]);
+    const newFiles = files.map((file) => file); // Store File objects directly
+    setSelectedRoomImages((prev) => [
+      ...prev,
+      ...files.map((file) => URL.createObjectURL(file)),
+    ]);
+    setSelectedRoomFiles((prev) => [...prev, ...newFiles]);
   };
 
   const handleRemoveRoomImage = (index) => {
@@ -436,7 +448,11 @@ const Properties = ({ propertyData: initialPropertyData }) => {
                   {selectedImages.map((image, index) => (
                     <div key={index} className="relative items-center">
                       <img
-                        src={image}
+                        src={
+                          image instanceof File
+                            ? URL.createObjectURL(image)
+                            : image
+                        }
                         alt={`Property Preview ${index + 1}`}
                         className="h-28 rounded-xl sm:min-w-full object-cover md:w-full"
                       />
@@ -683,7 +699,11 @@ const Properties = ({ propertyData: initialPropertyData }) => {
                     {selectedRoomImages.map((image, index) => (
                       <div key={index} className="relative items-center">
                         <img
-                          src={image}
+                          src={
+                            image instanceof File
+                              ? URL.createObjectURL(image)
+                              : image
+                          }
                           alt={`Room Preview ${index + 1}`}
                           className="h-28 rounded-xl sm:min-w-full object-cover md:w-full"
                         />
@@ -741,21 +761,18 @@ const Properties = ({ propertyData: initialPropertyData }) => {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3 mt-3">
-                    {room?.images?.map(
-                      (image, imgIndex) =>
-                        image && (
-                          <img
-                            key={imgIndex}
-                            src={
-                              image instanceof File
-                                ? URL.createObjectURL(image)
-                                : image
-                            }
-                            alt={`Room ${index + 1} Image ${imgIndex + 1}`}
-                            className="h-28 rounded-xl"
-                          />
-                        )
-                    )}
+                    {room?.images?.map((image, imgIndex) => (
+                      <img
+                        key={imgIndex}
+                        src={
+                          image instanceof File
+                            ? URL.createObjectURL(image)
+                            : image
+                        }
+                        alt={`Room ${index + 1} Image ${imgIndex + 1}`}
+                        className="h-28 rounded-xl"
+                      />
+                    ))}
                   </div>
                 </div>
               ))}
