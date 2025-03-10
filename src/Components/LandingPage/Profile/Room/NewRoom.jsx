@@ -85,7 +85,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
 
       if (initialPropertyData.imageUrls) {
         setSelectedImages(initialPropertyData.imageUrls);
-        setSelectedFiles(initialPropertyData.imageUrls); // Store URLs directly
+        setSelectedFiles(initialPropertyData.imageUrls); 
       }
     }
   }, [initialPropertyData]);
@@ -128,22 +128,19 @@ const Properties = ({ propertyData: initialPropertyData }) => {
 
   const handleSave = async () => {
     try {
-      // Upload property images
       const imageUrls = await Promise.all(
         selectedFiles.map(
-          (file) => (file instanceof File ? uploadImage(file) : file) // If it's already a URL, keep it
+          (file) => (file instanceof File ? uploadImage(file) : file) 
         )
       );
 
-      // Update selectedFiles with the URLs from Firebase
       setSelectedFiles(imageUrls);
 
-      // Upload room images
       const updatedRooms = await Promise.all(
         additionalRoomPrice.map(async (room) => {
           const roomImageUrls = await Promise.all(
             room.images.map(
-              (file) => (file instanceof File ? uploadImage(file) : file) // If it's already a URL, keep it
+              (file) => (file instanceof File ? uploadImage(file) : file) 
             )
           );
           return {
@@ -153,7 +150,6 @@ const Properties = ({ propertyData: initialPropertyData }) => {
         })
       );
 
-      // Update selectedRoomFiles with the URLs from Firebase
       setSelectedRoomFiles(updatedRooms.flatMap((room) => room.images));
 
       const dataToSave = {
@@ -196,7 +192,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       return;
     }
 
-    const newFiles = files.map((file) => file); // Store File objects directly
+    const newFiles = files.map((file) => file); 
     setSelectedImages((prev) => [
       ...prev,
       ...files.map((file) => URL.createObjectURL(file)),
@@ -219,7 +215,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       return;
     }
 
-    const newFiles = files.map((file) => file); // Store File objects directly
+    const newFiles = files.map((file) => file); 
     setSelectedRoomImages((prev) => [
       ...prev,
       ...files.map((file) => URL.createObjectURL(file)),
