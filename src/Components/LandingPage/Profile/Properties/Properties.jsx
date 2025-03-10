@@ -53,6 +53,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const propertiesPerPage = 3;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProperties, setTotalProperties] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   const handleActionChange = (newAction) => {
@@ -134,15 +135,12 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
 
   const handleDeleteProperty = async (propertyId) => {
     try {
-      // Delete the document from Firebase
       await deleteDoc(doc(db, "properties", propertyId));
 
-      // Update the local state to remove the deleted property
       setProperties((prevProperties) =>
         prevProperties.filter((property) => property.id !== propertyId)
       );
 
-      // Update the total number of properties
       setTotalProperties((prevTotal) => prevTotal - 1);
     } catch (error) {
       console.error("Error deleting property: ", error);
@@ -162,7 +160,17 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
     );
   };
 
-  const totalPages = Math.ceil(properties.length / propertiesPerPage);
+  const filteredProperties = properties.filter((property) => {
+    const nameMatch = property.name
+      ?.toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const locationMatch = property.location
+      ?.toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    return nameMatch || locationMatch;
+  });
+
+  const totalPages = Math.ceil(filteredProperties.length / propertiesPerPage);
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -189,6 +197,8 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                 type="text"
                 placeholder="What are you looking for?"
                 className="w-full focus:outline-none"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="flex space-x-2 w-full md:w-auto mt-2 md:mt-0">
@@ -198,7 +208,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                     ? "bg-bluebutton text-white"
                     : "bg-bluebutton text-white"
                 }`}
-                onClick={() => handleActionChange("Add New Room")}
+                onClick={() => handleActionChange("Add New Property")}
               >
                 Add New Property
               </button>
