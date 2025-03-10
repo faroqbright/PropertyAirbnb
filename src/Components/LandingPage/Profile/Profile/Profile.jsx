@@ -242,7 +242,7 @@ export default function Bookings() {
         >
           Info
         </button>
-        {userType !== "LandLord" && (
+        {userType !== "LandLord" && userInfo?.personalInfo && (
           <button
             className={`px-4 w-32 py-2.5 text-sm font-medium rounded-full ${
               status === "Lifestyle"
@@ -337,8 +337,11 @@ export default function Bookings() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center cursor-pointer justify-center overflow-hidden"
-                  onClick={() => document.getElementById('fileInput')?.click()}
+                  <div
+                    className="w-20 h-20 rounded-full bg-gray-100 flex items-center cursor-pointer justify-center overflow-hidden"
+                    onClick={() =>
+                      document.getElementById("fileInput")?.click()
+                    }
                   >
                     {profileImage ? (
                       <img
@@ -454,39 +457,43 @@ export default function Bookings() {
               </div>
             </div>
 
-            <div className="flex flex-row gap-16 ">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">CNIC</label>
-                <div className="flex space-x-4">
-                  {uploadedImage && (
-                    <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden border-[1px]">
-                      <img
-                        src={uploadedImage}
-                        alt="CNIC"
-                        className="object-cover h-full w-full"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {userType !== "LandLord" && (
+            {uploadedImage && uploadedOtherImage && (
+              <div className="flex flex-row gap-16 ">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Other Document</label>
+                  <label className="text-sm font-medium">CNIC</label>
                   <div className="flex space-x-4">
-                    {uploadedOtherImage && (
+                    {uploadedImage && (
                       <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden border-[1px]">
                         <img
-                          src={uploadedOtherImage}
-                          alt="Other Doc"
+                          src={uploadedImage}
+                          alt="CNIC"
                           className="object-cover h-full w-full"
                         />
                       </div>
                     )}
                   </div>
                 </div>
-              )}
-            </div>
+
+                {userType !== "LandLord" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Other Document
+                    </label>
+                    <div className="flex space-x-4">
+                      {uploadedOtherImage && (
+                        <div className="relative h-[120px] w-[200px] rounded-lg overflow-hidden border-[1px]">
+                          <img
+                            src={uploadedOtherImage}
+                            alt="Other Doc"
+                            className="object-cover h-full w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex justify-center ">
               <button

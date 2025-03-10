@@ -5,7 +5,7 @@ import { Edit2, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import NewRoom from "../Room/NewRoom";
 import { useSelector } from "react-redux";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../../../firebase/firebaseConfig";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -130,6 +130,23 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
         route = "/Landing/Properties/PropertiesDetail";
     }
     router.push(route);
+  };
+
+  const handleDeleteProperty = async (propertyId) => {
+    try {
+      // Delete the document from Firebase
+      await deleteDoc(doc(db, "properties", propertyId));
+
+      // Update the local state to remove the deleted property
+      setProperties((prevProperties) =>
+        prevProperties.filter((property) => property.id !== propertyId)
+      );
+
+      // Update the total number of properties
+      setTotalProperties((prevTotal) => prevTotal - 1);
+    } catch (error) {
+      console.error("Error deleting property: ", error);
+    }
   };
 
   const CustomButton = ({ label, status }) => {
@@ -265,7 +282,10 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                         <div className="lg:mr-10 mr-2 xl:mr-28 flex justify-center items-center">
                           <div className="flex flex-row md:flex-col gap-2 mr-4">
                             <Edit2 className="w-6 h-6 rounded-full border-green-500 fill-green-500 border-[1px] p-1 text-green-500 cursor-pointer" />
-                            <Trash2 className="w-6 h-6 rounded-full border-red-500 fill-red-500 border-[1px] p-1 text-red-500 cursor-pointer" />
+                            <Trash2 
+                              className="w-6 h-6 rounded-full border-red-500 fill-red-500 border-[1px] p-1 text-red-500 cursor-pointer" 
+                              onClick={() => handleDeleteProperty(property.id)}
+                            />
                           </div>
                           <div className="md:border-l-[1px] hidden mr-4 md:block border-t-[1px] border-gray-300 h-10"></div>
                           <span className="text-lg hidden md:block font-semibold">
