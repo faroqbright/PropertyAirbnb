@@ -5,7 +5,13 @@ import { Edit2, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import NewRoom from "../Room/NewRoom";
 import { useSelector } from "react-redux";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { db } from "../../../../firebase/firebaseConfig";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -136,11 +142,9 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const handleDeleteProperty = async (propertyId) => {
     try {
       await deleteDoc(doc(db, "properties", propertyId));
-
       setProperties((prevProperties) =>
         prevProperties.filter((property) => property.id !== propertyId)
       );
-
       setTotalProperties((prevTotal) => prevTotal - 1);
     } catch (error) {
       console.error("Error deleting property: ", error);
@@ -180,13 +184,33 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
 
   const startIndex = (currentPage - 1) * propertiesPerPage;
   const endIndex = startIndex + propertiesPerPage;
-  const currentProperties = properties.slice(startIndex, endIndex);
+  const currentProperties = filteredProperties.slice(startIndex, endIndex);
+  
+  const [propertyData, setPropertyData] = useState("");
+
+  const handleEditProperty = async (property) => {
+    try {
+      const docRef = doc(db, "properties", property.id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const latestData = docSnap.data();
+        setPropertyData({ id: property.id, ...latestData });
+        setAction("Edit Property");
+        setNewRoomOpen(true);
+      } else {
+        console.log("No such document!");
+      }
+    } catch (error) {
+      console.error("Error fetching property data:", error);
+    }
+  };
 
   return (
     <>
       {newRoomOpen ? (
         <div className="w-full p-6 -mt-12">
-          <NewRoom />
+          <NewRoom propertyData={propertyData} />
         </div>
       ) : (
         <>
@@ -279,7 +303,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                       <div className="flex-grow md:ml-4">
                         <div className="flex flex-col gap-2 w-full">
                           <h3 className="text-lg font-semibold breal-words">
-                            {property?.name || "No Title"}{" "}
+                            {property?.name || "No Title"}{" "},{" "}
                             {property?.location || "No Location"}
                           </h3>
                           <p className="text-gray-500 text-sm">
@@ -291,9 +315,12 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                       <div className="flex flex-col md:flex-row items-center justify-between mt-4 md:mt-0 space-y-2 md:space-y-0 md:space-x-2 w-full md:w-auto">
                         <div className="lg:mr-10 mr-2 xl:mr-28 flex justify-center items-center">
                           <div className="flex flex-row md:flex-col gap-2 mr-4">
-                            <Edit2 className="w-6 h-6 rounded-full border-green-500 fill-green-500 border-[1px] p-1 text-green-500 cursor-pointer" />
-                            <Trash2 
-                              className="w-6 h-6 rounded-full border-red-500 fill-red-500 border-[1px] p-1 text-red-500 cursor-pointer" 
+                            <Edit2
+                              onClick={() => handleEditProperty(property)}
+                              className="w-6 h-6 rounded-full border-green-500 fill-green-500 border-[1px] p-1 text-green-500 cursor-pointer"
+                            />
+                            <Trash2
+                              className="w-6 h-6 rounded-full border-red-500 fill-red-500 border-[1px] p-1 text-red-500 cursor-pointer"
                               onClick={() => handleDeleteProperty(property.id)}
                             />
                           </div>

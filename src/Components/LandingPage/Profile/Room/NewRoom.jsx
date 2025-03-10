@@ -20,9 +20,9 @@ import {
   WavesLadder,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { db } from "../../../../firebase/firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import {
   getStorage,
   ref,
@@ -32,7 +32,7 @@ import {
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 
-const Properties = () => {
+const Properties = ({ propertyData: initialPropertyData }) => {
   const [step, setStep] = useState(1);
   const router = useRouter();
   const [selectedImages, setSelectedImages] = useState([]);
@@ -58,6 +58,42 @@ const Properties = () => {
   const fileInputRef = useRef(null);
   const [clickedButtons, setClickedButtons] = useState([]);
   const userId = useSelector((state) => state?.auth?.userInfo?.uid);
+
+  useEffect(() => {
+    if (initialPropertyData) {
+      setPropertyData({
+        name: initialPropertyData.name || "",
+        location: initialPropertyData.location || "",
+        description: initialPropertyData.description || "",
+        longitude: initialPropertyData.longitude || "",
+        latitude: initialPropertyData.latitude || "",
+        pricePerMonth: initialPropertyData.pricePerMonth || "",
+        additionalCosts: initialPropertyData.additionalCosts || [],
+        amenities: initialPropertyData.amenities || [],
+        rooms: initialPropertyData.rooms || [],
+      });
+
+      setAdditionalCosts(initialPropertyData.additionalCosts || []);
+      setAdditionalRoomPrice(initialPropertyData.rooms || []);
+
+      if (initialPropertyData.amenities) {
+        const selectedAmenities = initialPropertyData.amenities.map((amenity) =>
+          namesArray.indexOf(amenity)
+        );
+        setClickedButtons(selectedAmenities);
+      }
+
+      if (initialPropertyData.imageUrls) {
+        setSelectedImages(initialPropertyData.imageUrls);
+        setSelectedFiles(
+          initialPropertyData.imageUrls.map((url) => ({
+            url,
+            isFromFirebase: true,
+          }))
+        );
+      }
+    }
+  }, [initialPropertyData]);
 
   const uploadImage = async (file) => {
     try {
@@ -90,19 +126,18 @@ const Properties = () => {
         );
       });
     } catch (error) {
-      toast.error("Error uploading image:", error);
+      toast.error("Error uploading image: " + error.message);
       throw error;
     }
   };
 
   const handleSave = async () => {
     try {
-      // Upload property images
+      // Upload images and get their URLs
       const imageUrls = await Promise.all(
         selectedFiles.map((file) => uploadImage(file))
       );
 
-      // Upload room images and update the additionalRoomPrice array
       const updatedRooms = await Promise.all(
         additionalRoomPrice.map(async (room) => {
           const roomImageUrls = await Promise.all(
@@ -110,12 +145,11 @@ const Properties = () => {
           );
           return {
             ...room,
-            images: roomImageUrls, // Replace File objects with URLs
+            images: roomImageUrls,
           };
         })
       );
 
-      // Prepare the data to save
       const dataToSave = {
         userId: userId,
         name: propertyData.name,
@@ -126,21 +160,25 @@ const Properties = () => {
         pricePerMonth: propertyData.pricePerMonth,
         additionalCosts: additionalCosts,
         amenities: clickedButtons.map((index) => namesArray[index]),
-        rooms: updatedRooms, // Use the updated rooms array
-        imageUrls: imageUrls,
+        rooms: updatedRooms,
+        imageUrls: imageUrls, // Ensure this is set correctly
         status: "Approved",
         active: 1,
       };
 
-      // Save the data to Firestore
-      const docRef = await addDoc(collection(db, "properties"), dataToSave);
-      toast.success("Property Created Successfully");
+      if (initialPropertyData?.id) {
+        const propertyRef = doc(db, "properties", initialPropertyData?.id);
+        await updateDoc(propertyRef, dataToSave);
+        toast.success("Property Updated Successfully");
+      } else {
+        const docRef = await addDoc(collection(db, "properties"), dataToSave);
+        toast.success("Property Created Successfully");
+      }
+
       router.push("/Landing/Home");
-      // console.log("Document written with ID: ", dataToSave);
-      
     } catch (e) {
-      console.error("Error adding document: ", e); // Log the error
-      toast.error("Error adding document: " + e.message); // Show the error message
+      console.error("Error saving document: ", e);
+      toast.error("Error saving document: " + e.message);
     }
   };
 
@@ -284,7 +322,7 @@ const Properties = () => {
       !propertyData.description ||
       !propertyData.longitude ||
       !propertyData.latitude ||
-      selectedFiles.length < 5
+      selectedImages.length < 5
     ) {
       toast.error("Please fill all fields and upload at least 5 images.");
       return false;
@@ -703,14 +741,21 @@ const Properties = () => {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3 mt-3">
-                    {room.images.map((image, imgIndex) => (
-                      <img
-                        key={imgIndex}
-                        src={URL.createObjectURL(image)}
-                        alt={`Room ${index + 1} Image ${imgIndex + 1}`}
-                        className="h-28 rounded-xl"
-                      />
-                    ))}
+                    {room?.images?.map(
+                      (image, imgIndex) =>
+                        image && (
+                          <img
+                            key={imgIndex}
+                            src={
+                              image instanceof File
+                                ? URL.createObjectURL(image)
+                                : image
+                            }
+                            alt={`Room ${index + 1} Image ${imgIndex + 1}`}
+                            className="h-28 rounded-xl"
+                          />
+                        )
+                    )}
                   </div>
                 </div>
               ))}
