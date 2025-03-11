@@ -31,7 +31,8 @@ import {
 } from "firebase/storage";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
-import MapModal from "./MapModal";
+import dynamic from "next/dynamic";
+const MapModal = dynamic(() => import("./MapModal"), { ssr: false });
 
 const Properties = ({ propertyData: initialPropertyData }) => {
   const [step, setStep] = useState(1);
