@@ -505,6 +505,7 @@ export default function Bookings() {
                 {loadingSave ? "Saving..." : "Save changes"}
               </button>
             </div>
+            
           </div>
         </div>
       )}
