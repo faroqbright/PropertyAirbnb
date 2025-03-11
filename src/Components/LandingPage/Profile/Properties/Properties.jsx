@@ -24,43 +24,20 @@ import {
   ChevronsRight,
 } from "lucide-react";
 
-const initialProperties = [
-  {
-    id: 1,
-    img: "/assets/propertiesImage.jpeg",
-    title: "Entire loft in Florence, Italy",
-    rooms: "Room1",
-    price: "$120",
-    status: "Available",
-  },
-  {
-    id: 2,
-    img: "/assets/propertiesImage.jpeg",
-    title: "Entire loft in Florence, Italy",
-    rooms: "Room2",
-    price: "$120",
-    status: "Inactive",
-  },
-  {
-    id: 3,
-    img: "/assets/propertiesImage.jpeg",
-    title: "Entire loft in Florence, Italy",
-    rooms: "Room3",
-    price: "$120",
-    status: "Booked",
-  },
-];
-
 export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const [action, setAction] = useState("View");
   const userInfo = useSelector((state) => state.auth.userInfo);
-  const [properties, setProperties] = useState(initialProperties);
+  const userid = userInfo.uid;
+
+  const [properties, setProperties] = useState([]);
   const [userType, setUserType] = useState("");
   const propertiesPerPage = 3;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProperties, setTotalProperties] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
+  console.log(properties);
+  
 
   const handleActionChange = (newAction) => {
     setAction(newAction);
@@ -104,15 +81,19 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
           id: doc.id,
           ...doc.data(),
         }));
-        setProperties(propertiesList);
-        setTotalProperties(propertiesList.length);
+
+        const userProperties = propertiesList.filter(
+          (property) => property.userId === userid
+        );
+
+        setProperties(userProperties);
       } catch (error) {
         console.error("Error fetching properties: ", error);
       }
     };
 
     fetchProperties();
-  }, []);
+  }, [userid]);
 
   useEffect(() => {
     if (userInfo) {
@@ -120,24 +101,24 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
     }
   }, [userInfo]);
 
-  const handleButtonClick = (status) => {
-    localStorage.setItem("FromProperties", "true");
-    let route;
-    switch (status) {
-      case "Available":
-        route = "/Landing/Properties/PropertiesDetail";
-        break;
-      case "Inactive":
-        route = "/Landing/Properties/PropertiesDetail";
-        break;
-      case "Booked":
-        route = "/Landing/Properties/PropertiesDetail";
-        break;
-      default:
-        route = "/Landing/Properties/PropertiesDetail";
-    }
-    router.push(route);
-  };
+  // const handleButtonClick = (status) => {
+  //   localStorage.setItem("FromProperties", "true");
+  //   let route;
+  //   switch (status) {
+  //     case "Available":
+  //       route = "/Landing/Properties/PropertiesDetail";
+  //       break;
+  //     case "Inactive":
+  //       route = "/Landing/Properties/PropertiesDetail";
+  //       break;
+  //     case "Booked":
+  //       route = "/Landing/Properties/PropertiesDetail";
+  //       break;
+  //     default:
+  //       route = "/Landing/Properties/PropertiesDetail";
+  //   }
+  //   router.push(route);
+  // };
 
   const handleDeleteProperty = async (propertyId) => {
     try {
@@ -157,14 +138,14 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
     return (
       <button
         className={`text-sm font-medium border-[2px] rounded-full px-4 py-1 w-full md:w-32 ${borderColor} ${bgColor} ${textColor}`}
-        onClick={() => handleButtonClick(status)}
+        // onClick={() => handleButtonClick(status)}
       >
         {label}
       </button>
     );
   };
 
-  const filteredProperties = properties.filter((property) => {
+  const filteredProperties = properties?.filter((property) => {
     const nameMatch = property.name
       ?.toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -185,7 +166,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const startIndex = (currentPage - 1) * propertiesPerPage;
   const endIndex = startIndex + propertiesPerPage;
   const currentProperties = filteredProperties.slice(startIndex, endIndex);
-  
+
   const [propertyData, setPropertyData] = useState("");
 
   const handleEditProperty = async (property) => {
@@ -303,7 +284,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                       <div className="flex-grow md:ml-4">
                         <div className="flex flex-col gap-2 w-full">
                           <h3 className="text-lg font-semibold breal-words">
-                            {property?.name || "No Title"}{" "},{" "}
+                            {property?.name || "No Title"} ,{" "}
                             {property?.location || "No Location"}
                           </h3>
                           <p className="text-gray-500 text-sm">
