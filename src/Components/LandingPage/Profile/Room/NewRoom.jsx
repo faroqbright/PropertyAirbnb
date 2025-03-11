@@ -65,6 +65,14 @@ const Properties = ({ propertyData: initialPropertyData }) => {
   const openMapModal = () => setIsMapModalOpen(true);
   const closeMapModal = () => setIsMapModalOpen(false);
 
+  const handleMapSave = (latitude, longitude) => {
+    setPropertyData((prevData) => ({
+      ...prevData,
+      latitude,
+      longitude,
+    }));
+  };
+
   useEffect(() => {
     if (initialPropertyData) {
       setPropertyData({
@@ -814,7 +822,13 @@ const Properties = ({ propertyData: initialPropertyData }) => {
         )}
       </div>
       {isMapModalOpen && (
-        <MapModal isOpen={isMapModalOpen} onClose={closeMapModal} />
+        <MapModal
+          isOpen={isMapModalOpen}
+          onClose={closeMapModal}
+          onSave={handleMapSave}
+          initialLatitude={propertyData.latitude}
+          initialLongitude={propertyData.longitude}
+        />
       )}
     </div>
   );

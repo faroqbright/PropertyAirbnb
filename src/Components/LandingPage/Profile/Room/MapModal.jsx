@@ -56,36 +56,46 @@ const CenterMarkerIcon = () => (
   </div>
 );
 
-const MapModal = ({ isOpen, onClose }) => {
+const MapModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  initialLatitude,
+  initialLongitude,
+}) => {
   const [propertyData, setPropertyData] = useState({
-    longitude: "",
-    latitude: "",
+    longitude: initialLongitude || "",
+    latitude: initialLatitude || "",
   });
   const [userLocation, setUserLocation] = useState(null);
-  const [savedLocation, setSavedLocation] = useState(null); // ✅ new state
   const mapRef = useRef();
 
   useEffect(() => {
-    if (isOpen && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation([latitude, longitude]);
-          setPropertyData({ latitude, longitude });
-        },
-        (error) => {
-          console.error("Error getting user location:", error);
-        }
-      );
+    if (isOpen) {
+      if (initialLatitude && initialLongitude) {
+        setUserLocation([initialLatitude, initialLongitude]);
+        setPropertyData({
+          latitude: initialLatitude,
+          longitude: initialLongitude,
+        });
+      } else if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setUserLocation([latitude, longitude]);
+            setPropertyData({ latitude, longitude });
+          },
+          (error) => {
+            console.error("Error getting user location:", error);
+          }
+        );
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialLatitude, initialLongitude]);
 
   const handleSave = () => {
-    setSavedLocation({
-      latitude: propertyData.latitude,
-      longitude: propertyData.longitude,
-    });
-
+    onSave(propertyData.latitude, propertyData.longitude);
+    onClose();
   };
 
   if (!isOpen || !userLocation) return null;
@@ -95,7 +105,10 @@ const MapModal = ({ isOpen, onClose }) => {
       <div className="bg-white rounded-lg w-full max-w-3xl relative">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-semibold">Select From Map</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <IoClose className="w-6 h-6" />
           </button>
         </div>
@@ -115,15 +128,17 @@ const MapModal = ({ isOpen, onClose }) => {
 
           <CenterMarkerIcon />
 
-          <div className="mt-4 space-y-2">
-            <p>Latitude: {propertyData.latitude}</p>
-            <p>Longitude: {propertyData.longitude}</p>
+          <div className="mt-4 flex justify-between items-center">
+            <div>
+              <p>Latitude: {propertyData.latitude}</p>
+              <p>Longitude: {propertyData.longitude}</p>
+            </div>
 
             <button
               onClick={handleSave}
-              className="mt-2 px-4 py-2 bg-bluebutton rounded-full text-white flex justify-center transition"
+              className="px-4 py-2 bg-bluebutton rounded-full text-white flex transition"
             >
-              Save Location
+              Save
             </button>
           </div>
         </div>

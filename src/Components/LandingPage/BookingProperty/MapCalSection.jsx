@@ -13,7 +13,6 @@ import {
 } from "date-fns";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import CustomMarkerImg from "../../../../public/assets/Icon Button.png";
 import "leaflet/dist/leaflet.css";
 import {
   ChevronLeft,
@@ -24,9 +23,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSelector } from "react-redux";
 import { db } from "../../../firebase/firebaseConfig";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 export default function Header() {
@@ -70,17 +68,11 @@ export default function Header() {
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const [property, setProperty] = useState(null);
-  const [rooms, setRooms] = useState([]);
-  const [services, setServices] = useState([]);
   const [user, setuser] = useState([]);
   const [userDetails, setUserDetails] = useState(null);
-  const [description, setdescription] = useState(null);
-  const [name, setname] = useState(null);
-  const [price, setprice] = useState(null);
-  const [location, setlocation] = useState(null);
-  const userType = useSelector((state) => state.auth.userInfo?.userType);
   const searchParams = useSearchParams();
   const propertyId = searchParams.get("id");
+  console.log(property);
 
   useEffect(() => {
     if (!propertyId) {
@@ -113,12 +105,12 @@ export default function Header() {
         toast.error("No user ID found.");
         return;
       }
-  
+
       const fetchUserDetails = async () => {
         try {
           const userRef = doc(db, "users", user);
           const userSnap = await getDoc(userRef);
-  
+
           if (userSnap.exists()) {
             setUserDetails(userSnap.data());
           } else {
@@ -128,13 +120,12 @@ export default function Header() {
           console.error("Error fetching user details:", error);
         }
       };
-  
+
       fetchUserDetails();
     }, 2000); // Delay the effect by 5 seconds
-  
+
     return () => clearTimeout(timeoutId);
   }, [user]);
-   
 
   const AddZoomControl = () => {
     const map = useMap();
@@ -355,25 +346,35 @@ export default function Header() {
               </div>
             </div>
           </div>
-          <MapContainer
-            center={[34.18223, -118.13191]}
-            zoom={10}
-            className="h-[400px] w-full relative z-0 rounded-xl"
-            style={{ zIndex: 0 }}
-            zoomControl={false}
-          >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <Marker position={[34.18223, -118.13191]} icon={customIcon}>
-              <Popup>
-                <div className="rounded-lg flex items-center gap-2">
-                  <span className="text-sm font-medium">
-                    Exact location provided after booking
-                  </span>
-                </div>
-              </Popup>
-            </Marker>
-            <AddZoomControl />
-          </MapContainer>
+          {property?.latitude && property?.longitude ? (
+            <MapContainer
+              center={[property.latitude, property.longitude]}
+              zoom={10}
+              className="h-[400px] w-full relative z-0 rounded-xl"
+              style={{ zIndex: 0 }}
+              zoomControl={false}
+            >
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker
+                position={[property.latitude, property.longitude]}
+                icon={customIcon}
+              >
+                <Popup>
+                  <div className="rounded-lg flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      Exact location provided after booking
+                    </span>
+                  </div>
+                </Popup>
+              </Marker>
+              <AddZoomControl />
+            </MapContainer>
+          ) : (
+            <div className="h-[400px] w-full flex items-center justify-center text-gray-500">
+              Loading map...
+            </div>
+          )}
+
           <div className="absolute bottom-[550px] right-2 bg-white pt-1 pb-2 px-2 rounded-md shadow-lg text-left z-50 border border-gray-200">
             <button
               onClick={toggleFullScreen}
@@ -435,24 +436,34 @@ export default function Header() {
       {isFullScreen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center">
           <div className="relative w-full h-full">
-            <MapContainer
-              center={[34.18223, -118.13191]}
-              zoom={12}
-              className="w-full h-full"
-              style={{ zIndex: 1 }}
-            >
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker position={[34.18223, -118.13191]} icon={customIcon}>
-                <Popup>
-                  <div className="rounded-lg flex items-center gap-2">
-                    <span className="text-sm font-medium">
-                      Exact location provided after booking
-                    </span>
-                  </div>
-                </Popup>
-              </Marker>
-              <AddZoomControl />
-            </MapContainer>
+            {property?.latitude && property?.longitude ? (
+              <MapContainer
+                center={[property.latitude, property.longitude]}
+                zoom={10}
+                className="h-full w-full relative z-0 rounded-xl"
+                style={{ zIndex: 0 }}
+                zoomControl={false}
+              >
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <Marker
+                  position={[property.latitude, property.longitude]}
+                  icon={customIcon}
+                >
+                  <Popup>
+                    <div className="rounded-lg flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        Exact location provided after booking
+                      </span>
+                    </div>
+                  </Popup>
+                </Marker>
+                <AddZoomControl />
+              </MapContainer>
+            ) : (
+              <div className="h-[400px] w-full flex items-center justify-center text-gray-500">
+                Loading map...
+              </div>
+            )}
 
             <button
               onClick={toggleFullScreen}
