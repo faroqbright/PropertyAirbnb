@@ -155,6 +155,7 @@ export default function Header() {
                   className="object-cover w-full h-32 md:h-48 lg:h-64 rounded-lg"
                 />
               ))}
+              
             </div>
           </div>
         </div>
