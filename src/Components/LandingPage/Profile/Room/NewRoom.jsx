@@ -31,6 +31,7 @@ import {
 } from "firebase/storage";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import MapModal from "./MapModal";
 
 const Properties = ({ propertyData: initialPropertyData }) => {
   const [step, setStep] = useState(1);
@@ -39,6 +40,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [selectedRoomImages, setSelectedRoomImages] = useState([]);
   const [selectedRoomFiles, setSelectedRoomFiles] = useState([]);
+  const [isLoading, setisLoading] = useState(false);
   const [propertyData, setPropertyData] = useState({
     name: "",
     location: "",
@@ -58,6 +60,10 @@ const Properties = ({ propertyData: initialPropertyData }) => {
   const fileInputRef = useRef(null);
   const [clickedButtons, setClickedButtons] = useState([]);
   const userId = useSelector((state) => state?.auth?.userInfo?.uid);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+
+  const openMapModal = () => setIsMapModalOpen(true);
+  const closeMapModal = () => setIsMapModalOpen(false);
 
   useEffect(() => {
     if (initialPropertyData) {
@@ -85,7 +91,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
 
       if (initialPropertyData.imageUrls) {
         setSelectedImages(initialPropertyData.imageUrls);
-        setSelectedFiles(initialPropertyData.imageUrls); 
+        setSelectedFiles(initialPropertyData.imageUrls);
       }
     }
   }, [initialPropertyData]);
@@ -127,10 +133,11 @@ const Properties = ({ propertyData: initialPropertyData }) => {
   };
 
   const handleSave = async () => {
+    setisLoading(true);
     try {
       const imageUrls = await Promise.all(
-        selectedFiles.map(
-          (file) => (file instanceof File ? uploadImage(file) : file) 
+        selectedFiles.map((file) =>
+          file instanceof File ? uploadImage(file) : file
         )
       );
 
@@ -139,8 +146,8 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       const updatedRooms = await Promise.all(
         additionalRoomPrice.map(async (room) => {
           const roomImageUrls = await Promise.all(
-            room.images.map(
-              (file) => (file instanceof File ? uploadImage(file) : file) 
+            room.images.map((file) =>
+              file instanceof File ? uploadImage(file) : file
             )
           );
           return {
@@ -172,15 +179,17 @@ const Properties = ({ propertyData: initialPropertyData }) => {
         const propertyRef = doc(db, "properties", initialPropertyData?.id);
         await updateDoc(propertyRef, dataToSave);
         toast.success("Property Updated Successfully");
+        setisLoading(false);
       } else {
         const docRef = await addDoc(collection(db, "properties"), dataToSave);
         toast.success("Property Created Successfully");
+        setisLoading(false);
       }
-
       router.push("/Landing/Home");
     } catch (e) {
       console.error("Error saving document: ", e);
       toast.error("Error saving document: " + e.message);
+      setisLoading(false);
     }
   };
 
@@ -192,7 +201,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       return;
     }
 
-    const newFiles = files.map((file) => file); 
+    const newFiles = files.map((file) => file);
     setSelectedImages((prev) => [
       ...prev,
       ...files.map((file) => URL.createObjectURL(file)),
@@ -215,7 +224,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       return;
     }
 
-    const newFiles = files.map((file) => file); 
+    const newFiles = files.map((file) => file);
     setSelectedRoomImages((prev) => [
       ...prev,
       ...files.map((file) => URL.createObjectURL(file)),
@@ -551,11 +560,13 @@ const Properties = ({ propertyData: initialPropertyData }) => {
                   />
                 </label>
               </div>
-
-              <button className="bg-slate-200 md:px-14 sm:px-10 py-2 rounded-3xl mt-4 font-semibold text-textclr w-full lg:w-fit mb-7">
-                Select From Map
-              </button>
             </form>
+            <button
+              className="bg-slate-200 md:px-14 sm:px-10 py-2 rounded-3xl mt-4 font-semibold text-textclr w-full lg:w-fit mb-7"
+              onClick={openMapModal}
+            >
+              Select From Map
+            </button>
           </div>
         </div>
       ) : step === 2 ? (
@@ -567,7 +578,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
                 <br />
                 <input
                   type="number"
-                  placeholder="Enter Per Month Prize of Property"
+                  placeholder="Enter Price Per Month "
                   className="border-2 py-2 rounded-full w-full pl-5 mt-3 text-textclr"
                   value={propertyData.pricePerMonth}
                   onChange={(e) =>
@@ -789,12 +800,22 @@ const Properties = ({ propertyData: initialPropertyData }) => {
         {step === 4 && (
           <button
             onClick={handleSave}
-            className="text-center items-center bg-bluebutton px-20 py-3 rounded-full text-white"
+            disabled={isLoading}
+            className={`text-center items-center bg-bluebutton px-20 py-3 rounded-full text-white ${
+              isLoading ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
           >
-            Save
+            {isLoading ? (
+              <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              "Save"
+            )}
           </button>
         )}
       </div>
+      {isMapModalOpen && (
+        <MapModal isOpen={isMapModalOpen} onClose={closeMapModal} />
+      )}
     </div>
   );
 };

@@ -3,7 +3,12 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { FacebookAuthProvider, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import {
+  FacebookAuthProvider,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
 import { toast } from "react-toastify";
 import { Eye, EyeOff } from "lucide-react";
 import { auth, db } from "../../../firebase/firebaseConfig";
@@ -79,14 +84,14 @@ const Login = () => {
       const provider = new FacebookAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-  
+
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
-  
+
       if (userSnap.exists()) {
         const existingUser = userSnap.data();
         const userRole = existingUser.role;
-  
+
         if (userRole !== activeTab) {
           toast.error(`You are not registered as a ${activeTab}.`);
           return;
@@ -102,30 +107,32 @@ const Login = () => {
           loginMethod: "Facebook",
         });
       }
-  
+
       toast.success("Logged in successfully with Facebook!");
       router.push("/Landing/Home");
       dispatch(setUserInfo(user));
-      document.cookie = `uid=${user.uid}; path=/; max-age=${7 * 24 * 60 * 60}; Secure; SameSite=Lax`;
+      document.cookie = `uid=${user.uid}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }; Secure; SameSite=Lax`;
     } catch (error) {
       console.error("Facebook Auth Error:", error.code, error.message);
       toast.error(`Error: ${error.message}`);
     }
   };
-  
+
   const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-  
+
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
-  
+
       if (userSnap.exists()) {
         const existingUser = userSnap.data();
         const userRole = existingUser.role;
-  
+
         if (userRole !== activeTab) {
           toast.error(`You are not registered as a ${activeTab}.`);
           return;
@@ -141,7 +148,7 @@ const Login = () => {
           loginMethod: "Google",
         });
       }
-  
+
       toast.success("Logged in successfully with Google!");
       router.push("/Landing/Home");
       dispatch(
@@ -152,14 +159,16 @@ const Login = () => {
           photoURL: user.photoURL || "",
           role: activeTab,
         })
-      );      
-      document.cookie = `uid=${user.uid}; path=/; max-age=${7 * 24 * 60 * 60}; Secure; SameSite=Lax`;
+      );
+      document.cookie = `uid=${user.uid}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }; Secure; SameSite=Lax`;
     } catch (error) {
       console.error("Google Auth Error:", error.code, error.message);
       toast.error(`Error: ${error.message}`);
     }
   };
-  
+
   return (
     <div className="flex mx-auto justify-center min-h-screen p-4">
       <div className="bg-white rounded-2xl border-[1.5px] border-gray-200 w-full max-w-2xl px-10 lg:px-20 py-20">
@@ -229,20 +238,30 @@ const Login = () => {
 
           <button
             type="submit"
-            className="w-full mt-8 py-3 bg-teal-500 text-white font-medium rounded-full"
+            className="w-full mt-8 py-3 bg-teal-500 text-white font-medium rounded-full flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
-            {loading ? "Loading..." : "Login"}
+            {loading ? (
+              <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
 
         <div className="flex flex-col lg:flex-row justify-between mt-8 gap-2">
-          <button onClick={loginWithGoogle} className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500">
+          <button
+            onClick={loginWithGoogle}
+            className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500"
+          >
             <FcGoogle size={20} />
             Continue with Google
           </button>
-          <button onClick={loginInWithFacebook} className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500">
-            <FaFacebook size={20} className="text-blue-600"/>
+          <button
+            onClick={loginInWithFacebook}
+            className="flex items-center justify-center gap-2 border-[1.5px] rounded-full py-3 px-4 text-gray-500"
+          >
+            <FaFacebook size={20} className="text-blue-600" />
             Continue with Facebook
           </button>
         </div>

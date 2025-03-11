@@ -10,10 +10,12 @@ import { useRouter } from "next/navigation";
 
 const Forgot = () => {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const usersRef = collection(db, "users");
@@ -22,12 +24,12 @@ const Forgot = () => {
 
       if (querySnapshot.empty) {
         toast.error("Email does not exist in our records.");
-        return;
-      }
+        return;      }
 
       await sendPasswordResetEmail(auth, email);
       toast.success("Password reset email sent! Check your inbox.");
       setEmail("");
+      setLoading(false);
 
       setTimeout(() => {
         router.push("/Auth/Login");
@@ -41,7 +43,9 @@ const Forgot = () => {
       errorMessage =
         errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
       toast.error(errorMessage);
+      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (
@@ -69,10 +73,16 @@ const Forgot = () => {
 
         <div className="mt-20">
           <button
-            className="w-full text-center mt-5 border-[1.5px] py-2 text-white bg-bluebutton rounded-full"
+            type="submit"
+            className="w-full mt-8 py-3 bg-teal-500 text-white font-medium rounded-full flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleResetPassword}
+            disabled={loading}
           >
-            Send
+            {loading ? (
+              <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Send"
+            )}
           </button>
         </div>
       </div>

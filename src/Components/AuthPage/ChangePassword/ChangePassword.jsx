@@ -21,6 +21,7 @@ const ChangePassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
 
@@ -56,6 +57,7 @@ const ChangePassword = () => {
       toast.error("New password should be at least 8 characters long.");
       return;
     }
+    setLoading(true); 
 
     try {
       const credential = EmailAuthProvider.credential(user.email, oldPassword);
@@ -75,6 +77,9 @@ const ChangePassword = () => {
       errorMessage =
         errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
       toast.error(errorMessage);
+    }
+    finally {
+      setLoading(false); 
     }
   };
 
@@ -139,11 +144,17 @@ const ChangePassword = () => {
         </div>
 
         <div className="mt-5">
-          <button
+        <button
+            type="submit"
+            className="w-full mt-8 py-3 bg-teal-500 text-white font-medium rounded-full flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleChangePassword}
-            className="w-full text-center mt-5 border-[1.5px] py-2 text-white bg-bluebutton rounded-full"
+            disabled={loading}
           >
-            Save
+            {loading ? (
+              <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Save"
+            )}
           </button>
         </div>
       </div>

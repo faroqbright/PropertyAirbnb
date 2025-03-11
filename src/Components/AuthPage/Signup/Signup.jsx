@@ -506,7 +506,11 @@ const Signup = () => {
             onClick={handleSignUpClick}
             disabled={!termsAccepted || loading}
           >
-            {loading ? "Signing Up..." : "Sign Up"}
+            {loading ? (
+              <div className="w-6 h-6 mx-auto my-1.5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Sign Up"
+            )}
           </button>
           <div className="flex flex-col lg:flex-row lg:justify-between mt-10 gap-4">
             <button

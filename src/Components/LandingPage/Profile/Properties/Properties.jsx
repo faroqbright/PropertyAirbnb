@@ -11,6 +11,7 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../../../../firebase/firebaseConfig";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -23,6 +24,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import Image from "next/image";
 
 export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const [action, setAction] = useState("View");
@@ -35,10 +37,8 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProperties, setTotalProperties] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const router = useRouter();
   console.log(properties);
   
-
   const handleActionChange = (newAction) => {
     setAction(newAction);
     setNewRoomOpen(true);
@@ -46,23 +46,17 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
 
   const getStatusStyles = (status) => {
     switch (status) {
-      case "Available":
+      case "Active":
         return {
           bgColor: "bg-gray-50",
-          textColor: "text-black",
-          borderColor: "border-gray-50",
+          textColor: "text-green-400",
+          borderColor: "border-green-400",
         };
       case "Inactive":
         return {
           bgColor: "bg-white",
-          textColor: "text-black",
-          borderColor: "border-gray-200",
-        };
-      case "Booked":
-        return {
-          bgColor: "bg-white",
-          textColor: "text-purplebutton",
-          borderColor: "border-purple-300",
+          textColor: "text-red-400",
+          borderColor: "border-red-400",
         };
       default:
         return {
@@ -77,10 +71,13 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
     const fetchProperties = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "properties"));
-        const propertiesList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const propertiesList = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+          };
+        });
 
         const userProperties = propertiesList.filter(
           (property) => property.userId === userid
@@ -101,25 +98,6 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
     }
   }, [userInfo]);
 
-  // const handleButtonClick = (status) => {
-  //   localStorage.setItem("FromProperties", "true");
-  //   let route;
-  //   switch (status) {
-  //     case "Available":
-  //       route = "/Landing/Properties/PropertiesDetail";
-  //       break;
-  //     case "Inactive":
-  //       route = "/Landing/Properties/PropertiesDetail";
-  //       break;
-  //     case "Booked":
-  //       route = "/Landing/Properties/PropertiesDetail";
-  //       break;
-  //     default:
-  //       route = "/Landing/Properties/PropertiesDetail";
-  //   }
-  //   router.push(route);
-  // };
-
   const handleDeleteProperty = async (propertyId) => {
     try {
       await deleteDoc(doc(db, "properties", propertyId));
@@ -132,16 +110,59 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
     }
   };
 
-  const CustomButton = ({ label, status }) => {
-    const { bgColor, textColor, borderColor } = getStatusStyles(status);
+  const handleStatusChange = async (propertyId, newStatus) => {
+    try {
+      await updateDoc(doc(db, "properties", propertyId), {
+        status: newStatus,
+      });
+
+      setProperties((prevProperties) =>
+        prevProperties.map((property) =>
+          property.id === propertyId
+            ? { ...property, status: newStatus }
+            : property
+        )
+      );
+    } catch (error) {
+      console.error("Error updating status: ", error);
+    }
+  };
+
+  const StatusDropdown = ({ property }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const { bgColor, textColor, borderColor } = getStatusStyles(property.status);
 
     return (
-      <button
-        className={`text-sm font-medium border-[2px] rounded-full px-4 py-1 w-full md:w-32 ${borderColor} ${bgColor} ${textColor}`}
-        // onClick={() => handleButtonClick(status)}
-      >
-        {label}
-      </button>
+      <div className="relative">
+        <button
+          className={`text-sm font-medium border-[2px] rounded-full px-4 py-1 w-full md:w-32 ${borderColor} ${bgColor} ${textColor}`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {property.status || "No Status"}
+        </button>
+        {isOpen && (
+          <div className="absolute mt-2 w-full md:w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+            <button
+              className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              onClick={() => {
+                handleStatusChange(property.id, "Active");
+                setIsOpen(false);
+              }}
+            >
+              Active
+            </button>
+            <button
+              className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              onClick={() => {
+                handleStatusChange(property.id, "Inactive");
+                setIsOpen(false);
+              }}
+            >
+              Inactive
+            </button>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -222,10 +243,10 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
 
           <div
             className={`w-full ${
-              userInfo.email ? "bg-[#f8f8f8]" : "bg-white"
+              properties?.length === 0 ? "bg-[#f8f8f8]" : "bg-white"
             } rounded-xl border-[1.5px] border-gray-200 px-4 pt-1 pb-4`}
           >
-            {!userInfo.email ? (
+            {properties?.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Image
                   src="/assets/notFound.jpeg"
@@ -312,10 +333,7 @@ export default function Properties({ newRoomOpen, setNewRoomOpen }) {
                             </p>
                           </span>
                         </div>
-                        <CustomButton
-                          label={property.status || "No Status"}
-                          status={property.status || "No Status"}
-                        />
+                        <StatusDropdown property={property} />
                       </div>
                     </div>
                   );

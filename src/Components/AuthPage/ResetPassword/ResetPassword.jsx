@@ -12,6 +12,7 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [oobCode, setOobCode] = useState(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -28,6 +29,7 @@ const ResetPassword = () => {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     if (newPassword !== confirmPassword) {
       toast.error("Passwords do not match.");
@@ -47,7 +49,8 @@ const ResetPassword = () => {
     try {
       await confirmPasswordReset(auth, oobCode, newPassword);
       toast.success("Password reset successfully!");
-      
+      setLoading(false);
+
       setTimeout(() => {
         router.push("/Auth/Login");
       }, 1000);
@@ -59,7 +62,9 @@ const ResetPassword = () => {
       errorMessage =
         errorMessage.charAt(0).toUpperCase() + errorMessage.slice(1) + ".";
       toast.error(errorMessage);
+      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (
@@ -100,10 +105,16 @@ const ResetPassword = () => {
 
         <div className="mt-5">
           <button
+            type="submit"
+            className="w-full mt-8 py-3 bg-teal-500 text-white font-medium rounded-full flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleResetPassword}
-            className="w-full text-center mt-5 border-[1.5px] py-2 text-white bg-bluebutton rounded-full"
+            disabled={loading}
           >
-            Save
+            {loading ? (
+              <div className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "Send"
+            )}
           </button>
         </div>
       </div>

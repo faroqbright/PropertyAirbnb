@@ -1,7 +1,7 @@
 "use client";
 import { LayoutGrid } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { db } from "../../../firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -9,7 +9,7 @@ export default function Header() {
   const [activeButton, setActiveButton] = useState(1);
   const [fromProperties, setFromProperties] = useState(false);
   const [property, setProperty] = useState(null);
-  const router = useRouter();
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
 
   const searchParams = useSearchParams();
   const propertyId = searchParams.get("id");
@@ -43,43 +43,18 @@ export default function Header() {
     }
   }, []);
 
-  const handleHeaderButtonClick = (id) => {
-    localStorage.removeItem("FromProperties");
-    router.push("/Landing/Home");
-  };
-
-  // Determine which images to display
   const selectedImages =
     activeButton === 1
-      ? property?.imageUrls?.slice(0, 5) // Property images
-      : property?.rooms?.[activeButton - 2]?.images?.slice(0, 5); // Room images
+      ? property?.imageUrls?.slice(0, 5)
+      : property?.rooms?.[activeButton - 2]?.images?.slice(0, 5);
+
+  const allImages =
+    activeButton === 1
+      ? property?.imageUrls
+      : property?.rooms?.[activeButton - 2]?.images;
 
   return (
     <>
-      {fromProperties && (
-        <div className="flex flex-wrap justify-center px-4 gap-4 my-9 max-w-full">
-          <button
-            onClick={() => handleHeaderButtonClick(1)}
-            className="h-10 min-w-[140px] text-white font-medium rounded-full bg-bluebutton transition"
-          >
-            Edit Room
-          </button>
-          <button
-            onClick={() => handleHeaderButtonClick(2)}
-            className="h-10 min-w-[140px] text-white font-medium rounded-full bg-purplebutton transition"
-          >
-            Inactive Room
-          </button>
-          <button
-            onClick={() => handleHeaderButtonClick(3)}
-            className="h-10 min-w-[140px] text-white font-medium rounded-full bg-red-500 transition"
-          >
-            Delete Room
-          </button>
-        </div>
-      )}
-
-      {/* Image Display */}
       <div className="container mx-auto px-4 md:px-10 lg:px-36 flex flex-col md:flex-row gap-4 relative mt-6 overflow-hidden">
         {selectedImages?.[0] && (
           <img
@@ -87,7 +62,7 @@ export default function Header() {
             alt="Main Image"
             width={610}
             height={438}
-            className="object-cover w-full md:w-[300px] lg:w-[490px] h-[438px] rounded-xl" // Fixed height
+            className="object-cover w-full md:w-[300px] lg:w-[490px] h-[438px] rounded-xl"
           />
         )}
 
@@ -99,7 +74,7 @@ export default function Header() {
               alt={`Image ${index + 2}`}
               width={300}
               height={215}
-              className="object-cover w-full h-[215px]" // Fixed height
+              className="object-cover w-full h-[215px]"
             />
           ))}
           {selectedImages?.[4] && (
@@ -109,10 +84,13 @@ export default function Header() {
                 alt="Last Image"
                 width={300}
                 height={215}
-                className="object-cover w-full h-[215px]" // Fixed height
+                className="object-cover w-full h-[215px]"
               />
               <div className="absolute bottom-2 lg:bottom-4 left-1/2 transform -translate-x-1/2 w-max">
-                <button className="flex items-center sm:px-4 sm:py-2 px-2 py-1.5 rounded-lg bg-white border-[1.5px] border-black text-black shadow-md">
+                <button
+                  onClick={() => setShowAllPhotos(true)}
+                  className="flex items-center sm:px-4 sm:py-2 px-2 py-1.5 rounded-lg bg-white border-[1.5px] border-black text-black shadow-md"
+                >
                   <LayoutGrid size={16} />
                   <span className="font-medium text-[12px] sm:text-[14px] ml-1.5">
                     Show all photos
@@ -124,7 +102,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Room Selection Buttons */}
       <div className="mt-8 flex justify-center sm:justify-end gap-2 sm:pr-36 mb-10">
         <button
           onClick={() => setActiveButton(1)}
@@ -152,6 +129,36 @@ export default function Header() {
           </button>
         ))}
       </div>
+
+      {showAllPhotos && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4 overflow-auto">
+          <div className="relative bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
+                Show All Photos
+              </h2>
+              <button
+                onClick={() => setShowAllPhotos(false)}
+                className="text-gray-600 hover:text-black text-2xl font-bold"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {allImages?.map((img, index) => (
+                <img
+                  key={index}
+                  src={img}
+                  alt={`Image ${index + 1}`}
+                  className="object-cover w-full h-32 md:h-48 lg:h-64 rounded-lg"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
