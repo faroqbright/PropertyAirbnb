@@ -31,6 +31,7 @@ import {
 } from "firebase/storage";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+// import MapModal from "./MapModal";
 import dynamic from "next/dynamic";
 const MapModal = dynamic(() => import("./MapModal"), { ssr: false });
 
@@ -279,7 +280,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
 
   const handleAddRoom = (e) => {
     e.preventDefault();
-    if (roomInput.price && selectedRoomFiles.length >= 5) {
+    if (roomInput.price && selectedRoomFiles.length >= 0) {
       setAdditionalRoomPrice([
         ...additionalRoomPrice,
         { ...roomInput, images: selectedRoomFiles },
@@ -288,7 +289,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       setSelectedRoomImages([]);
       setSelectedRoomFiles([]);
     } else {
-      toast.error("Please fill all fields and upload at least 5 images.");
+      toast.error("Please fill all fields and upload at least 1 image.");
     }
   };
 
@@ -372,20 +373,20 @@ const Properties = ({ propertyData: initialPropertyData }) => {
     return true;
   };
 
-  const validateStep4 = () => {
-    if (selectedRoomFiles.length < 5) {
-      toast.error("Please upload at least 5 images for the room.");
-      return false;
-    }
-    return true;
-  };
+  // const validateStep4 = () => {
+  //   if (selectedRoomFiles.length < 5) {
+  //     toast.error("Please upload at least 5 images for the room.");
+  //     return false;
+  //   }
+  //   return true;
+  // };
 
   const handleNextStep = (e) => {
     e.preventDefault();
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
     if (step === 3 && !validateStep3()) return;
-    if (step === 4 && !validateStep4()) return;
+    // if (step === 4 && !validateStep4()) return;
     setStep(step + 1);
   };
 
@@ -396,7 +397,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
     }
     if (newStep === 2 && !validateStep1()) return;
     if (newStep === 3 && !validateStep2()) return;
-    if (newStep === 4 && !validateStep3()) return;
+    // if (newStep === 4 && !validateStep3()) return;
     setStep(newStep);
   };
 

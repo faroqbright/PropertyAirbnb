@@ -187,7 +187,7 @@ export default function Context() {
       <div className="lg:w-[40%] w-full bg-[#B19BD9] text-white rounded-2xl p-6 relative">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-gray-300">
           <div className="text-2xl font-medium">
-            {price}{" "}
+            ${price}{" "}
             <span className="text-lg text-gray-200 font-normal">/ month</span>
           </div>
           <div className="flex items-center gap-2 mt-2 md:mt-0">

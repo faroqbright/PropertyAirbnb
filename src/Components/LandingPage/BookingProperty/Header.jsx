@@ -56,50 +56,129 @@ export default function Header() {
   return (
     <>
       <div className="container mx-auto px-4 md:px-10 lg:px-36 flex flex-col md:flex-row gap-4 relative mt-6 overflow-hidden">
-        {selectedImages?.[0] && (
-          <img
-            src={selectedImages[0]}
-            alt="Main Image"
-            width={610}
-            height={438}
-            className="object-cover w-full md:w-[300px] lg:w-[490px] h-[438px] rounded-xl"
-          />
-        )}
-
-        <div className="grid grid-cols-2 gap-2 flex-1">
-          {selectedImages?.slice(1, 4).map((img, index) => (
-            <img
-              key={index}
-              src={img}
-              alt={`Image ${index + 2}`}
-              width={300}
-              height={215}
-              className="object-cover w-full h-[215px]"
-            />
-          ))}
-          {selectedImages?.[4] && (
-            <div className="relative w-full">
+        {selectedImages?.length === 1 && (
+          <>
+            <div className="grid grid-cols-1 gap-2 w-full">
               <img
-                src={selectedImages[4]}
-                alt="Last Image"
-                width={300}
-                height={215}
-                className="object-cover w-full h-[215px]"
+                src={selectedImages[0]}
+                alt="Main Image"
+                width={610}
+                height={438}
+                className="object-cover w-full md:w-full lg:w-full h-[438px] rounded-xl"
               />
-              <div className="absolute bottom-2 lg:bottom-4 left-1/2 transform -translate-x-1/2 w-max">
-                <button
-                  onClick={() => setShowAllPhotos(true)}
-                  className="flex items-center sm:px-4 sm:py-2 px-2 py-1.5 rounded-lg bg-white border-[1.5px] border-black text-black shadow-md"
-                >
-                  <LayoutGrid size={16} />
-                  <span className="font-medium text-[12px] sm:text-[14px] ml-1.5">
-                    Show all photos
-                  </span>
-                </button>
+              <div className="relative w-full">
+                <div className="absolute bottom-2 lg:bottom-4 left-1/2 transform -translate-x-1/2 w-max">
+                  <button
+                    onClick={() => setShowAllPhotos(true)}
+                    className="flex items-center sm:px-4 sm:py-2 px-2 py-1.5 rounded-lg bg-white border-[1.5px] border-black text-black shadow-md"
+                  >
+                    <LayoutGrid size={16} />
+                    <span className="font-medium text-[12px] sm:text-[14px] ml-1.5">
+                      Show all photos
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+        {selectedImages?.length === 2 && (
+          <>
+            <div className="grid grid-cols-2 gap-2 w-full">
+              {selectedImages.map((img, index) => (
+                <img
+                  key={index}
+                  src={img}
+                  alt={`Image ${index + 1}`}
+                  className="object-cover w-full h-[300px] rounded-xl"
+                />
+              ))}
+              <div className="relative w-full">
+                <div className="absolute bottom-2 lg:bottom-4 left-1/2 transform -translate-x-1/2 w-max">
+                  <button
+                    onClick={() => setShowAllPhotos(true)}
+                    className="flex items-center sm:px-4 sm:py-2 px-2 py-1.5 rounded-lg bg-white border-[1.5px] border-black text-black shadow-md"
+                  >
+                    <LayoutGrid size={16} />
+                    <span className="font-medium text-[12px] sm:text-[14px] ml-1.5">
+                      Show all photos
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {selectedImages?.length === 3 && (
+          <>
+            <div className="grid grid-cols-3 gap-2 w-full">
+              {selectedImages.map((img, index) => (
+                <img
+                  key={index}
+                  src={img}
+                  alt={`Image ${index + 1}`}
+                  className="object-cover w-full h-[300px] rounded-xl"
+                />
+              ))}
+              <div className="relative w-full">
+                <div className="absolute bottom-2 lg:bottom-4 left-1/2 transform -translate-x-1/2 w-max">
+                  <button
+                    onClick={() => setShowAllPhotos(true)}
+                    className="flex items-center sm:px-4 sm:py-2 px-2 py-1.5 rounded-lg bg-white border-[1.5px] border-black text-black shadow-md"
+                  >
+                    <LayoutGrid size={16} />
+                    <span className="font-medium text-[12px] sm:text-[14px] ml-1.5">
+                      Show all photos
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {selectedImages?.length >= 4 && (
+          <>
+            {selectedImages?.[0] && (
+              <img
+                src={selectedImages[0]}
+                alt="Main Image"
+                width={610}
+                height={438}
+                className="object-cover w-full md:w-[300px] lg:w-[490px] h-[438px] rounded-xl"
+              />
+            )}
+
+            <div className="grid grid-cols-2 gap-2 flex-1">
+              {selectedImages?.slice(1, 5).map((img, index) => (
+                <img
+                  key={index}
+                  src={img}
+                  alt={`Image ${index + 2}`}
+                  width={300}
+                  height={215}
+                  className="object-cover w-full h-[215px] rounded-xl"
+                />
+              ))}
+
+              <div className="relative w-full">
+                <div className="absolute bottom-2 lg:bottom-4 left-1/2 transform -translate-x-1/2 w-max">
+                  <button
+                    onClick={() => setShowAllPhotos(true)}
+                    className="flex items-center sm:px-4 sm:py-2 px-2 py-1.5 rounded-lg bg-white border-[1.5px] border-black text-black shadow-md"
+                  >
+                    <LayoutGrid size={16} />
+                    <span className="font-medium text-[12px] sm:text-[14px] ml-1.5">
+                      Show all photos
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="mt-8 flex justify-center sm:justify-end gap-2 sm:pr-36 mb-10">
@@ -155,7 +234,6 @@ export default function Header() {
                   className="object-cover w-full h-32 md:h-48 lg:h-64 rounded-lg"
                 />
               ))}
-              
             </div>
           </div>
         </div>

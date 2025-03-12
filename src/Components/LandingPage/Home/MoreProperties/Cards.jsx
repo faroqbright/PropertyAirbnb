@@ -25,27 +25,79 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState("Rating highest to lowest");
   const [currentPage, setCurrentPage] = useState(1);
-  const [properties, setProperties] = useState([]); 
+  const [properties, setProperties] = useState([]);
+  const [selectedLongitude, setSelectedLongitude] = useState(0);
+  const [selectedLatitude, setSelectedLatitude] = useState(0);
+  const [selectedPrice, setSelectedPrice] = useState(0);
 
-  
+  const [tooltipData, setTooltipData] = useState([]);
+
+  const [userLocation, setUserLocation] = useState([34.18223, -118.13191]); // Default location
+
+  useEffect(() => {
+    const getUserLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setUserLocation([latitude, longitude]);
+          },
+          (error) => {
+            console.error("Error getting user location:", error);
+          }
+        );
+      }
+    };
+
+    getUserLocation();
+  }, []);
+
+  const SetViewToUserLocation = ({ location }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (location) {
+        map.setView(location, 13);
+      }
+    }, [location, map]);
+
+    return null;
+  };
+
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "properties"));  
+        const querySnapshot = await getDocs(collection(db, "properties"));
         const propertiesData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setProperties(propertiesData); 
+        setProperties(propertiesData);
+
+        const initialTooltipData = propertiesData
+          .filter(
+            (property) =>
+              typeof property.latitude === "number" &&
+              typeof property.longitude === "number" &&
+              property.latitude >= -90 &&
+              property.latitude <= 90 &&
+              property.longitude >= -180 &&
+              property.longitude <= 180
+          )
+          .map((property) => ({
+            position: [property.latitude, property.longitude],
+            text: `$${property.pricePerMonth} / month`,
+          }));
+        setTooltipData(initialTooltipData);
       } catch (error) {
         console.error("Error fetching properties:", error);
       }
     };
 
-    fetchProperties(); 
+    fetchProperties();
   }, []);
 
-  const totalPages = Math.ceil(properties.length / 6); 
+  const totalPages = Math.ceil(properties.length / 6);
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -54,8 +106,8 @@ export default function Header() {
   };
 
   const startIndex = (currentPage - 1) * 6;
-  const endIndex = startIndex + 6; 
-  const propertiesToShow = properties.slice(startIndex, endIndex); 
+  const endIndex = startIndex + 6;
+  const propertiesToShow = properties.slice(startIndex, endIndex);
 
   const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
 
@@ -124,17 +176,20 @@ export default function Header() {
     const [point, setPoint] = useState(map.latLngToContainerPoint(position));
 
     useEffect(() => {
-      const updatePosition = () => {
-        setPoint(map.latLngToContainerPoint(position));
-      };
+      if (position && position.length === 2) {
+        const [lat, lng] = position;
+        const updatePosition = () => {
+          setPoint(map.latLngToContainerPoint(position));
+        };
 
-      map.on("move", updatePosition);
-      map.on("zoom", updatePosition);
+        map.on("move", updatePosition);
+        map.on("zoom", updatePosition);
 
-      return () => {
-        map.off("move", updatePosition);
-        map.off("zoom", updatePosition);
-      };
+        return () => {
+          map.off("move", updatePosition);
+          map.off("zoom", updatePosition);
+        };
+      }
     }, [map, position]);
 
     return (
@@ -153,12 +208,11 @@ export default function Header() {
     );
   };
 
-  const tooltipData = [
-    { position: [34.18223, -118.13191], text: "$200" },
-    { position: [34.22223, -118.27191], text: "$220" },
-    { position: [34.23223, -118.38191], text: "$275" },
-    { position: [34.27223, -118.42191], text: "$310" },
-  ];
+  const handlePropertySelect = (property) => {
+    setSelectedLongitude(property.longitude);
+    setSelectedLatitude(property.latitude);
+    setSelectedPrice(property.pricePerMonth);
+  };
 
   return (
     <div className="bg-white py-8 px-2.5 sm:px-5 flex flex-col items-center mb-4">
@@ -191,24 +245,28 @@ export default function Header() {
             {properties.length} Search Results
           </h1>
           {propertiesToShow.map((property) => (
-            <div key={property.id} className="w-full bg-white overflow-hidden mb-6 border rounded-xl">
+            <div
+              key={property.id}
+              className="w-full bg-white overflow-hidden mb-6 border rounded-xl"
+              onClick={() => handlePropertySelect(property)}
+            >
               <div className="flex flex-col sm:flex-row">
                 <div className="relative h-[200px] overflow-hidden">
-                <Swiper
-                modules={[Pagination]}
-                pagination={{ clickable: true }}
-                className="h-full w-[300px]"
-              >
-                {property.imageUrls.map((image, index) => (
-                  <SwiperSlide key={index}>
-                    <img
-                      src={image}
-                      alt={property.name}
-                      className="h-full w-full object-cover rounded-xl py-2"
-                    />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+                  <Swiper
+                    modules={[Pagination]}
+                    pagination={{ clickable: true }}
+                    className="h-full w-[300px]"
+                  >
+                    {property.imageUrls.map((image, index) => (
+                      <SwiperSlide key={index}>
+                        <img
+                          src={image}
+                          alt={property.name}
+                          className="h-full w-full object-cover rounded-xl py-2"
+                        />
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
                 </div>
                 <div className="py-4 sm:w-1/2 px-5">
                   <div className="flex items-center justify-between">
@@ -225,7 +283,7 @@ export default function Header() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="block border-b border-gray-300 w-10 pt-2"></div>
 
                   <p className="text-[13px] text-[#6A6A6A] pt-2">
@@ -298,13 +356,14 @@ export default function Header() {
         </div>
         <div className="w-full lg:w-[50%] order-2 mt-8 lg:mt-16 rounded-xl overflow-hidden relative">
           <MapContainer
-            center={[34.18223, -118.13191]}
+            center={userLocation}
             zoom={10}
             className="lg:h-[700px] h-[450px] w-full relative z-0"
             style={{ zIndex: 0 }}
             zoomControl={false}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <SetViewToUserLocation location={userLocation} />
             {tooltipData.map((tooltip, index) => (
               <FloatingTooltip
                 key={index}
@@ -329,7 +388,7 @@ export default function Header() {
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex justify-center items-center">
           <div className="relative w-full h-full">
             <MapContainer
-              center={[34.18223, -118.13191]}
+              center={userLocation}
               zoom={12}
               className="w-full h-full"
               style={{ zIndex: 1 }}
@@ -355,6 +414,13 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      <div className="selected-property-info mt-4">
+        <h2 className="font-bold">Selected Property:</h2>
+        <p>Longitude: {selectedLongitude}</p>
+        <p>Latitude: {selectedLatitude}</p>
+        <p>Price: ${selectedPrice} / month</p>
+      </div>
     </div>
   );
 }
