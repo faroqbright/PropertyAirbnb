@@ -495,7 +495,6 @@ export default function Bookings() {
             ) : (
               ""
             )}
-            
             <div className="flex justify-center ">
               <button
                 className="bg-bluebutton text-white hover:bluebutton py-2 px-8 rounded-full"
