@@ -10,7 +10,7 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { set } from "date-fns";
 
 export default function Context() {
-  const [selectedRooms, setSelectedRooms] = useState("room1");
+  const [selectedRooms, setSelectedRooms] = useState([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const propertyId = searchParams.get("id");
@@ -26,6 +26,7 @@ export default function Context() {
   const [name, setname] = useState(null);
   const [price, setprice] = useState(null);
   const [location, setlocation] = useState(null);
+  const [selectedMonths, setSelectedMonths] = useState(1);
   const userType = useSelector((state) => state.auth.userInfo?.userType);
 
   useEffect(() => {
@@ -52,8 +53,8 @@ export default function Context() {
             propertyData.additionalCosts.map((service, index) => ({
               ...service,
               id: `service-${index + 1}`,
-              name: service.name, // Keep the original name
-              price: service.cost, // Rename cost to price
+              name: service.name,
+              price: service.cost,
             }))
           );
           setname(propertyData?.name || null);
@@ -61,7 +62,6 @@ export default function Context() {
           setprice(propertyData?.pricePerMonth || null);
           setlocation(propertyData?.location || null);
           setuser(propertyData?.userId || null);
-
         } else {
           console.error("Property not found!");
         }
@@ -79,12 +79,12 @@ export default function Context() {
         toast.error("No user ID found.");
         return;
       }
-  
+
       const fetchUserDetails = async () => {
         try {
           const userRef = doc(db, "users", user);
           const userSnap = await getDoc(userRef);
-  
+
           if (userSnap.exists()) {
             setUserDetails(userSnap.data());
           } else {
@@ -94,10 +94,10 @@ export default function Context() {
           console.error("Error fetching user details:", error);
         }
       };
-  
+
       fetchUserDetails();
-    }, 2000); // Delay the effect by 5 seconds
-  
+    }, 2000);
+
     return () => clearTimeout(timeoutId);
   }, [user]);
 
@@ -121,42 +121,65 @@ export default function Context() {
   }, [router]);
 
   const handleButtonClick = () => {
-    if (!user) {
-      toast.error("Please log in first.");
-      router.push("/Auth/Login");
+    if (selectedRooms.length === 0 && selectedServices.length === 0) {
+      toast.error("Please select at least one room and one service.");
       return;
-    } else {
-      if (fromProfile) {
-        router.push("/Landing/Profile");
-      } else {
-        router.push("/Landing/Properties/PropertiesDetail/Payment");
-      }
     }
-    localStorage.removeItem("fromProfile");
+
+    if (selectedRooms.length === 0) {
+      toast.error("Please select at least one room.");
+      return;
+    }
+
+    const storedRooms = localStorage.getItem("selectedRooms");
+    const storedServices = localStorage.getItem("selectedServices");
+
+    if (storedRooms) {
+      localStorage.removeItem("selectedRooms");
+    }
+    if (storedServices) {
+      localStorage.removeItem("selectedServices");
+    }
+
+    const selectedRoomsDetails = rooms.filter((room) =>
+      selectedRooms.includes(room.id)
+    );
+    const selectedServicesDetails = services.filter((service) =>
+      selectedServices.includes(service.id)
+    );
+
+    const total = calculateTotal();
+
+    localStorage.setItem("selectedRooms", JSON.stringify(selectedRoomsDetails));
+    localStorage.setItem(
+      "selectedServices",
+      JSON.stringify(selectedServicesDetails)
+    );
+
+    const propertyDetails = {
+      name: name,
+      location: location,
+      description: description,
+      price: price,
+    };
+    localStorage.setItem("propertyDetails", JSON.stringify(propertyDetails));
+    localStorage.setItem("selectedMonths", JSON.stringify(selectedMonths));
+    localStorage.setItem("basePrice", JSON.stringify(price));
+    localStorage.setItem("selectedProperty", JSON.stringify(property));
+
+    router.push("/Landing/Properties/PropertiesDetail/Payment");
   };
-
-  // const rooms = [
-  //   { id: "room1", name: "Room 1", price: 555 },
-  //   { id: "room2", name: "Room 2", price: 62 },
-  //   { id: "room3", name: "Room 3", price: 83 },
-  // ];
-
-  // const services = [
-  //   { id: "parking", name: "Parking lot", price: 555 },
-  //   { id: "primary", name: "Primary Services", price: 62 },
-  //   { id: "maintenance", name: "Maintenance", price: 83 },
-  // ];
 
   const calculateTotal = () => {
     const roomsTotal = rooms
       .filter((room) => selectedRooms.includes(room.id))
-      .reduce((sum, room) => sum + Number(room.price), 0); // Convert price to number
+      .reduce((sum, room) => sum + Number(room.price), 0);
 
     const servicesTotal = services
       .filter((service) => selectedServices.includes(service.id))
-      .reduce((sum, service) => sum + Number(service.price), 0); // Convert price to number
+      .reduce((sum, service) => sum + Number(service.price), 0);
 
-    return roomsTotal + servicesTotal;
+    return (roomsTotal + servicesTotal) * selectedMonths;
   };
 
   return (
@@ -187,8 +210,11 @@ export default function Context() {
       <div className="lg:w-[40%] w-full bg-[#B19BD9] text-white rounded-2xl p-6 relative">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-gray-300">
           <div className="text-2xl font-medium">
-            ${price}{" "}
-            <span className="text-lg text-gray-200 font-normal">/ month</span>
+            ${price * selectedMonths}{" "}
+            <span className="text-lg text-gray-200 font-normal">
+              / {selectedMonths || 1} Month
+              {(selectedMonths || 1) > 1 ? "s" : ""}
+            </span>
           </div>
           <div className="flex items-center gap-2 mt-2 md:mt-0">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
@@ -231,7 +257,9 @@ export default function Context() {
                 </label>
                 <span className="text-[15px] font-medium">{room.name}</span>
               </div>
-              <span className="text-[15px] font-medium">${room.price}</span>
+              <span className="text-[15px] font-medium">
+                ${room.price * selectedMonths}
+              </span>
             </label>
           ))}
         </div>
@@ -265,10 +293,10 @@ export default function Context() {
                   <Check className="w-5 h-5" />
                 )}
               </span>
-              <div className="flex items-center gap-2 ml-3">
+              <div className="flex items-center justify-between ml-3 w-full">
                 <span className="text-[15px] font-medium">{service.name}</span>
                 <span className="text-[15px] font-medium">
-                  ${service.price}
+                  ${service.price * selectedMonths}
                 </span>
               </div>
             </label>
@@ -280,7 +308,27 @@ export default function Context() {
           <span className="text-xl font-bold">${calculateTotal()}</span>
         </div>
 
-        {/* Conditionally render the button based on userDetails */}
+        <div className="w-full pt-4 mb-5">
+          <div className="relative">
+            <select
+              value={selectedMonths}
+              onChange={(e) => setSelectedMonths(Number(e.target.value))}
+              className={`font-medium w-full ${
+                selectedMonths ? "bg-bluebuttom" : "bg-purplebutton"
+              } bg-bluebutton text-white rounded-full py-2 cursor-pointer appearance-none focus:outline-none shadow-md text-center`}
+            >
+              <option value="" disabled hidden>
+                Select Months
+              </option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                <option key={month} value={month} className="text-black">
+                  {month} Month{month > 1 ? "s" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {userType !== "LandLord" && (
           <button
             onClick={handleButtonClick}

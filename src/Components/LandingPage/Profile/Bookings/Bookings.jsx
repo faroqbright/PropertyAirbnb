@@ -3,123 +3,17 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useSelector } from "react-redux";
-
-const adminBookings = [
-  {
-    id: 1,
-    adminName: "Hasaan Saleem",
-    rooms: "3 rooms",
-    period: "Feb 19, 2022 - Feb 26, 2022",
-    price: "$120",
-    status: "ongoing",
-  },
-  {
-    id: 2,
-    adminName: "Ali Raza",
-    rooms: "2 rooms",
-    period: "Mar 01, 2022 - Mar 10, 2022",
-    price: "$200",
-    status: "ongoing",
-  },
-  {
-    id: 3,
-    adminName: "Sara Khan",
-    rooms: "4 rooms",
-    period: "Apr 15, 2022 - Apr 22, 2022",
-    price: "$300",
-    status: "ongoing",
-  },
-  {
-    id: 4,
-    adminName: "Zara Ahmed",
-    rooms: "5 rooms",
-    period: "Jan 10, 2022 - Jan 17, 2022",
-    price: "$500",
-    status: "previous",
-  },
-  {
-    id: 5,
-    adminName: "Usman Ali",
-    rooms: "1 room",
-    period: "Dec 01, 2021 - Dec 07, 2021",
-    price: "$150",
-    status: "previous",
-  },
-  {
-    id: 6,
-    adminName: "Ayaz Khan",
-    rooms: "3 rooms",
-    period: "Nov 20, 2021 - Nov 27, 2021",
-    price: "$250",
-    status: "previous",
-  },
-];
-
-const userBookings = [
-  {
-    id: 1,
-    image: "/assets/Container1.png",
-    title: "Entire loft in Florence, Italy",
-    details: "5 rooms for 4 Months",
-    price: "$100",
-    status: "ongoing",
-    btntext: "Message",
-  },
-  {
-    id: 2,
-    image: "/assets/Container3.png",
-    title: "Entire loft in Florence, Italy",
-    details: "2 rooms for 4 Months",
-    price: "$120",
-    status: "ongoing",
-    btntext: "Message",
-  },
-  {
-    id: 3,
-    image: "/assets/Container2.png",
-    title: "Entire loft in Florence, Italy",
-    details: "1 room for 4 Months",
-    price: "$150",
-    status: "ongoing",
-    btntext: "Message",
-  },
-  {
-    id: 4,
-    image: "/assets/Container4.png",
-    title: "Entire loft in Florence, Italy",
-    details: "5 rooms for 2 Months",
-    price: "$220",
-    status: "previous",
-    btntext: "Write Review",
-  },
-  {
-    id: 5,
-    image: "/assets/Container5.png",
-    title: "Entire loft in Florence, Italy",
-    details: "1 room for 2 Months",
-    price: "$250",
-    status: "previous",
-    btntext: "Write Review",
-  },
-  {
-    id: 6,
-    image: "/assets/Container6.png",
-    title: "Entire loft in Florence, Italy",
-    details: "3 rooms for 4 Months",
-    price: "$160",
-    status: "previous",
-    btntext: "Write Review",
-  },
-];
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/firebase/firebaseConfig";
 
 export default function Bookings() {
   const [status, setStatus] = useState("ongoing");
   const userInfo = useSelector((state) => state.auth.userInfo);
   const [isAdmin, setIsAdmin] = useState(true);
+  const [bookings, setBookings] = useState([]);
+  const [propertyId, setPropertyId] = useState(null);
+  const [userIds, setUserIds] = useState([]);
   const router = useRouter();
-  const handleToggle = (newStatus) => {
-    setStatus(newStatus);
-  };
 
   useEffect(() => {
     if (userInfo?.role === "LandLord") {
@@ -128,6 +22,56 @@ export default function Bookings() {
       setIsAdmin(false);
     }
   }, [userInfo]);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const bookingsCollection = collection(db, "bookings");
+        const q = query(bookingsCollection); 
+  
+        const snapshot = await getDocs(q);
+        let bookingsList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+  
+        console.log("All Bookings Fetched:", bookingsList);
+  
+        if (propertyId && userInfo?.uid) {
+          const parsedPropertyId = typeof propertyId === 'string' ? JSON.parse(propertyId)?.id : propertyId?.id;
+          console.log("Parsed Property ID:", parsedPropertyId);
+          bookingsList = bookingsList.filter(
+            (booking) =>
+              booking.propertyId === parsedPropertyId &&
+              booking.userId === userInfo.uid
+          );
+        }
+  
+        console.log("Filtered Bookings:", bookingsList);
+  
+        setBookings(bookingsList);
+  
+        const userIds = new Set(bookingsList.map((booking) => booking.userId));
+        setUserIds(Array.from(userIds));
+  
+        if (bookingsList.length > 0) {
+          const firstBooking = bookingsList[0];
+          console.log("First Booking Property ID:", firstBooking.propertyId);
+          setPropertyId(firstBooking.propertyId);
+        }
+  
+        console.log("All User IDs from Properties:", Array.from(userIds));
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      }
+    };
+  
+    fetchBookings();
+  }, [userInfo, propertyId]);
+
+  const handleToggle = (newStatus) => {
+    setStatus(newStatus);
+  };
 
   const handleButtonClick = (btntext) => {
     if (btntext === "Message") {
@@ -140,9 +84,9 @@ export default function Bookings() {
     }
   };
 
-  const filteredBookings = isAdmin
-    ? adminBookings.filter((booking) => booking.status === status)
-    : userBookings.filter((booking) => booking.status === status);
+  const filteredBookings = bookings.filter(
+    (booking) => booking.status === status
+  );
 
   const navigate = (booking) => {
     if (isAdmin && booking.status === "ongoing") {
@@ -175,8 +119,12 @@ export default function Bookings() {
         </button>
       </div>
 
-      <div className={`w-full ${userInfo.email ? "bg-[#f8f8f8]" : "bg-white"} rounded-xl border-[1.5px] border-gray-200 px-6 pt-1 pb-4`}>
-        {userInfo.email ? (
+      <div
+        className={`w-full ${
+          userInfo?.email ? "bg-[#f8f8f8]" : "bg-white"
+        } rounded-xl border-[1.5px] border-gray-200 px-6 pt-1 pb-4`}
+      >
+        {filteredBookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 ">
             <Image
               src="/assets/notFound.jpeg"
@@ -210,8 +158,8 @@ export default function Bookings() {
                   />
                 ) : (
                   <Image
-                    src={booking.image}
-                    alt={booking.title}
+                    src={booking.image || "/assets/Container1.png"}
+                    alt={booking.propertyName}
                     width={150}
                     height={50}
                     className="rounded-2xl w-full md:h-[105px] h-[250px] object-cover"
@@ -219,23 +167,25 @@ export default function Bookings() {
                 )}
                 <div className="flex flex-col gap-2 w-full">
                   <h3 className="text-lg font-semibold">
-                    {isAdmin ? booking.adminName : booking.title}
+                    {isAdmin ? booking.adminName : booking.propertyName}
                   </h3>
                   <p className="text-gray-500 text-sm">
-                    {isAdmin ? booking.rooms : booking.details}
+                    {isAdmin
+                      ? booking.rooms
+                      : `${booking.selectedRooms.length} rooms for ${booking.selectedMonths} months`}
                   </p>
                   <span className="text-gray-600 font-normal text-sm">
-                    {isAdmin ? booking.period : ""}
+                    {isAdmin ? booking.period : booking.propertyLocation}
                   </span>
                   <div className="border-b-[1px] md:hidden border-gray-300 w-full"></div>
                   <span className="text-lg md:hidden font-semibold">
-                    {booking.price}
+                    ${booking.totalAmount}
                   </span>
                 </div>
                 <div className="flex items-center -mr-28 my-auto space-x-2">
                   <div className="md:border-l-[1px] hidden md:block border-t-[1px] border-gray-300 h-6"></div>
                   <span className="text-lg hidden md:block font-semibold">
-                    {booking.price}
+                    ${booking.totalAmount}
                   </span>
                 </div>
               </div>
@@ -270,9 +220,11 @@ export default function Bookings() {
                         ? "bg-purplebutton text-white"
                         : "bg-bluebutton text-white"
                     }`}
-                    onClick={() => handleButtonClick(booking.btntext)}
+                    onClick={() =>
+                      handleButtonClick(booking.btntext || "Message")
+                    }
                   >
-                    {booking.btntext}
+                    {booking.btntext || "Message"}
                   </button>
                 )}
               </div>

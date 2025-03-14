@@ -19,6 +19,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css"; // Import Swiper styles
 import "swiper/css/pagination";
 import { Pagination } from "swiper/modules";
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -29,10 +30,11 @@ export default function Header() {
   const [selectedLongitude, setSelectedLongitude] = useState(0);
   const [selectedLatitude, setSelectedLatitude] = useState(0);
   const [selectedPrice, setSelectedPrice] = useState(0);
-
+  const router = useRouter();
+  
   const [tooltipData, setTooltipData] = useState([]);
 
-  const [userLocation, setUserLocation] = useState([34.18223, -118.13191]); // Default location
+  const [userLocation, setUserLocation] = useState([34.18223, -118.13191]); 
 
   useEffect(() => {
     const getUserLocation = () => {
@@ -247,8 +249,13 @@ export default function Header() {
           {propertiesToShow.map((property) => (
             <div
               key={property.id}
-              className="w-full bg-white overflow-hidden mb-6 border rounded-xl"
-              onClick={() => handlePropertySelect(property)}
+              className="w-full bg-white overflow-hidden mb-6 border rounded-xl cursor-pointer group"
+              onClick={() => {
+                handlePropertySelect(property);
+                router.push(
+                  `/Landing/Properties/PropertiesDetail?id=${property.id}`
+                );
+              }}
             >
               <div className="flex flex-col sm:flex-row">
                 <div className="relative h-[200px] overflow-hidden">

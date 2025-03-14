@@ -5,7 +5,16 @@ import React, { useEffect, useState } from "react";
 import { Heart, Star } from "lucide-react";
 import { useSelector } from "react-redux";
 import { db } from "../../../firebase/firebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  setDoc,
+  updateDoc,
+  arrayRemove,
+  arrayUnion,
+} from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -32,6 +41,8 @@ export default function Card({ filters = {} }) {
   const [userType, setUserType] = useState("");
   const userInfo = useSelector((state) => state.auth.userInfo);
   const [properties, setProperties] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  console.log(favorites, properties);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -50,12 +61,28 @@ export default function Card({ filters = {} }) {
     fetchProperties();
   }, []);
 
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (userInfo) {
+        const userFavoritesRef = doc(
+          db,
+          "users",
+          userInfo.uid,
+          "favorites",
+          "favorites"
+        );
+        const docSnap = await getDoc(userFavoritesRef);
+        if (docSnap.exists()) {
+          setFavorites(docSnap.data().favorites || []);
+        }
+      }
+    };
+
+    fetchFavorites();
+  }, [userInfo]);
+
   const handleButtonClick = (index) => {
-    if (countries[index] === "All") {
-      setActiveIndex(index);
-    } else {
-      setActiveIndex(index);
-    }
+    setActiveIndex(index);
   };
 
   useEffect(() => {
@@ -66,9 +93,10 @@ export default function Card({ filters = {} }) {
 
   const selectedCountry = activeIndex !== null ? countries[activeIndex] : null;
 
-  const findProperties = selectedCountry && selectedCountry !== "All"
-    ? properties.filter((property) => property.location === selectedCountry)
-    : properties;
+  const findProperties =
+    selectedCountry && selectedCountry !== "All"
+      ? properties.filter((property) => property.location === selectedCountry)
+      : properties;
 
   const { location = "", budget = 0, amenities = [], rooms = "" } = filters;
 
@@ -79,7 +107,8 @@ export default function Card({ filters = {} }) {
 
     const propertyPrice = Number(property.pricePerMonth) || 0;
     const filterBudget = Number(budget) || 0;
-    const matchesBudget = filterBudget > 0 ? propertyPrice <= filterBudget : true;
+    const matchesBudget =
+      filterBudget > 0 ? propertyPrice <= filterBudget : true;
 
     const matchesAmenities =
       amenities.length > 0
@@ -94,6 +123,60 @@ export default function Card({ filters = {} }) {
 
     return matchesLocation && matchesBudget && matchesAmenities && matchesRooms;
   });
+
+  const toggleFavorite = async (propertyId) => {
+    if (userInfo) {
+      const userFavoritesRef = doc(
+        db,
+        "users",
+        userInfo.uid,
+        "favorites",
+        "favorites"
+      );
+      const propertyRef = doc(db, "properties", propertyId);
+
+      try {
+        const userFavoritesSnap = await getDoc(userFavoritesRef);
+        const currentFavorites = userFavoritesSnap.exists()
+          ? userFavoritesSnap.data().favorites || []
+          : [];
+
+        const isFavorited = currentFavorites.includes(propertyId);
+
+        if (isFavorited) {
+          await updateDoc(userFavoritesRef, {
+            favorites: arrayRemove(propertyId),
+          });
+          setFavorites((prevFavorites) =>
+            prevFavorites.filter((id) => id !== propertyId)
+          );
+        } else {
+          await updateDoc(userFavoritesRef, {
+            favorites: arrayUnion(propertyId),
+          });
+          setFavorites((prevFavorites) => [...prevFavorites, propertyId]);
+        }
+
+        const propertySnap = await getDoc(propertyRef);
+        if (propertySnap.exists()) {
+          const favoritedBy = propertySnap.data().favoritedBy || [];
+          if (isFavorited) {
+            await updateDoc(propertyRef, {
+              favoritedBy: arrayRemove(userInfo.uid),
+            });
+          } else {
+            await updateDoc(propertyRef, {
+              favoritedBy: arrayUnion(userInfo.uid),
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error updating favorites:", error);
+      }
+    } else {
+      console.log("User not logged in");
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5">
@@ -132,7 +215,7 @@ export default function Card({ filters = {} }) {
                 pagination={{ clickable: true }}
                 className="h-full w-full"
               >
-                {property.imageUrls.map((image, index) => (
+                {property.imageUrls?.map((image, index) => (
                   <SwiperSlide key={index}>
                     <img
                       src={image}
@@ -144,8 +227,12 @@ export default function Card({ filters = {} }) {
               </Swiper>
 
               <Heart
-                className={`absolute top-2 right-2 h-6 w-6 text-black z-10 ${
-                  property.favorite
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(property.id);
+                }}
+                className={`absolute top-2 right-2 z-40 text-white h-10 w-10 px-2 py-1 text-sm rounded-2xl cursor-pointer ${
+                  favorites.includes(property.id)
                     ? "fill-[#FDA4AF] text-[#F86D83]"
                     : "fill-transparent/25"
                 }`}
@@ -168,7 +255,7 @@ export default function Card({ filters = {} }) {
                 </div>
               </div>
               <p className="text-sm text-[#6A6A6A]">
-                {property.rooms.length} rooms
+                {property?.rooms?.length} rooms
               </p>
               <p className="text-sm text-[#222222]">
                 ${property.pricePerMonth}/month

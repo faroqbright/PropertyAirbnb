@@ -1,5 +1,8 @@
 "use client";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../../firebase/firebaseConfig";
 import {
   CreditCard,
   Banknote,
@@ -8,18 +11,100 @@ import {
   Nfc,
   ArrowRight,
   ChevronDown,
-  CircleCheck,
   Check,
 } from "lucide-react";
+import { useSelector } from "react-redux";
 
 export default function PaymentForm() {
   const [paymentMethod, setPaymentMethod] = useState("credit-card");
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
+  const router = useRouter();
+  const [selectedRooms, setSelectedRooms] = useState([]);
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [name, setName] = useState(null);
+  const [price, setPrice] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [roomPrices, setRoomPrices] = useState({});
+  const [servicePrices, setServicePrices] = useState({});
+  const [selectedMonths, setSelectedMonths] = useState(1);
+  const [propertyId, setPropertyId] = useState(null);
+  const userId = useSelector((state) => state.auth.userInfo?.uid);
 
-  const handlePayNow = () => {
+  useEffect(() => {
+    const storedRooms = JSON.parse(localStorage.getItem("selectedRooms")) || [];
+    const storedServices =
+      JSON.parse(localStorage.getItem("selectedServices")) || [];
+    const storedProperty = JSON.parse(localStorage.getItem("propertyDetails"));
+    const storedMonths =
+      JSON.parse(localStorage.getItem("selectedMonths")) || 1;
+    const storedPropertyId = localStorage.getItem("selectedProperty");
+
+    if (storedProperty) {
+      setName(storedProperty.name);
+      setLocation(storedProperty.location);
+      setPrice(storedProperty.pricePerMonth);
+
+      const roomPrices = {};
+      storedProperty?.rooms?.forEach((room, index) => {
+        roomPrices[`room-${index + 1}`] = room.price;
+      });
+      setRoomPrices(roomPrices);
+
+      const servicePrices = {};
+      storedProperty?.additionalCosts?.forEach((service, index) => {
+        servicePrices[`service-${index + 1}`] = service.cost;
+      });
+      setServicePrices(servicePrices);
+    }
+
+    setSelectedRooms(storedRooms);
+    setSelectedServices(storedServices);
+    setSelectedMonths(storedMonths);
+    setPropertyId(JSON.parse(storedPropertyId));
+
+    const total = calculateTotal(storedRooms, storedServices);
+    setTotalAmount(total);
+  }, []);
+
+  const calculateTotal = (rooms, services) => {
+    const roomsTotal = rooms.reduce((sum, room) => sum + Number(room.price), 0);
+    const servicesTotal = services.reduce(
+      (sum, service) => sum + Number(service.price),
+      0
+    );
+    return roomsTotal + servicesTotal;
+  };
+
+  const handlePayNow = async () => {
     setPaymentSubmitted(true);
+
+    console.log("property id is", propertyId);
+    console.log("user id is", userId);
+
+    const bookingDetails = {
+      propertyId,
+      userId,
+      propertyName: name,
+      propertyLocation: location,
+      selectedRooms,
+      selectedServices,
+      totalAmount: totalAmount * selectedMonths,
+      selectedMonths,
+      paymentMethod,
+      timestamp: new Date(),
+      status: "pending",
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, "bookings"), bookingDetails);
+      console.log("Booking saved with ID: ", docRef.id);
+      setPaymentSubmitted(true);
+    } catch (e) {
+      console.error("Error saving booking: ", e);
+    }
   };
 
   return (
@@ -167,31 +252,36 @@ export default function PaymentForm() {
             </div>
           </div>
 
-          <div className="bg-purplebutton text-white p-6 rounded-2xl w-full lg:w-[600px] h-[400px] flex flex-col justify-between">
+          <div className="bg-purplebutton text-white p-6 rounded-2xl w-full lg:w-[600px] h-[500px] flex flex-col justify-between">
             <div>
               <h2 className="text-[20px] font-semibold mb-5 border-b border-white/30 pb-3">
                 Booking Summary
               </h2>
               <div className="flex justify-between text-[17px] font-medium">
-                <p>Entire loft in Florence, Italy</p>
-                <span className="text-2xl mb-1 -mt-1">$99</span>
+                <p>{location}</p>
+                <span className="text-2xl mb-1 -mt-1">
+                  ${totalAmount * selectedMonths}
+                </span>
               </div>
-              <p className="text-[13px] mt-2 opacity-80 pb-1">
-                Beautiful Eiffel Tower View Studio & Private Balcony
-              </p>
+              <p className="text-[13px] mt-2 opacity-80 pb-1">{name}</p>
               <div className="mt-4 text-[13px] space-y-2 border-t border-white/30 pt-6">
-                <p className="flex justify-between">
-                  <span>$79 × 7 months</span> <span>$555</span>
-                </p>
-                <p className="flex justify-between">
-                  <span>Cleaning fee</span> <span>$62</span>
-                </p>
-                <p className="flex justify-between">
-                  <span>Service fee</span> <span>$83</span>
-                </p>
+                <span>
+                  ${totalAmount} x {selectedMonths} month{" "}
+                  {selectedMonths > 1 ? "s" : " "}
+                </span>
+                {selectedRooms.map((room) => (
+                  <p key={room.id} className="flex justify-between">
+                    <span>{room.name}</span> <span>${room.price}</span>
+                  </p>
+                ))}
+                {selectedServices.map((service) => (
+                  <p key={service.id} className="flex justify-between">
+                    <span>{service.name}</span> <span>${service.price}</span>
+                  </p>
+                ))}
               </div>
             </div>
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center ">
               <button
                 onClick={handlePayNow}
                 className="w-44 bg-bluebutton text-white py-2 rounded-full flex items-center justify-center gap-2"
