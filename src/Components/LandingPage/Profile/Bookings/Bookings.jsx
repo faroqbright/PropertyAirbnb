@@ -12,7 +12,6 @@ export default function Bookings() {
   const [isAdmin, setIsAdmin] = useState(true);
   const [bookings, setBookings] = useState([]);
   const [propertyId, setPropertyId] = useState(null);
-  const [userIds, setUserIds] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,46 +25,61 @@ export default function Bookings() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+        const propertiesCollection = collection(db, "properties");
+        const propertiesSnapshot = await getDocs(propertiesCollection);
+        const propertiesList = propertiesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        console.log("Properties Fetched:", propertiesList);
+
+        const propertyIdsFromProperties = new Set(
+          propertiesList.map((property) => property.id)
+        );
+        console.log(
+          "Property IDs from Properties:",
+          Array.from(propertyIdsFromProperties)
+        );
+
         const bookingsCollection = collection(db, "bookings");
-        const q = query(bookingsCollection); 
-  
+        const q = query(bookingsCollection);
         const snapshot = await getDocs(q);
         let bookingsList = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-  
+
         console.log("All Bookings Fetched:", bookingsList);
-  
-        if (propertyId && userInfo?.uid) {
-          const parsedPropertyId = typeof propertyId === 'string' ? JSON.parse(propertyId)?.id : propertyId?.id;
-          console.log("Parsed Property ID:", parsedPropertyId);
-          bookingsList = bookingsList.filter(
-            (booking) =>
-              booking.propertyId === parsedPropertyId &&
-              booking.userId === userInfo.uid
-          );
-        }
-  
+
+        bookingsList = bookingsList.filter((booking) => {
+          const bookingPropertyId =
+            typeof booking.propertyId === "string"
+              ? JSON.parse(booking.propertyId)?.id
+              : booking.propertyId?.id;
+          const property = propertiesList.find((prop) => prop.id === bookingPropertyId);
+          return property && property.userId === booking.userId;
+        });
+
         console.log("Filtered Bookings:", bookingsList);
-  
+
         setBookings(bookingsList);
-  
-        const userIds = new Set(bookingsList.map((booking) => booking.userId));
-        setUserIds(Array.from(userIds));
-  
+
         if (bookingsList.length > 0) {
           const firstBooking = bookingsList[0];
           console.log("First Booking Property ID:", firstBooking.propertyId);
           setPropertyId(firstBooking.propertyId);
         }
-  
-        console.log("All User IDs from Properties:", Array.from(userIds));
+
+        console.log(
+          "All Property IDs from Properties:",
+          Array.from(propertyIdsFromProperties)
+        );
       } catch (error) {
         console.error("Error fetching bookings:", error);
       }
     };
-  
+
     fetchBookings();
   }, [userInfo, propertyId]);
 
