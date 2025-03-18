@@ -203,11 +203,18 @@ export default function Card({ filters = {} }) {
           <div
             key={property.id}
             className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"
-            onClick={() =>
-              router.push(
-                `/Landing/Properties/PropertiesDetail?id=${property.id}`
-              )
-            }
+            onClick={() => {
+              // Remove items from localStorage
+              localStorage.removeItem("startDate");
+              localStorage.removeItem("endDate");
+
+              // Delay the navigation slightly
+              setTimeout(() => {
+                router.push(
+                  `/Landing/Properties/PropertiesDetail?id=${property.id}`
+                );
+              }, 100); // 100ms delay
+            }}
           >
             <div className="relative h-[200px] w-full overflow-hidden">
               <Swiper

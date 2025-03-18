@@ -32,27 +32,52 @@ export default function PaymentForm() {
   const [selectedMonths, setSelectedMonths] = useState(1);
   const [propertyId, setPropertyId] = useState(null);
   const userId = useSelector((state) => state.auth.userInfo?.uid);
+  const userPersonalInfo = useSelector((state) => state?.auth?.userInfo?.personalInfo);
+  
   const FullName = useSelector((state) => state.auth.userInfo?.FullName);
 
+  // Retrieve dates from localStorage
+  const startDate = localStorage.getItem("startDate");
+  const endDate = localStorage.getItem("endDate");
 
+  // Convert to Date objects
+  const startDateObj = new Date(startDate);
+  const endDateObj = new Date(endDate);
+
+  // Normalize time to midnight (00:00:00) to avoid time-related discrepancies
+  startDateObj.setHours(0, 0, 0, 0);
+  endDateObj.setHours(0, 0, 0, 0);
+
+  // Calculate the difference in milliseconds
+  const differenceInTime = endDateObj - startDateObj;
+
+  // Convert to days
+  const daysDifference = differenceInTime / (1000 * 60 * 60 * 24);
+
+  const daysDifferenceTwo = daysDifference + 1;
 
   useEffect(() => {
     const storedRooms = JSON.parse(localStorage.getItem("selectedRooms")) || [];
     const storedServices =
       JSON.parse(localStorage.getItem("selectedServices")) || [];
-    const storedProperty = JSON.parse(localStorage.getItem("propertyDetails"));
+    const storedProperty = JSON.parse(localStorage.getItem("selectedProperty"));
     const storedMonths =
       JSON.parse(localStorage.getItem("selectedMonths")) || 1;
     const storedPropertyId = localStorage.getItem("selectedProperty");
 
     if (storedProperty) {
+      setPrice(
+        Number(
+          ((storedProperty.pricePerMonth / 30) * daysDifferenceTwo).toFixed(2)
+        )
+      );
+
       setName(storedProperty.name);
       setLocation(storedProperty.location);
-      setPrice(storedProperty.pricePerMonth);
 
       const roomPrices = {};
       storedProperty?.rooms?.forEach((room, index) => {
-        roomPrices[`room-${index + 1}`] = room.price;
+        roomPrices[`room-${index + 1}`] =(room.price / 30 * daysDifferenceTwo).toFixed(2);
       });
       setRoomPrices(roomPrices);
 
@@ -73,31 +98,37 @@ export default function PaymentForm() {
   }, []);
 
   const calculateTotal = (rooms, services) => {
-    const roomsTotal = rooms.reduce((sum, room) => sum + Number(room.price), 0);
+    const roomsTotal = rooms.reduce((sum, room) => sum + Number((room.price / 30 * daysDifferenceTwo).toFixed(2)), 0);
     const servicesTotal = services.reduce(
-      (sum, service) => sum + Number(service.price),
+      (sum, service) => sum + Number((service.price/ 30 * daysDifferenceTwo).toFixed(2)),
       0
     );
     return roomsTotal + servicesTotal;
   };
 
   const handlePayNow = async () => {
+    const updatedSelectedRooms = selectedRooms.map((room) => ({
+      ...room,
+      price: ((room.price / 30) * daysDifferenceTwo).toFixed(2),
+    }));
     setPaymentSubmitted(true);
-
-    console.log("property id is", propertyId);
-    console.log("user id is", userId);
-    const startDate=localStorage.getItem("startDate");
-    const endDate=localStorage.getItem("endDate");
-
+    const updatedSelectedServices = selectedServices.map((service) => ({
+      ...service,
+      price: ((parseFloat(service.cost) / 30) * daysDifferenceTwo).toFixed(2),
+      cost: ((parseFloat(service.cost) / 30) * daysDifferenceTwo).toFixed(2),
+    }));
+    const startDate = localStorage.getItem("startDate");
+    const endDate = localStorage.getItem("endDate");
 
     const bookingDetails = {
       propertyId,
       userId,
+      userPersonalInfo,
       propertyName: name,
       propertyLocation: location,
-      selectedRooms,
-      selectedServices,
-      totalAmount: totalAmount * selectedMonths,
+      selectedRooms: updatedSelectedRooms, // Use the updated array
+      selectedServices: updatedSelectedServices, // Fixed duplicate assignment
+      totalAmount: (totalAmount * selectedMonths).toFixed(2),
       selectedMonths,
       paymentMethod,
       timestamp: new Date(),
@@ -109,7 +140,6 @@ export default function PaymentForm() {
 
     try {
       const docRef = await addDoc(collection(db, "bookings"), bookingDetails);
-      console.log("Booking saved with ID: ", docRef.id);
       setPaymentSubmitted(true);
       localStorage.removeItem("startDate");
       localStorage.removeItem("endDate");
@@ -271,23 +301,23 @@ export default function PaymentForm() {
               <div className="flex justify-between text-[17px] font-medium">
                 <p>{location}</p>
                 <span className="text-2xl mb-1 -mt-1">
-                  ${totalAmount * selectedMonths}
+                  ${(totalAmount * selectedMonths).toFixed(2)}
                 </span>
               </div>
               <p className="text-[13px] mt-2 opacity-80 pb-1">{name}</p>
               <div className="mt-4 text-[13px] space-y-2 border-t border-white/30 pt-6">
                 <span>
-                  ${totalAmount} x {selectedMonths} month{" "}
+                  ${price} / {daysDifferenceTwo} days{" "}
                   {selectedMonths > 1 ? "s" : " "}
                 </span>
                 {selectedRooms.map((room) => (
                   <p key={room.id} className="flex justify-between">
-                    <span>{room.name}</span> <span>${room.price}</span>
+                    <span>{room.name}</span> <span>${(room.price / 30 * daysDifferenceTwo).toFixed(2)}</span>
                   </p>
                 ))}
                 {selectedServices.map((service) => (
                   <p key={service.id} className="flex justify-between">
-                    <span>{service.name}</span> <span>${service.price}</span>
+                    <span>{service.name}</span> <span>${(service.price / 30 * daysDifferenceTwo).toFixed(2)}</span>
                   </p>
                 ))}
               </div>

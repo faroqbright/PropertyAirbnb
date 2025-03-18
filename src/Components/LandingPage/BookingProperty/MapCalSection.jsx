@@ -4,6 +4,9 @@ import {
   format,
   addMonths,
   subMonths,
+  differenceInDays,
+  differenceInMonths,
+  differenceInYears,
   startOfMonth,
   endOfMonth,
   startOfWeek,
@@ -75,60 +78,124 @@ export default function Header() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [selectionMade, setSelectionMade] = useState(false);
-  console.log(property);
 
+  // Initialize startDate and endDate from localStorage
+  useEffect(() => {
+    const storedStartDate = localStorage.getItem("startDate");
+    const storedEndDate = localStorage.getItem("endDate");
+  
+    if (storedStartDate && storedEndDate) {
+      // Parse dates and set time to midnight to avoid timezone issues
+      const start = new Date(storedStartDate + "T00:00:00");
+      const end = new Date(storedEndDate + "T00:00:00");
+  
+      setStartDate(start);
+      setEndDate(end);
+    }
+  }, []);
+  
   const handleDateClick = async (day) => {
+    // Normalize the day to midnight to avoid timezone issues
+    const normalizedDay = new Date(day);
+    normalizedDay.setHours(0, 0, 0, 0);
+  
     if (!startDate || (startDate && endDate)) {
-      setStartDate(day);
+      setStartDate(normalizedDay);
       setEndDate(null);
       setSelectionMade(true);
-      localStorage.setItem("startDate", day.toISOString());  
-    } else if (day > startDate) {
-      setEndDate(day);
+      localStorage.setItem("startDate", format(normalizedDay, "yyyy-MM-dd")); // Store as YYYY-MM-DD
+    } else if (normalizedDay > startDate) {
+      setEndDate(normalizedDay);
       setSelectionMade(false);
-      localStorage.setItem("endDate", day.toISOString()); 
-      await saveDatesToFirebase(); 
+      localStorage.setItem("endDate", format(normalizedDay, "yyyy-MM-dd")); // Store as YYYY-MM-DD
+      await saveDatesToFirebase();
     } else {
       setEndDate(startDate);
-      setStartDate(day);
-      localStorage.setItem("startDate", day.toISOString()); 
-      localStorage.setItem("endDate", startDate.toISOString()); 
-      await saveDatesToFirebase(); 
+      setStartDate(normalizedDay);
+      localStorage.setItem("startDate", format(normalizedDay, "yyyy-MM-dd")); // Store as YYYY-MM-DD
+      localStorage.setItem("endDate", format(startDate, "yyyy-MM-dd")); // Store as YYYY-MM-DD
+      await saveDatesToFirebase();
     }
   };
-  console.log(startDate, "Start Dates");
-  console.log(endDate, "End Dates");
+
+  const saveDatesToFirebase = async () => {
+    if (!propertyId || !startDate || !endDate) {
+      return;
+    }
+
+    try {
+      const propertyRef = doc(db, "properties", propertyId);
+
+      await updateDoc(propertyRef, {
+        selectedDates: {
+          startDate: format(startDate, "yyyy-MM-dd"), // Store as YYYY-MM-DD
+          endDate: format(endDate, "yyyy-MM-dd"), // Store as YYYY-MM-DD
+        },
+      });
+
+      toast.success("Dates saved successfully!");
+    } catch (error) {
+      console.error("Error saving dates to Firebase:", error);
+      toast.error("Failed to save dates.");
+    }
+  };
+
+  const formatDuration = (startDate, endDate) => {
+    if (!startDate || !endDate) return "Select dates";
+
+    const days = differenceInDays(endDate, startDate) + 1;
+    const months = differenceInMonths(endDate, startDate);
+    const years = differenceInYears(endDate, startDate);
+
+    if (years > 0) {
+      const remainingMonths = differenceInMonths(
+        endDate,
+        addYears(startDate, years)
+      );
+      const remainingDays = differenceInDays(
+        endDate,
+        addMonths(addYears(startDate, years), remainingMonths)
+      );
+      return `${years} ${years === 1 ? "year" : "years"}${
+        remainingMonths > 0
+          ? `, ${remainingMonths} ${remainingMonths === 1 ? "month" : "months"}`
+          : ""
+      }${
+        remainingDays > 0
+          ? `, and ${remainingDays} ${remainingDays === 1 ? "day" : "days"}`
+          : ""
+      }`;
+    } else if (months > 0) {
+      const remainingDays = differenceInDays(
+        endDate,
+        addMonths(startDate, months)
+      );
+      return `${months} ${months === 1 ? "month" : "months"}${
+        remainingDays > 0
+          ? ` and ${remainingDays} ${remainingDays === 1 ? "day" : "days"}`
+          : ""
+      }`;
+    } else {
+      return `${days} ${days === 1 ? "day" : "days"}`;
+    }
+  };
+
+  const durationText =
+    startDate && endDate ? formatDuration(startDate, endDate) : "Select dates";
 
   const isDateInRange = (day) => {
     if (!startDate || !endDate) return false;
     return day >= startDate && day <= endDate;
   };
 
-  {
-    days.map((day, index) => (
-      <div
-        key={index}
-        className={`text-center hover:bg-bluebutton rounded-full hover:text-white cursor-pointer py-3 text-sm ${
-          isSameMonth(day, currentMonth) ? "text-black" : "text-gray-300"
-        } ${
-          day.getTime() === startDate?.getTime() ||
-          day.getTime() === endDate?.getTime()
-            ? "bg-bluebutton text-white"
-            : isDateInRange(day)
-            ? "bg-bluebutton text-white"
-            : ""
-        }`}
-        onClick={() => handleDateClick(day)}
-      >
-        {format(day, "d")}
-      </div>
-    ));
-  }
-
   const clearDates = () => {
     setStartDate(null);
     setEndDate(null);
     setSelectionMade(false);
+
+    // Clear startDate and endDate from localStorage
+    localStorage.removeItem("startDate");
+    localStorage.removeItem("endDate");
   };
 
   useEffect(() => {
@@ -183,28 +250,6 @@ export default function Header() {
 
     return () => clearTimeout(timeoutId);
   }, [user]);
-
-  const saveDatesToFirebase = async () => {
-    if (!propertyId || !startDate || !endDate) {
-      return;
-    }
-
-    try {
-      const propertyRef = doc(db, "properties", propertyId);
-
-      await updateDoc(propertyRef, {
-        selectedDates: {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
-      });
-
-      toast.success("Dates saved successfully!");
-    } catch (error) {
-      console.error("Error saving dates to Firebase:", error);
-      toast.error("Failed to save dates.");
-    }
-  };
 
   const AddZoomControl = () => {
     const map = useMap();
@@ -353,12 +398,18 @@ export default function Header() {
           <div className="mb-20">
             <div className="flex items-left space-x-2">
               <h2 className="text-[20px] font-semibold mr-4">
-                2 months in New York
+                {durationText} in {property?.location}
               </h2>
             </div>
             <p className="text-sm text-gray-400 font-medium">
-              Feb 19, 2022 - Feb 26, 2022
+              {startDate && endDate
+                ? `${format(startDate, "MMM d, yyyy")} - ${format(
+                    endDate,
+                    "MMM d, yyyy"
+                  )}`
+                : "Select dates"}
             </p>
+
             <div className="max-w-2xl mx-auto bg-[#F9F9F9] rounded-lg shadow-md ml-2 mt-6 flex">
               <div className="w-1/4 mr-4 hidden sm:block bg-white rounded-lg shadow-lg">
                 {months.map((month) => (
