@@ -1,25 +1,31 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useSelector } from "react-redux";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import { Pagination } from "swiper/modules";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 export default function Bookings() {
   const [status, setStatus] = useState("ongoing");
   const userInfo = useSelector((state) => state.auth.userInfo);
-  const [isAdmin, setIsAdmin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [bookings, setBookings] = useState([]);
-  const [propertyId, setPropertyId] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const router = useRouter();
 
+  console.log("Bookings", bookings);
+  console.log("userInfo", userInfo);
+
   useEffect(() => {
-    if (userInfo?.role === "LandLord") {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
+    setIsAdmin(userInfo?.role === "LandLord");
   }, [userInfo]);
 
   useEffect(() => {
@@ -34,14 +40,6 @@ export default function Bookings() {
 
         console.log("Properties Fetched:", propertiesList);
 
-        const propertyIdsFromProperties = new Set(
-          propertiesList.map((property) => property.id)
-        );
-        console.log(
-          "Property IDs from Properties:",
-          Array.from(propertyIdsFromProperties)
-        );
-
         const bookingsCollection = collection(db, "bookings");
         const q = query(bookingsCollection);
         const snapshot = await getDocs(q);
@@ -52,36 +50,37 @@ export default function Bookings() {
 
         console.log("All Bookings Fetched:", bookingsList);
 
-        bookingsList = bookingsList.filter((booking) => {
-          const bookingPropertyId =
-            typeof booking.propertyId === "string"
-              ? JSON.parse(booking.propertyId)?.id
-              : booking.propertyId?.id;
-          const property = propertiesList.find((prop) => prop.id === bookingPropertyId);
-          return property && property.userId === booking.userId;
-        });
+        if (isAdmin) {
+          bookingsList = bookingsList.filter((booking) => {
+            try {
+              console.log("Booking Property ID:", booking.propertyId);
 
-        console.log("Filtered Bookings:", bookingsList);
+              const propertyIdObj =
+                typeof booking.propertyId === "string"
+                  ? JSON.parse(booking.propertyId)
+                  : booking.propertyId;
 
-        setBookings(bookingsList);
+              console.log("Parsed Property ID Object:", propertyIdObj);
+              console.log("Property User ID:", propertyIdObj.userId);
+              console.log("Logged-in User ID:", userInfo?.uid);
 
-        if (bookingsList.length > 0) {
-          const firstBooking = bookingsList[0];
-          console.log("First Booking Property ID:", firstBooking.propertyId);
-          setPropertyId(firstBooking.propertyId);
+              return propertyIdObj.userId === userInfo?.uid;
+            } catch (error) {
+              console.error("Error parsing propertyId:", error);
+              return false;
+            }
+          });
         }
 
-        console.log(
-          "All Property IDs from Properties:",
-          Array.from(propertyIdsFromProperties)
-        );
+        console.log("Filtered Bookings:", bookingsList);
+        setBookings(bookingsList);
       } catch (error) {
         console.error("Error fetching bookings:", error);
       }
     };
 
     fetchBookings();
-  }, [userInfo, propertyId]);
+  }, [userInfo, isAdmin]);
 
   const handleToggle = (newStatus) => {
     setStatus(newStatus);
@@ -98,12 +97,8 @@ export default function Bookings() {
     }
   };
 
-  const filteredBookings = bookings.filter(
-    (booking) => booking.status === status
-  );
-
-  const navigate = (booking) => {
-    if (isAdmin && booking.status === "ongoing") {
+  const navigate = (bookings) => {
+    if (isAdmin && bookings.status === "ongoing") {
       router.push("/Landing/Profile/Details");
     }
   };
@@ -138,7 +133,7 @@ export default function Bookings() {
           userInfo?.email ? "bg-[#f8f8f8]" : "bg-white"
         } rounded-xl border-[1.5px] border-gray-200 px-6 pt-1 pb-4`}
       >
-        {filteredBookings.length === 0 ? (
+        {bookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 ">
             <Image
               src="/assets/notFound.jpeg"
@@ -152,54 +147,77 @@ export default function Bookings() {
             </p>
           </div>
         ) : (
-          filteredBookings.map((booking) => (
+          bookings.map((bookings) => (
             <div
-              key={booking.id}
+              key={bookings.id}
               onClick={(e) => {
                 e.preventDefault();
-                navigate(booking);
+                navigate(bookings);
               }}
               className="flex flex-col md:flex-row items-start md:items-center md:justify-between border-b-[1.5px] last:border-b-0 py-4"
             >
               <div className="flex flex-col md:flex-row items-start gap-4 w-full">
-                {isAdmin ? (
-                  <Image
-                    src="/assets/admin.jpeg"
-                    alt="Admin picture"
-                    width={150}
-                    height={50}
-                    className="rounded-2xl w-full md:h-[105px] h-[200px] object-cover"
-                  />
-                ) : (
-                  <Image
-                    src={booking.image || "/assets/Container1.png"}
-                    alt={booking.propertyName}
-                    width={150}
-                    height={50}
-                    className="rounded-2xl w-full md:h-[105px] h-[250px] object-cover"
-                  />
-                )}
+                {bookings?.selectedRooms &&
+                  bookings.selectedRooms.length > 0 && (
+                    <div className="w-72">
+                      <Swiper
+                        modules={[Pagination]}
+                        pagination={{ clickable: true }}
+                        className="h-full w-full"
+                      >
+                        {bookings.selectedRooms.map((room, roomIndex) =>
+                          room.images?.map((imgUrl, imgIndex) => (
+                            <SwiperSlide
+                              key={`room-${roomIndex}-img-${imgIndex}`}
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`Room ${roomIndex + 1} Image ${
+                                  imgIndex + 1
+                                }`}
+                                className="rounded-2xl h-[200px] md:h-[105px] w-full object-cover"
+                              />
+                            </SwiperSlide>
+                          ))
+                        )}
+                      </Swiper>
+                    </div>
+                  )}
+
                 <div className="flex flex-col gap-2 w-full">
                   <h3 className="text-lg font-semibold">
-                    {isAdmin ? booking.adminName : booking.propertyName}
+                    {isAdmin ? bookings.FullName : bookings.FullName}
                   </h3>
+
                   <p className="text-gray-500 text-sm">
-                    {isAdmin
-                      ? booking.rooms
-                      : `${booking.selectedRooms.length} rooms for ${booking.selectedMonths} months`}
+                    {bookings?.selectedRooms?.length || 0} rooms
                   </p>
+
                   <span className="text-gray-600 font-normal text-sm">
-                    {isAdmin ? booking.period : booking.propertyLocation}
+                    {new Date(bookings?.startDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}{" "}
+                    -{" "}
+                    {new Date(bookings?.endDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
                   </span>
+
                   <div className="border-b-[1px] md:hidden border-gray-300 w-full"></div>
+
                   <span className="text-lg md:hidden font-semibold">
-                    ${booking.totalAmount}
+                    ${bookings?.totalAmount}
                   </span>
                 </div>
+
                 <div className="flex items-center -mr-28 my-auto space-x-2">
                   <div className="md:border-l-[1px] hidden md:block border-t-[1px] border-gray-300 h-6"></div>
                   <span className="text-lg hidden md:block font-semibold">
-                    ${booking.totalAmount}
+                    ${bookings?.totalAmount}
                   </span>
                 </div>
               </div>
@@ -230,15 +248,15 @@ export default function Bookings() {
                 ) : (
                   <button
                     className={`px-4 py-2 md:w-32 w-52 text-sm font-medium rounded-full ${
-                      booking.btntext === "Requested"
+                      bookings.btntext === "Requested"
                         ? "bg-purplebutton text-white"
                         : "bg-bluebutton text-white"
                     }`}
                     onClick={() =>
-                      handleButtonClick(booking.btntext || "Message")
+                      handleButtonClick(bookings.btntext || "Message")
                     }
                   >
-                    {booking.btntext || "Message"}
+                    {bookings.btntext || "Message"}
                   </button>
                 )}
               </div>

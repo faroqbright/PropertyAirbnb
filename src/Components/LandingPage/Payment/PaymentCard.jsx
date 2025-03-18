@@ -32,6 +32,9 @@ export default function PaymentForm() {
   const [selectedMonths, setSelectedMonths] = useState(1);
   const [propertyId, setPropertyId] = useState(null);
   const userId = useSelector((state) => state.auth.userInfo?.uid);
+  const FullName = useSelector((state) => state.auth.userInfo?.FullName);
+
+
 
   useEffect(() => {
     const storedRooms = JSON.parse(localStorage.getItem("selectedRooms")) || [];
@@ -83,6 +86,9 @@ export default function PaymentForm() {
 
     console.log("property id is", propertyId);
     console.log("user id is", userId);
+    const startDate=localStorage.getItem("startDate");
+    const endDate=localStorage.getItem("endDate");
+
 
     const bookingDetails = {
       propertyId,
@@ -96,12 +102,17 @@ export default function PaymentForm() {
       paymentMethod,
       timestamp: new Date(),
       status: "pending",
+      FullName: FullName,
+      startDate,
+      endDate,
     };
 
     try {
       const docRef = await addDoc(collection(db, "bookings"), bookingDetails);
       console.log("Booking saved with ID: ", docRef.id);
       setPaymentSubmitted(true);
+      localStorage.removeItem("startDate");
+      localStorage.removeItem("endDate");
     } catch (e) {
       console.error("Error saving booking: ", e);
     }

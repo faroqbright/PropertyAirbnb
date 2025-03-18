@@ -209,13 +209,13 @@ export default function Context() {
 
       <div className="lg:w-[40%] w-full bg-[#B19BD9] text-white rounded-2xl p-6 relative">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-gray-300">
-          <div className="text-2xl font-medium">
+          {/* <div className="text-2xl font-medium">
             ${price * selectedMonths}{" "}
             <span className="text-lg text-gray-200 font-normal">
               / {selectedMonths || 1} Month
               {(selectedMonths || 1) > 1 ? "s" : ""}
             </span>
-          </div>
+          </div> */}
           <div className="flex items-center gap-2 mt-2 md:mt-0">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
             <span>5.0</span>
@@ -295,9 +295,9 @@ export default function Context() {
               </span>
               <div className="flex items-center justify-between ml-3 w-full">
                 <span className="text-[15px] font-medium">{service.name}</span>
-                <span className="text-[15px] font-medium">
+                {/* <span className="text-[15px] font-medium">
                   ${service.price * selectedMonths}
-                </span>
+                </span> */}
               </div>
             </label>
           ))}
@@ -308,7 +308,7 @@ export default function Context() {
           <span className="text-xl font-bold">${calculateTotal()}</span>
         </div>
 
-        <div className="w-full pt-4 mb-5">
+        {/* <div className="w-full pt-4 mb-5">
           <div className="relative">
             <select
               value={selectedMonths}
@@ -327,7 +327,7 @@ export default function Context() {
               ))}
             </select>
           </div>
-        </div>
+        </div> */}
 
         {userType !== "LandLord" && (
           <button

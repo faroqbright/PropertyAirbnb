@@ -24,7 +24,7 @@ import {
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { db } from "../../../firebase/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 
 export default function Header() {
@@ -72,7 +72,64 @@ export default function Header() {
   const [userDetails, setUserDetails] = useState(null);
   const searchParams = useSearchParams();
   const propertyId = searchParams.get("id");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [selectionMade, setSelectionMade] = useState(false);
   console.log(property);
+
+  const handleDateClick = async (day) => {
+    if (!startDate || (startDate && endDate)) {
+      setStartDate(day);
+      setEndDate(null);
+      setSelectionMade(true);
+      localStorage.setItem("startDate", day.toISOString());  
+    } else if (day > startDate) {
+      setEndDate(day);
+      setSelectionMade(false);
+      localStorage.setItem("endDate", day.toISOString()); 
+      await saveDatesToFirebase(); 
+    } else {
+      setEndDate(startDate);
+      setStartDate(day);
+      localStorage.setItem("startDate", day.toISOString()); 
+      localStorage.setItem("endDate", startDate.toISOString()); 
+      await saveDatesToFirebase(); 
+    }
+  };
+  console.log(startDate, "Start Dates");
+  console.log(endDate, "End Dates");
+
+  const isDateInRange = (day) => {
+    if (!startDate || !endDate) return false;
+    return day >= startDate && day <= endDate;
+  };
+
+  {
+    days.map((day, index) => (
+      <div
+        key={index}
+        className={`text-center hover:bg-bluebutton rounded-full hover:text-white cursor-pointer py-3 text-sm ${
+          isSameMonth(day, currentMonth) ? "text-black" : "text-gray-300"
+        } ${
+          day.getTime() === startDate?.getTime() ||
+          day.getTime() === endDate?.getTime()
+            ? "bg-bluebutton text-white"
+            : isDateInRange(day)
+            ? "bg-bluebutton text-white"
+            : ""
+        }`}
+        onClick={() => handleDateClick(day)}
+      >
+        {format(day, "d")}
+      </div>
+    ));
+  }
+
+  const clearDates = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setSelectionMade(false);
+  };
 
   useEffect(() => {
     if (!propertyId) {
@@ -126,6 +183,28 @@ export default function Header() {
 
     return () => clearTimeout(timeoutId);
   }, [user]);
+
+  const saveDatesToFirebase = async () => {
+    if (!propertyId || !startDate || !endDate) {
+      return;
+    }
+
+    try {
+      const propertyRef = doc(db, "properties", propertyId);
+
+      await updateDoc(propertyRef, {
+        selectedDates: {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        },
+      });
+
+      toast.success("Dates saved successfully!");
+    } catch (error) {
+      console.error("Error saving dates to Firebase:", error);
+      toast.error("Failed to save dates.");
+    }
+  };
 
   const AddZoomControl = () => {
     const map = useMap();
@@ -201,7 +280,7 @@ export default function Header() {
   const convertTimestampToMonthYear = (timestamp) => {
     if (!timestamp?.seconds) return "Invalid Date";
 
-    const date = new Date(timestamp.seconds * 1000); // Convert seconds to milliseconds
+    const date = new Date(timestamp.seconds * 1000);
     return new Intl.DateTimeFormat("en-US", {
       month: "long",
       year: "numeric",
@@ -334,13 +413,24 @@ export default function Header() {
                         isSameMonth(day, currentMonth)
                           ? "text-black"
                           : "text-gray-300"
+                      } ${
+                        day.getTime() === startDate?.getTime() ||
+                        day.getTime() === endDate?.getTime()
+                          ? "bg-bluebutton text-white"
+                          : isDateInRange(day)
+                          ? "bg-bluebutton text-white"
+                          : ""
                       }`}
+                      onClick={() => handleDateClick(day)}
                     >
                       {format(day, "d")}
                     </div>
                   ))}
                 </div>
-                <p className="text-center text-sm text-gray-400 font-medium mt-4 underline cursor-pointer pb-10">
+                <p
+                  className="text-center text-sm text-gray-400 font-medium mt-4 underline cursor-pointer pb-10"
+                  onClick={clearDates}
+                >
                   Clear dates
                 </p>
               </div>
