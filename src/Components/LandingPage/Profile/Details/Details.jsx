@@ -2,7 +2,7 @@
 import { Check, Star } from "lucide-react";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, query } from "firebase/firestore";
+import { collection, getDocs, query,} from "firebase/firestore";
 import { db } from "../../../../firebase/firebaseConfig";
 
 export default function Bookings(id){
