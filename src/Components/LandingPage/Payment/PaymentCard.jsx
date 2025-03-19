@@ -134,6 +134,8 @@ export default function PaymentForm() {
       timestamp: new Date(),
       status: "pending",
       FullName: FullName,
+      propertyPrice: price,
+      numberOfDays: daysDifferenceTwo,
       startDate,
       endDate,
     };
