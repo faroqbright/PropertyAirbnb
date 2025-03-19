@@ -1,13 +1,11 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight, Star, Check } from "lucide-react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { db } from "../../../firebase/firebaseConfig";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
-import { set } from "date-fns";
+import { doc, getDoc } from "firebase/firestore";
+import { differenceInDays } from "date-fns";
 
 export default function Context() {
   const [selectedRooms, setSelectedRooms] = useState([]);
@@ -24,10 +22,48 @@ export default function Context() {
   const [userDetails, setUserDetails] = useState(null);
   const [description, setdescription] = useState(null);
   const [name, setname] = useState(null);
-  const [price, setprice] = useState(null);
+  const [pricePerMonth, setPricePerMonth] = useState(null);
   const [location, setlocation] = useState(null);
-  const [selectedMonths, setSelectedMonths] = useState(1);
+  const [daysSelected, setDaysSelected] = useState(0);
   const userType = useSelector((state) => state.auth.userInfo?.userType);
+
+  const updateDaysSelected = () => {
+    const storedStartDate = localStorage.getItem("startDate");
+    const storedEndDate = localStorage.getItem("endDate");
+
+    if (storedStartDate && storedEndDate) {
+      const startDate = new Date(storedStartDate);
+      const endDate = new Date(storedEndDate);
+      const days = differenceInDays(endDate, startDate) + 1;
+      setDaysSelected(days);
+    }
+  };
+
+  useEffect(() => {
+    updateDaysSelected(); // Initial call
+
+    // Listen for storage changes in other tabs
+    const handleStorageChange = (event) => {
+      if (event.key === "startDate" || event.key === "endDate") {
+        updateDaysSelected();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  // Detect changes within the same tab
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateDaysSelected();
+    }, 500); // Check every 500ms
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!propertyId) {
@@ -59,7 +95,7 @@ export default function Context() {
           );
           setname(propertyData?.name || null);
           setdescription(propertyData?.description || null);
-          setprice(propertyData?.pricePerMonth || null);
+          setPricePerMonth(propertyData?.pricePerMonth || null);
           setlocation(propertyData?.location || null);
           setuser(propertyData?.userId || null);
         } else {
@@ -88,7 +124,7 @@ export default function Context() {
           if (userSnap.exists()) {
             setUserDetails(userSnap.data());
           } else {
-            console.error("User not found!");
+            console.error("User  not found!");
           }
         } catch (error) {
           console.error("Error fetching user details:", error);
@@ -120,14 +156,38 @@ export default function Context() {
     };
   }, [router]);
 
+  const calculateProportion = () => {
+    if (daysSelected <= 0) return 1; // Default to full month if no dates are selected
+
+    const daysInMonth = 30; // Assuming a month has 30 days for calculation
+    const proportion = daysSelected / daysInMonth;
+
+    return proportion; // Always return the calculated proportion
+  };
+
+  const calculateAdjustedPrice = (basePrice) => {
+    const proportion = calculateProportion();
+    const adjustedPrice = (basePrice * proportion).toFixed(2); // Round to 2 decimal places
+    return adjustedPrice;
+  };
+
   const handleButtonClick = () => {
-    if (selectedRooms.length === 0 && selectedServices.length === 0) {
-      toast.error("Please select at least one room and one service.");
+    if (!userType) {
+      toast.error("Please login first.");
+      router.push("/Auth/Login");
       return;
     }
 
-    if (selectedRooms.length === 0) {
+    if (selectedRooms.length === 0 && selectedServices.length === 0) {
       toast.error("Please select at least one room.");
+      return;
+    }
+
+    const startDate = localStorage.getItem("startDate");
+    const endDate = localStorage.getItem("endDate");
+
+    if (!startDate || !endDate) {
+      toast.error("Please select a start and end date.");
       return;
     }
 
@@ -150,6 +210,8 @@ export default function Context() {
 
     const total = calculateTotal();
 
+    console.log(selectedRoomsDetails);
+
     localStorage.setItem("selectedRooms", JSON.stringify(selectedRoomsDetails));
     localStorage.setItem(
       "selectedServices",
@@ -160,26 +222,26 @@ export default function Context() {
       name: name,
       location: location,
       description: description,
-      price: price,
+      price: pricePerMonth,
     };
     localStorage.setItem("propertyDetails", JSON.stringify(propertyDetails));
-    localStorage.setItem("selectedMonths", JSON.stringify(selectedMonths));
-    localStorage.setItem("basePrice", JSON.stringify(price));
     localStorage.setItem("selectedProperty", JSON.stringify(property));
 
     router.push("/Landing/Properties/PropertiesDetail/Payment");
   };
 
   const calculateTotal = () => {
+    const proportion = calculateProportion();
+
     const roomsTotal = rooms
       .filter((room) => selectedRooms.includes(room.id))
-      .reduce((sum, room) => sum + Number(room.price), 0);
+      .reduce((sum, room) => sum + Number(room.price) * proportion, 0);
 
     const servicesTotal = services
       .filter((service) => selectedServices.includes(service.id))
-      .reduce((sum, service) => sum + Number(service.price), 0);
+      .reduce((sum, service) => sum + Number(service.price) * proportion, 0);
 
-    return (roomsTotal + servicesTotal) * selectedMonths;
+    return (roomsTotal + servicesTotal).toFixed(2); // Round to 2 decimal places
   };
 
   return (
@@ -209,6 +271,17 @@ export default function Context() {
 
       <div className="lg:w-[40%] w-full bg-[#B19BD9] text-white rounded-2xl p-6 relative">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-gray-300">
+<<<<<<< HEAD
+=======
+          <div className="text-2xl font-medium">
+            ${calculateAdjustedPrice(pricePerMonth)}{" "}
+            <span className="text-lg text-gray-200 font-normal">
+              {daysSelected && daysSelected !== 0
+                ? `/ ${daysSelected} Day${daysSelected !== 1 ? "s" : ""}`
+                : "/ 30 Days"}
+            </span>
+          </div>
+>>>>>>> ca58ea13828596ba494281e56c5b917bd9ca1ce5
           <div className="flex items-center gap-2 mt-2 md:mt-0">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
             <span>5.0</span>
@@ -251,7 +324,7 @@ export default function Context() {
                 <span className="text-[15px] font-medium">{room.name}</span>
               </div>
               <span className="text-[15px] font-medium">
-                ${room.price * selectedMonths}
+                ${calculateAdjustedPrice(room.price)}
               </span>
             </label>
           ))}
@@ -288,6 +361,12 @@ export default function Context() {
               </span>
               <div className="flex items-center justify-between ml-3 w-full">
                 <span className="text-[15px] font-medium">{service.name}</span>
+<<<<<<< HEAD
+=======
+                <span className="text-[15px] font-medium">
+                  ${calculateAdjustedPrice(service.price)}
+                </span>
+>>>>>>> ca58ea13828596ba494281e56c5b917bd9ca1ce5
               </div>
             </label>
           ))}

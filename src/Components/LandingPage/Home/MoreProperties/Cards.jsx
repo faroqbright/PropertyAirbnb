@@ -252,9 +252,14 @@ export default function Header() {
               className="w-full bg-white overflow-hidden mb-6 border rounded-xl cursor-pointer group"
               onClick={() => {
                 handlePropertySelect(property);
-                router.push(
-                  `/Landing/Properties/PropertiesDetail?id=${property.id}`
-                );
+                // Remove items from localStorage
+                localStorage.removeItem("startDate");
+                localStorage.removeItem("endDate");
+              
+                // Delay the navigation slightly
+                setTimeout(() => {
+                  router.push(`/Landing/Properties/PropertiesDetail?id=${property.id}`);
+                }, 100); // 100ms delay
               }}
             >
               <div className="flex flex-col sm:flex-row">
