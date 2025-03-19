@@ -271,8 +271,6 @@ export default function Context() {
 
       <div className="lg:w-[40%] w-full bg-[#B19BD9] text-white rounded-2xl p-6 relative">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-gray-300">
-<<<<<<< HEAD
-=======
           <div className="text-2xl font-medium">
             ${calculateAdjustedPrice(pricePerMonth)}{" "}
             <span className="text-lg text-gray-200 font-normal">
@@ -281,7 +279,6 @@ export default function Context() {
                 : "/ 30 Days"}
             </span>
           </div>
->>>>>>> ca58ea13828596ba494281e56c5b917bd9ca1ce5
           <div className="flex items-center gap-2 mt-2 md:mt-0">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
             <span>5.0</span>
@@ -361,12 +358,9 @@ export default function Context() {
               </span>
               <div className="flex items-center justify-between ml-3 w-full">
                 <span className="text-[15px] font-medium">{service.name}</span>
-<<<<<<< HEAD
-=======
                 <span className="text-[15px] font-medium">
                   ${calculateAdjustedPrice(service.price)}
                 </span>
->>>>>>> ca58ea13828596ba494281e56c5b917bd9ca1ce5
               </div>
             </label>
           ))}
