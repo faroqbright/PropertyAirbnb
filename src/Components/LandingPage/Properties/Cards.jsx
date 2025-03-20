@@ -12,7 +12,15 @@ import {
   Star,
 } from "lucide-react";
 import { db } from "../../../firebase/firebaseConfig";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  getDoc,
+  doc,
+  updateDoc,
+  arrayRemove,
+  arrayUnion,
+} from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -27,7 +35,9 @@ export default function Card({ filters = {} }) {
   const [activeIndex, setActiveIndex] = useState(null);
   const [userType, setUserType] = useState("");
   const userInfo = useSelector((state) => state.auth.userInfo);
+  const [favorites, setFavorites] = useState([]); // State for user's favorite properties
 
+  // Fetch properties
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -46,12 +56,35 @@ export default function Card({ filters = {} }) {
     fetchProperties();
   }, []);
 
+  // Fetch user's favorites
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (userInfo) {
+        const userFavoritesRef = doc(
+          db,
+          "users",
+          userInfo.uid,
+          "favorites",
+          "favorites"
+        );
+        const docSnap = await getDoc(userFavoritesRef);
+        if (docSnap.exists()) {
+          setFavorites(docSnap.data().favorites || []);
+        }
+      }
+    };
+
+    fetchFavorites();
+  }, [userInfo]);
+
+  // Set user type
   useEffect(() => {
     if (userInfo) {
       setUserType(userInfo?.userType);
     }
   }, [userInfo]);
 
+  // Filter properties based on filters
   const { location = "", budget = 0, amenities = [], rooms = "" } = filters;
 
   const filteredProperties = properties.filter((property) => {
@@ -78,6 +111,7 @@ export default function Card({ filters = {} }) {
     return matchesLocation && matchesBudget && matchesAmenities && matchesRooms;
   });
 
+  // Pagination logic
   const indexOfLastProperty = currentPage * propertiesPerPage;
   const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
   const currentProperties = filteredProperties.slice(
@@ -92,6 +126,45 @@ export default function Card({ filters = {} }) {
     }
   };
 
+  // Toggle favorite functionality
+  const toggleFavorite = async (propertyId) => {
+    if (!userInfo) {
+      console.log("User not logged in");
+      return;
+    }
+
+    const propertyRef = doc(db, "properties", propertyId);
+
+    try {
+      const propertySnap = await getDoc(propertyRef);
+      if (propertySnap.exists()) {
+        const favoritedBy = propertySnap.data().favoritedBy || [];
+        const isFavorited = favoritedBy.includes(userInfo.uid);
+
+        if (isFavorited) {
+          // Remove the user's ID from the favoritedBy array
+          await updateDoc(propertyRef, {
+            favoritedBy: arrayRemove(userInfo.uid),
+          });
+        } else {
+          // Add the user's ID to the favoritedBy array
+          await updateDoc(propertyRef, {
+            favoritedBy: arrayUnion(userInfo.uid),
+          });
+        }
+
+        // Update local state
+        setFavorites((prevFavorites) =>
+          isFavorited
+            ? prevFavorites.filter((id) => id !== propertyId) // Remove from favorites
+            : [...prevFavorites, propertyId] // Add to favorites
+        );
+      }
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 min-[450px]:px-10 sm:px-4 lg:px-10 py-8 mt-5 mb-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -100,14 +173,11 @@ export default function Card({ filters = {} }) {
             key={property.id}
             className="relative bg-white rounded-xl overflow-hidden cursor-pointer group border"
             onClick={() => {
-              // Remove items from localStorage
               localStorage.removeItem("startDate");
               localStorage.removeItem("endDate");
-            
-              // Delay the navigation slightly
               setTimeout(() => {
                 router.push(`/Landing/Properties/PropertiesDetail?id=${property.id}`);
-              }, 100); // 100ms delay
+              }, 100);
             }}
           >
             <div className="relative h-[200px] w-full overflow-hidden">
@@ -127,10 +197,15 @@ export default function Card({ filters = {} }) {
                 ))}
               </Swiper>
               <Heart
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(property.id);
+                }}
                 className={`absolute top-2 right-2 h-6 w-6 text-black z-10 ${
-                  property.favorite
-                    ? "fill-[#FDA4AF] text-[#F86D83]"
-                    : "fill-transparent/25"
+                  property.favoritedBy?.includes(userInfo?.uid) ||
+                  favorites.includes(property.id)
+                    ? "fill-[#FDA4AF] text-[#F86D83]" // Active (Pink)
+                    : "fill-transparent/25" // Inactive
                 }`}
               />
             </div>

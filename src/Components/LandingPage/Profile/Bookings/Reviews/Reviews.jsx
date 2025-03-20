@@ -1,26 +1,26 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import axios from "axios";
-import { doc, setDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { serverTimestamp } from "firebase/firestore";
-
 
 export default function WriteReview() {
   const router = useRouter();
   const dispatch = useDispatch();
+
+  // Access query parameters
+  const searchParams = new URLSearchParams(window.location.search);
+  const propertyId = searchParams.get("propertyId"); // Retrieve propertyId from the URL
 
   const selector = useSelector((state) => state);
   const userType = selector?.auth?.userInfo?.userType;
   const userId = selector?.auth?.userInfo?.uid;
   const userName = selector?.auth?.userInfo?.FullName;
   const category = "rating";
-
-  console.log(selector)
 
   const [ratings, setRatings] = useState({
     Description: "",
@@ -45,23 +45,30 @@ export default function WriteReview() {
       toast.error("User not logged in!");
       return;
     }
-  
+
+    if (!propertyId) {
+      toast.error("Property ID is missing!");
+      return;
+    }
+
     try {
       const reviewRef = doc(db, "LandlordReviews", userId); // Store reviews with userId as the document ID
-  
+
       await setDoc(reviewRef, {
         userId,
         userName,
         userType,
+        propertyId, // Include propertyId in the Firestore document
         ratings,
         createdAt: serverTimestamp(), // Firestore timestamp for consistent date retrieval
       });
-  
+
       toast.success("Review submitted successfully!");
-  
+
       // Navigate to Properties Detail Page
       localStorage.setItem("fromProfile", "true");
-      router.push("/Landing/Properties/PropertiesDetail");
+      router.push(`/Landing/Properties/PropertiesDetail?id=${propertyId}`);
+      console.log("Review submitted successfully", reviewRef);
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review. Please try again.");
@@ -79,9 +86,9 @@ export default function WriteReview() {
             <Star
               key={starIndex}
               size={30}
-              onClick={() => handleStarClick(category, starIndex)} // Use category instead of title
+              onClick={() => handleStarClick(category, starIndex)}
               className={
-                starIndex < (ratings[category] || 0) // Check if rating exists, default to 0
+                starIndex < (ratings[category] || 0)
                   ? "fill-[#FF9E35] text-[#FF9E35] cursor-pointer"
                   : "fill-[#D4CDC5] text-[#D4CDC5] cursor-pointer"
               }

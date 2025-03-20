@@ -19,6 +19,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 import { Pagination } from "swiper/modules";
+import { toast } from "react-toastify";
 
 const countries = [
   "France",
@@ -40,9 +41,11 @@ export default function Card({ filters = {} }) {
   const [activeIndex, setActiveIndex] = useState(null);
   const [userType, setUserType] = useState("");
   const userInfo = useSelector((state) => state.auth.userInfo);
+  const userId = userInfo?.uid;
   const [properties, setProperties] = useState([]);
   const [favorites, setFavorites] = useState([]);
   console.log(favorites, properties);
+  console.log("User info is:", userId);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -125,56 +128,41 @@ export default function Card({ filters = {} }) {
   });
 
   const toggleFavorite = async (propertyId) => {
-    if (userInfo) {
-      const userFavoritesRef = doc(
-        db,
-        "users",
-        userInfo.uid,
-        "favorites",
-        "favorites"
-      );
-      const propertyRef = doc(db, "properties", propertyId);
+    if (!userInfo) {
+      toast.error("User not logged in");
+      return;
+    }
 
-      try {
-        const userFavoritesSnap = await getDoc(userFavoritesRef);
-        const currentFavorites = userFavoritesSnap.exists()
-          ? userFavoritesSnap.data().favorites || []
-          : [];
+    const propertyRef = doc(db, "properties", propertyId);
 
-        const isFavorited = currentFavorites.includes(propertyId);
+    try {
+      const propertySnap = await getDoc(propertyRef);
+      if (propertySnap.exists()) {
+        const favoritedBy = propertySnap.data().favoritedBy || [];
+        const isFavorited = favoritedBy.includes(userInfo.uid);
 
         if (isFavorited) {
-          await updateDoc(userFavoritesRef, {
-            favorites: arrayRemove(propertyId),
+          // Remove the user's ID from the favoritedBy array
+          await updateDoc(propertyRef, {
+            favoritedBy: arrayRemove(userInfo.uid),
           });
-          setFavorites((prevFavorites) =>
-            prevFavorites.filter((id) => id !== propertyId)
-          );
         } else {
-          await updateDoc(userFavoritesRef, {
-            favorites: arrayUnion(propertyId),
+          // Add the user's ID to the favoritedBy array
+          await updateDoc(propertyRef, {
+            favoritedBy: arrayUnion(userInfo.uid),
           });
-          setFavorites((prevFavorites) => [...prevFavorites, propertyId]);
         }
 
-        const propertySnap = await getDoc(propertyRef);
-        if (propertySnap.exists()) {
-          const favoritedBy = propertySnap.data().favoritedBy || [];
-          if (isFavorited) {
-            await updateDoc(propertyRef, {
-              favoritedBy: arrayRemove(userInfo.uid),
-            });
-          } else {
-            await updateDoc(propertyRef, {
-              favoritedBy: arrayUnion(userInfo.uid),
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error updating favorites:", error);
+        // Update local state
+        setFavorites(
+          (prevFavorites) =>
+            isFavorited
+              ? prevFavorites.filter((id) => id !== propertyId) // Remove from favorites
+              : [...prevFavorites, propertyId] // Add to favorites
+        );
       }
-    } else {
-      console.log("User not logged in");
+    } catch (error) {
+      console.error("Error updating favorites:", error);
     }
   };
 
@@ -232,18 +220,19 @@ export default function Card({ filters = {} }) {
                   </SwiperSlide>
                 ))}
               </Swiper>
-
               <Heart
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleFavorite(property.id);
                 }}
-                className={`absolute top-2 right-2 z-40 text-white h-10 w-10 px-2 py-1 text-sm rounded-2xl cursor-pointer ${
+                className={`absolute top-2 right-2 z-40 h-10 w-10 px-2 py-1 rounded-2xl cursor-pointer ${
+                  property.favoritedBy?.includes(userInfo?.uid) ||
                   favorites.includes(property.id)
-                    ? "fill-[#FDA4AF] text-[#F86D83]"
-                    : "fill-transparent/25"
+                    ? "fill-[#FDA4AF] text-[#F86D83]" // Active (Pink)
+                    : "fill-transparent/25" // Inactive
                 }`}
               />
+
               {property.isGuestFavorite && (
                 <div className="absolute top-2 left-2 text-black bg-white px-2 py-1 text-sm rounded-2xl font-medium text-[14px]">
                   Guest Favourite

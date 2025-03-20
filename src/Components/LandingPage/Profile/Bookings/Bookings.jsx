@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { collection, query, getDocs, updateDoc, doc } from "firebase/firestore"; 
+import { collection, query, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -94,14 +94,14 @@ export default function Bookings() {
     setCurrentPage(1);
   };
 
-  const handleButtonClick = async (btntext, bookingId) => {
+  const handleButtonClick = async (btntext, bookingId, propertyId) => {
     if (btntext === "Message") {
       localStorage.setItem("fromProfile", "true");
       router.push("/Landing/Properties/PropertiesDetail");
     } else if (btntext === "Write Review") {
       router.push("/Landing/Reviews");
     } else if (isAdmin && btntext === "Give User Review") {
-      router.push("/Landing/Profile/Details/Reviews");
+      router.push(`/Landing/Profile/Details/Reviews?propertyId=${propertyId}`);
     } else if (btntext === "Reject") {
       try {
         await deleteDoc(doc(db, "bookings", bookingId));
@@ -295,7 +295,13 @@ export default function Bookings() {
                 {isAdmin && status === "previous" ? (
                   <button
                     className="px-4 py-2 md:w-44 w-44 text-sm font-medium rounded-full bg-bluebutton text-white"
-                    onClick={() => handleButtonClick("Give User Review")}
+                    onClick={() =>
+                      handleButtonClick(
+                        "Give User Review",
+                        bookings.id,
+                        bookings?.propertyId?.id
+                      )
+                    }
                   >
                     Give User Review
                   </button>

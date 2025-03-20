@@ -14,12 +14,13 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { db } from "../../../../firebase/firebaseConfig"; // Import Firebase db
-import { collection, getDocs } from "firebase/firestore"; // Import Firestore functions
+import { arrayRemove, arrayUnion, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore"; // Import Firestore functions
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css"; // Import Swiper styles
 import "swiper/css/pagination";
 import { Pagination } from "swiper/modules";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 
 export default function Header() {
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -31,10 +32,10 @@ export default function Header() {
   const [selectedLatitude, setSelectedLatitude] = useState(0);
   const [selectedPrice, setSelectedPrice] = useState(0);
   const router = useRouter();
-  
+
   const [tooltipData, setTooltipData] = useState([]);
 
-  const [userLocation, setUserLocation] = useState([34.18223, -118.13191]); 
+  const [userLocation, setUserLocation] = useState([34.18223, -118.13191]);
 
   useEffect(() => {
     const getUserLocation = () => {
@@ -66,6 +67,31 @@ export default function Header() {
     return null;
   };
 
+  const [favorites, setFavorites] = useState([]); // State for user's favorite properties
+  const userInfo = useSelector((state) => state.auth.userInfo); // Get user info from Redux
+
+  // Fetch user's favorites
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (userInfo) {
+        const userFavoritesRef = doc(
+          db,
+          "users",
+          userInfo.uid,
+          "favorites",
+          "favorites"
+        );
+        const docSnap = await getDoc(userFavoritesRef);
+        if (docSnap.exists()) {
+          setFavorites(docSnap.data().favorites || []);
+        }
+      }
+    };
+
+    fetchFavorites();
+  }, [userInfo]);
+
+  // Fetch properties
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -98,6 +124,46 @@ export default function Header() {
 
     fetchProperties();
   }, []);
+
+  // Toggle favorite functionality
+  const toggleFavorite = async (propertyId) => {
+    if (!userInfo) {
+      console.log("User not logged in");
+      return;
+    }
+
+    const propertyRef = doc(db, "properties", propertyId);
+
+    try {
+      const propertySnap = await getDoc(propertyRef);
+      if (propertySnap.exists()) {
+        const favoritedBy = propertySnap.data().favoritedBy || [];
+        const isFavorited = favoritedBy.includes(userInfo.uid);
+
+        if (isFavorited) {
+          // Remove the user's ID from the favoritedBy array
+          await updateDoc(propertyRef, {
+            favoritedBy: arrayRemove(userInfo.uid),
+          });
+        } else {
+          // Add the user's ID to the favoritedBy array
+          await updateDoc(propertyRef, {
+            favoritedBy: arrayUnion(userInfo.uid),
+          });
+        }
+
+        // Update local state
+        setFavorites(
+          (prevFavorites) =>
+            isFavorited
+              ? prevFavorites.filter((id) => id !== propertyId) // Remove from favorites
+              : [...prevFavorites, propertyId] // Add to favorites
+        );
+      }
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+    }
+  };
 
   const totalPages = Math.ceil(properties.length / 6);
 
@@ -255,10 +321,12 @@ export default function Header() {
                 // Remove items from localStorage
                 localStorage.removeItem("startDate");
                 localStorage.removeItem("endDate");
-              
+
                 // Delay the navigation slightly
                 setTimeout(() => {
-                  router.push(`/Landing/Properties/PropertiesDetail?id=${property.id}`);
+                  router.push(
+                    `/Landing/Properties/PropertiesDetail?id=${property.id}`
+                  );
                 }, 100); // 100ms delay
               }}
             >
@@ -287,10 +355,15 @@ export default function Header() {
                     </h2>
                     <div className="flex items-center gap-1 text-sm -mr-3">
                       <Heart
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(property.id);
+                        }}
                         className={`h-6 w-6 text-black ${
-                          property.favorite
-                            ? "fill-[#FDA4AF] !text-[#F86D83]"
-                            : "fill-slate-50"
+                          property.favoritedBy?.includes(userInfo?.uid) ||
+                          favorites.includes(property.id)
+                            ? "fill-[#FDA4AF] !text-[#F86D83]" // Active (Pink)
+                            : "fill-slate-50" // Inactive
                         }`}
                       />
                     </div>
