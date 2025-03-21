@@ -11,6 +11,8 @@ export default function WriteReview() {
   const reviewTitles = ["Organization", "Communication", "Honesty"];
   const router = useRouter();
   const selector = useSelector((state) => state);
+  const searchParams = new URLSearchParams(window.location.search);
+  const propertyId = searchParams.get("propertyId");
 
   const userType = selector?.auth?.userInfo?.userType;
   const userId = selector?.auth?.userInfo?.uid;
@@ -65,6 +67,7 @@ export default function WriteReview() {
         userName,
         userType,
         userImage,
+        propertyId,
         organization: ratings.Organization,
         communication: ratings.Communication,
         honesty: ratings.Honesty,
@@ -73,7 +76,7 @@ export default function WriteReview() {
       });
 
       toast.success("Review submitted successfully!");
-      router.push("/Landing/Properties/PropertiesDetail");
+      router.push(`/Landing/Properties/PropertiesDetail?id=${propertyId}`);
       localStorage.setItem("fromProfile", "true");
     } catch (error) {
       console.error("Error submitting review:", error);

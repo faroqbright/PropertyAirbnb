@@ -99,7 +99,7 @@ export default function Bookings() {
       localStorage.setItem("fromProfile", "true");
       router.push("/Landing/Properties/PropertiesDetail");
     } else if (btntext === "Write Review") {
-      router.push("/Landing/Reviews");
+      router.push(`/Landing/Reviews?propertyId=${propertyId}`);
     } else if (isAdmin && btntext === "Give User Review") {
       router.push(`/Landing/Profile/Details/Reviews?propertyId=${propertyId}`);
     } else if (btntext === "Reject") {
@@ -304,6 +304,19 @@ export default function Bookings() {
                     }
                   >
                     Give User Review
+                  </button>
+                ) : status === "previous" ? (
+                  <button
+                    className="px-4 py-2 md:w-44 w-44 text-sm font-medium rounded-full bg-bluebutton text-white"
+                    onClick={() =>
+                      handleButtonClick(
+                        "Write Review",
+                        bookings.id,
+                        bookings?.propertyId?.id
+                      )
+                    }
+                  >
+                    Write Review
                   </button>
                 ) : isAdmin && bookings.status === "pending" ? (
                   <div className="flex flex-col items-center gap-2 px-4 py-2 text-sm font-medium rounded-full">
