@@ -12,6 +12,7 @@ export default function WriteReview() {
   const router = useRouter();
   const dispatch = useDispatch();
 
+
   // Access query parameters
   const searchParams = new URLSearchParams(window.location.search);
   const propertyId = searchParams.get("propertyId"); // Retrieve propertyId from the URL
@@ -20,6 +21,7 @@ export default function WriteReview() {
   const userType = selector?.auth?.userInfo?.userType;
   const userId = selector?.auth?.userInfo?.uid;
   const userName = selector?.auth?.userInfo?.FullName;
+  const userImage = selector?.auth?.userInfo?.personalInfo?.image;
   const category = "rating";
 
   const [ratings, setRatings] = useState({
@@ -58,6 +60,7 @@ export default function WriteReview() {
         userId,
         userName,
         userType,
+        userImage,
         propertyId, // Include propertyId in the Firestore document
         ratings,
         createdAt: serverTimestamp(), // Firestore timestamp for consistent date retrieval

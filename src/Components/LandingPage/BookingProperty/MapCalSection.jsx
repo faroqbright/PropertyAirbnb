@@ -27,8 +27,15 @@ import {
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { db } from "../../../firebase/firebaseConfig";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 
 export default function Header() {
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -78,27 +85,63 @@ export default function Header() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [selectionMade, setSelectionMade] = useState(false);
+  const userInfo = useSelector((state) => state.auth.userInfo);
+  const [review, setReview] = useState([]);
+  console.log("userInfo", userInfo);
 
   // Initialize startDate and endDate from localStorage
   useEffect(() => {
     const storedStartDate = localStorage.getItem("startDate");
     const storedEndDate = localStorage.getItem("endDate");
-  
+
     if (storedStartDate && storedEndDate) {
       // Parse dates and set time to midnight to avoid timezone issues
       const start = new Date(storedStartDate + "T00:00:00");
       const end = new Date(storedEndDate + "T00:00:00");
-  
+
       setStartDate(start);
       setEndDate(end);
     }
   }, []);
-  
+
+  useEffect(() => {
+    const fetchReview = async () => {
+      try {
+        if (!userInfo?.uid || !userInfo?.userType || !propertyId) return;
+
+        // Determine correct Firestore collection
+        const collectionName =
+          userInfo.userType === "LandLord" ? "LandlordReviews" : "reviews";
+        const reviewsCollection = collection(db, collectionName);
+        const snapshot = await getDocs(reviewsCollection);
+
+        const reviewsList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        console.log(`Fetched Reviews from ${collectionName}:`, reviewsList);
+
+        // Match propertyId and userId
+        const matchedReview = reviewsList.find(
+          (r) => r.propertyId === propertyId && r.userId === userInfo.uid
+        );
+
+        console.log("Matched Review:", matchedReview);
+        setReview(matchedReview || null);
+      } catch (error) {
+        console.error("Error fetching review:", error);
+      }
+    };
+
+    fetchReview();
+  }, [userInfo, propertyId]);
+
   const handleDateClick = async (day) => {
     // Normalize the day to midnight to avoid timezone issues
     const normalizedDay = new Date(day);
     normalizedDay.setHours(0, 0, 0, 0);
-  
+
     if (!startDate || (startDate && endDate)) {
       setStartDate(normalizedDay);
       setEndDate(null);
@@ -338,56 +381,47 @@ export default function Header() {
         <div className="w-full lg:w-[50%] md:space-x-4 lg:space-x-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 mx-auto lg:mr-10 order-2 mt-10 lg:mt-60">
           {fromProfile === true ? (
             <>
-              <div className="2xl:max-w-xl xl:max-w-md max-w-sm p-8 bg-[#F5F5F5] rounded-2xl shadow-sm mx-auto">
-                <h2 className="text-2xl font-semibold mb-14">Client Review</h2>
-                <div className="flex items-center space-x-4">
-                  <Image
-                    src="/assets/Small.png"
-                    alt="Shayna"
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
-                  <div>
-                    <h3 className="text-base font-semibold">Shayna</h3>
-                    <p className="text-sm text-gray-500">December 2021</p>
+              {review ? (
+                <div className="w-[400px] p-8 mt-14 md:mt-0 lg:mt-14 bg-[#F5F5F5] rounded-2xl shadow-sm mx-auto">
+                  <h2 className="text-2xl font-semibold mb-14">Your Review</h2>
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={review.userImage || "/assets/Small.png"}
+                      alt="Shayna"
+                      width={48}
+                      height={48}
+                      className="w-14 h-14 rounded-full"
+                    />
+                    <div>
+                      <h3 className="text-base font-semibold">
+                        {review.userName}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {review.createdAt?.seconds
+                          ? new Date(
+                              review.createdAt.seconds * 1000
+                            ).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : "Unknown Date"}
+                      </p>
+                    </div>
                   </div>
+                  <p className="text-sm text-gray-700 mt-3">
+                    {review.description} {review.ratings?.Description}
+                  </p>
+                  <button className="text-sm font-medium text-black mt-4 underline flex items-center">
+                    Show more{" "}
+                    <ChevronRight size={16} className="mt-[3px] ml-0.5" />
+                  </button>
                 </div>
-                <p className="text-sm text-gray-700 mt-3">
-                  Wonderful neighborhood, easy access to restaurants and the
-                  subway, cozy studio apartment with a super comfortable bed.
-                  Great host, super helpful and responsive. Cool murphy bed...
+              ) : (
+                <p className="text-sm text-gray-500">
+                  No review found for this property.
                 </p>
-                <button className="text-sm font-medium text-black mt-4 underline flex items-center">
-                  Show more{" "}
-                  <ChevronRight size={16} className="mt-[3px] ml-0.5" />
-                </button>
-              </div>
-              <div className="2xl:max-w-xl xl:max-w-md max-w-sm p-8 mt-14 md:mt-0 lg:mt-14 bg-[#F5F5F5] rounded-2xl shadow-sm mx-auto">
-                <h2 className="text-2xl font-semibold mb-14">Your Review</h2>
-                <div className="flex items-center space-x-4">
-                  <Image
-                    src="/assets/Small.png"
-                    alt="Shayna"
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
-                  <div>
-                    <h3 className="text-base font-semibold">Shayna</h3>
-                    <p className="text-sm text-gray-500">December 2021</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700 mt-3">
-                  Wonderful neighborhood, easy access to restaurants and the
-                  subway, cozy studio apartment with a super comfortable bed.
-                  Great host, super helpful and responsive. Cool murphy bed...
-                </p>
-                <button className="text-sm font-medium text-black mt-4 underline flex items-center">
-                  Show more{" "}
-                  <ChevronRight size={16} className="mt-[3px] ml-0.5" />
-                </button>
-              </div>
+              )}
             </>
           ) : (
             <></>

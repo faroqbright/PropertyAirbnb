@@ -71,6 +71,7 @@ export default function WriteReview() {
         organization: ratings.Organization,
         communication: ratings.Communication,
         honesty: ratings.Honesty,
+        AvgRating: (ratings.Organization + ratings.Communication + ratings.Honesty) / 3,
         description: ratings.Description,
         createdAt: serverTimestamp(), // Store timestamp
       });

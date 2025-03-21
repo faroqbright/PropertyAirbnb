@@ -34,7 +34,8 @@ export default function Page() {
       <Context />
       <MapCalSection />
       <Testimonial />
-      {fromProfile || fromProperties ? <Testimonial3 /> : <Testimonial2 />}
+      {/* {fromProfile || fromProperties ? <Testimonial3 /> : <Testimonial2 />} */}
+      <Testimonial3 /> 
     </>
   );
 }

@@ -25,11 +25,13 @@ export default function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const bookingsPerPage = 3;
+  const userId = userInfo?.uid;
 
   const router = useRouter();
 
   console.log("Bookings", bookings);
   console.log("userInfo", userInfo);
+  console.log("userId");
 
   useEffect(() => {
     setIsAdmin(userInfo?.role === "LandLord");
@@ -38,6 +40,8 @@ export default function Bookings() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+        if (!userInfo?.uid) return; // Ensure userInfo is available
+
         const propertiesCollection = collection(db, "properties");
         const propertiesSnapshot = await getDocs(propertiesCollection);
         const propertiesList = propertiesSnapshot.docs.map((doc) => ({
@@ -48,8 +52,7 @@ export default function Bookings() {
         console.log("Properties Fetched:", propertiesList);
 
         const bookingsCollection = collection(db, "bookings");
-        const q = query(bookingsCollection);
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(bookingsCollection);
         let bookingsList = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -58,25 +61,21 @@ export default function Bookings() {
         console.log("All Bookings Fetched:", bookingsList);
 
         if (isAdmin) {
+          // ✅ Filter bookings where the landlord owns the property
           bookingsList = bookingsList.filter((booking) => {
             try {
-              console.log("Booking Property ID:", booking.propertyId);
-
-              const propertyIdObj =
-                typeof booking.propertyId === "string"
-                  ? JSON.parse(booking.propertyId)
-                  : booking.propertyId;
-
-              console.log("Parsed Property ID Object:", propertyIdObj);
-              console.log("Property User ID:", propertyIdObj.userId);
-              console.log("Logged-in User ID:", userInfo?.uid);
-
-              return propertyIdObj.userId === userInfo?.uid;
+              const property = booking.propertyId; // propertyId is an object
+              return property?.userId === userInfo?.uid;
             } catch (error) {
-              console.error("Error parsing propertyId:", error);
+              console.error("Error filtering bookings for admin:", error);
               return false;
             }
           });
+        } else {
+          // ✅ Show bookings for the logged-in user
+          bookingsList = bookingsList.filter(
+            (booking) => booking.userId === userInfo?.uid
+          );
         }
 
         console.log("Filtered Bookings:", bookingsList);

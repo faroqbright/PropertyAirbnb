@@ -12,12 +12,12 @@ export default function Reviews() {
   const selector = useSelector((state) => state);
   const userType = selector?.auth?.userInfo?.userType;
   console.log(userType);
-  
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const collectionName = userType === "LandLord" ? "LandlordReviews" : "reviews";
+        const collectionName =
+          userType === "LandLord" ? "LandlordReviews" : "reviews";
 
         const q = query(collection(db, collectionName), limit(6));
 
@@ -34,15 +34,13 @@ export default function Reviews() {
     };
 
     if (userType) fetchReviews();
-  }, [userType]);  
-
-
-  
+  }, [userType]);
 
   return (
     <div className="max-w-7xl mx-auto p-9">
       <h1 className="text-[28px] font-bold text-center text-black mb-6">
-        What {userType === "LandLord" ? "Landlords" : "Tenants"} say about this place
+        What {userType === "LandLord" ? "Landlords" : "Tenants"} say about this
+        place
       </h1>
 
       <div className="md:pl-24">
@@ -62,10 +60,10 @@ export default function Reviews() {
                 ) : (
                   <img
                     src={item?.userImage || "/default-profile.png"}
-                    alt={item.userName}
+                    alt={item?.userName}
                     width={56}
                     height={56}
-                    className="rounded-full"
+                    className="w-14 h-14 rounded-full object-cover"
                   />
                 )}
                 <div>
