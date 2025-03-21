@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { addDoc, collection } from "firebase/firestore";
 import { db } from "../../../firebase/firebaseConfig";
 import {
   CreditCard,
@@ -10,15 +9,18 @@ import {
   Calendar,
   Nfc,
   ArrowRight,
-  ChevronDown,
   Check,
 } from "lucide-react";
 import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { IoCard } from "react-icons/io5";
 
 export default function PaymentForm() {
   const [paymentMethod, setPaymentMethod] = useState("credit-card");
-  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
-  const [showYearDropdown, setShowYearDropdown] = useState(false);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
   const router = useRouter();
   const [selectedRooms, setSelectedRooms] = useState([]);
@@ -27,33 +29,32 @@ export default function PaymentForm() {
   const [name, setName] = useState(null);
   const [price, setPrice] = useState(null);
   const [location, setLocation] = useState(null);
-  const [roomPrices, setRoomPrices] = useState({});
-  const [servicePrices, setServicePrices] = useState({});
   const [selectedMonths, setSelectedMonths] = useState(1);
   const [propertyId, setPropertyId] = useState(null);
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiration, setExpiration] = useState(null); // Use null for DatePicker
+  const [cvc, setCvc] = useState("");
+  const [nameOnCard, setNameOnCard] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const userId = useSelector((state) => state.auth.userInfo?.uid);
-  const userPersonalInfo = useSelector((state) => state?.auth?.userInfo?.personalInfo);
-  
+  const userPersonalInfo = useSelector(
+    (state) => state?.auth?.userInfo?.personalInfo
+  );
+  const Email = useSelector((state) => state.auth.userInfo?.email);
   const FullName = useSelector((state) => state.auth.userInfo?.FullName);
 
-  // Retrieve dates from localStorage
   const startDate = localStorage.getItem("startDate");
   const endDate = localStorage.getItem("endDate");
 
-  // Convert to Date objects
   const startDateObj = new Date(startDate);
   const endDateObj = new Date(endDate);
 
-  // Normalize time to midnight (00:00:00) to avoid time-related discrepancies
   startDateObj.setHours(0, 0, 0, 0);
   endDateObj.setHours(0, 0, 0, 0);
 
-  // Calculate the difference in milliseconds
   const differenceInTime = endDateObj - startDateObj;
-
-  // Convert to days
   const daysDifference = differenceInTime / (1000 * 60 * 60 * 24);
-
   const daysDifferenceTwo = daysDifference + 1;
 
   useEffect(() => {
@@ -71,21 +72,8 @@ export default function PaymentForm() {
           ((storedProperty.pricePerMonth / 30) * daysDifferenceTwo).toFixed(2)
         )
       );
-
       setName(storedProperty.name);
       setLocation(storedProperty.location);
-
-      const roomPrices = {};
-      storedProperty?.rooms?.forEach((room, index) => {
-        roomPrices[`room-${index + 1}`] =(room.price / 30 * daysDifferenceTwo).toFixed(2);
-      });
-      setRoomPrices(roomPrices);
-
-      const servicePrices = {};
-      storedProperty?.additionalCosts?.forEach((service, index) => {
-        servicePrices[`service-${index + 1}`] = service.cost;
-      });
-      setServicePrices(servicePrices);
     }
 
     setSelectedRooms(storedRooms);
@@ -98,55 +86,205 @@ export default function PaymentForm() {
   }, []);
 
   const calculateTotal = (rooms, services) => {
-    const roomsTotal = rooms.reduce((sum, room) => sum + Number((room.price / 30 * daysDifferenceTwo).toFixed(2)), 0);
+    const roomsTotal = rooms.reduce(
+      (sum, room) =>
+        sum + Number(((room.price / 30) * daysDifferenceTwo).toFixed(2)),
+      0
+    );
     const servicesTotal = services.reduce(
-      (sum, service) => sum + Number((service.price/ 30 * daysDifferenceTwo).toFixed(2)),
+      (sum, service) =>
+        sum + Number(((service.price / 30) * daysDifferenceTwo).toFixed(2)),
       0
     );
     return roomsTotal + servicesTotal;
   };
 
+  const handleCardNumberChange = (e) => {
+    const value = e.target.value.replace(/\D/g, "").substring(0, 16);
+    const formattedValue = value.replace(/(\d{4})(?=\d)/g, "$1 ");
+    setCardNumber(formattedValue);
+  };
+
+  const handleExpirationChange = (date) => {
+    setExpiration(date);
+  };
+
+  const handleCVCChange = (e) => {
+    const value = e.target.value.replace(/\D/g, "").substring(0, 4);
+    setCvc(value);
+  };
+
   const handlePayNow = async () => {
+    if (!cardNumber || !expiration || !cvc || !nameOnCard) {
+      toast.error("Please fill in all the required fields.");
+      return;
+    }
+
+    setLoading(true);
+
     const updatedSelectedRooms = selectedRooms.map((room) => ({
       ...room,
       price: ((room.price / 30) * daysDifferenceTwo).toFixed(2),
     }));
-    setPaymentSubmitted(true);
+
     const updatedSelectedServices = selectedServices.map((service) => ({
       ...service,
       price: ((parseFloat(service.cost) / 30) * daysDifferenceTwo).toFixed(2),
       cost: ((parseFloat(service.cost) / 30) * daysDifferenceTwo).toFixed(2),
     }));
-    const startDate = localStorage.getItem("startDate");
-    const endDate = localStorage.getItem("endDate");
 
-    const bookingDetails = {
-      propertyId,
-      userId,
-      userPersonalInfo,
-      propertyName: name,
-      propertyLocation: location,
-      selectedRooms: updatedSelectedRooms, // Use the updated array
-      selectedServices: updatedSelectedServices, // Fixed duplicate assignment
-      totalAmount: (totalAmount * selectedMonths).toFixed(2),
-      selectedMonths,
-      paymentMethod,
-      timestamp: new Date(),
-      status: "pending",
-      FullName: FullName,
-      propertyPrice: price,
-      numberOfDays: daysDifferenceTwo,
-      startDate,
-      endDate,
+    const getUserIP = async () => {
+      try {
+        const response = await fetch("https://api.ipify.org?format=json");
+        const data = await response.json();
+        return data.ip;
+      } catch (error) {
+        console.error("Failed to fetch IP address", error);
+        return null;
+      }
+    };
+
+    const getCountryName = async (ip) => {
+      try {
+        const response = await fetch(`https://ipapi.co/${ip}/json/`);
+        const data = await response.json();
+        return data.country_code.toLowerCase();
+      } catch (error) {
+        console.error("Failed to fetch country name", error);
+        return null;
+      }
+    };
+
+    const generateUUID = () => {
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0,
+          v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
     };
 
     try {
-      const docRef = await addDoc(collection(db, "bookings"), bookingDetails);
-      setPaymentSubmitted(true);
-      localStorage.removeItem("startDate");
-      localStorage.removeItem("endDate");
-    } catch (e) {
-      console.error("Error saving booking: ", e);
+      const ip = await getUserIP();
+      if (!ip) {
+        toast.error("Failed to fetch IP address.");
+        return;
+      }
+
+      const countryName = await getCountryName(ip);
+      if (!countryName) {
+        toast.error("Failed to fetch country information.");
+        return;
+      }
+
+      const muid = generateUUID();
+      const sid = generateUUID();
+      const guid = generateUUID();
+
+      const expMonth = String(expiration.getMonth() + 1).padStart(2, "0");
+      const expYear = String(expiration.getFullYear()).slice(-2);
+
+      const paymentPayload = new URLSearchParams({
+        type: "card",
+        "card[number]": cardNumber.replace(/\s+/g, ""),
+        "card[cvc]": cvc,
+        "card[exp_month]": expMonth,
+        "card[exp_year]": expYear,
+        "billing_details[name]": nameOnCard,
+        "billing_details[email]": Email || "example@example.com",
+        "billing_details[address][country]": countryName,
+        muid: muid,
+        sid: sid,
+        guid: guid,
+        payment_user_agent:
+          "stripe.js/c93000e12a; stripe-js-v3/c93000e12a; checkout",
+      });
+
+      const response = await axios.post(
+        "https://api.stripe.com/v1/payment_methods",
+        paymentPayload,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      if (!response.data.id) {
+        toast.error("Failed to create payment method.");
+        return;
+      }
+
+      const paymentMethodId = response.data.id;
+
+      const paymentIntentResponse = await axios.post(
+        "https://api.stripe.com/v1/payment_intents",
+        new URLSearchParams({
+          amount: totalAmount * 100,
+          currency: "usd",
+          payment_method: paymentMethodId,
+          confirm: "true",
+          return_url:
+            "http://localhost:3000/Landing/Properties/PropertiesDetail/Payment",
+        }),
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      if (paymentIntentResponse.data.status === "succeeded") {
+        const transactionId = paymentIntentResponse.data.id;
+        const currentDate = new Date().toISOString().split('T')[0];
+        const bookingDetails = {
+          propertyId,
+          userId,
+          userPersonalInfo,
+          propertyName: name,
+          propertyLocation: location,
+          selectedRooms: updatedSelectedRooms,
+          selectedServices: updatedSelectedServices,
+          totalAmount: (totalAmount * selectedMonths).toFixed(2),
+          selectedMonths,
+          paymentMethod,
+          timestamp: new Date(),
+          status: "pending",
+          FullName: FullName,
+          propertyPrice: price,
+          numberOfDays: daysDifferenceTwo,
+          startDate,
+          endDate,
+        };
+
+        try {
+          await addDoc(collection(db, "bookings"), bookingDetails);
+          const transactionDetails = {
+            transactionId,
+            date: currentDate,
+            bankType: "Stripe",
+            type: paymentMethod,
+            amount: (totalAmount * selectedMonths).toFixed(2),
+            propertyId: propertyId.id,
+          };
+
+          await addDoc(collection(db, "accounts"), transactionDetails);
+          setPaymentSubmitted(true);
+          localStorage.removeItem("startDate");
+          localStorage.removeItem("endDate");
+          setTimeout(() => {
+            router.push("/Landing/Home");
+          }, 3000);
+        } catch (e) {
+          console.error("Error saving booking: ", e);
+        }
+      }
+    } catch (error) {
+      console.error("Payment failed:", error);
+      toast.error("Payment failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,6 +337,8 @@ export default function PaymentForm() {
                 <input
                   className="w-full px-2 py-1.5 border rounded-full pl-6"
                   placeholder="Name"
+                  value={nameOnCard}
+                  onChange={(e) => setNameOnCard(e.target.value)}
                 />
               </div>
               <div>
@@ -209,8 +349,10 @@ export default function PaymentForm() {
                   <input
                     className="w-full px-2 py-1.5 border rounded-full pl-6 pr-10"
                     placeholder="xxxx xxxx xxxx xxxx"
+                    value={cardNumber}
+                    onChange={handleCardNumberChange}
                   />
-                  <Calendar
+                  <IoCard
                     className="absolute right-3 top-2.5 text-gray-400"
                     size={18}
                   />
@@ -219,62 +361,23 @@ export default function PaymentForm() {
               <div className="flex flex-col md:flex-row gap-4 mb-6 w-full max-w-4xl mx-auto">
                 <div className="w-full md:w-1/3">
                   <label className="block text-sm text-[13px] mb-2 ml-1 font-medium">
-                    Month
+                    Expiration Date
                   </label>
-                  <div className="relative">
-                    <div
-                      className="w-full px-2 text-[15px] py-1.5 border rounded-full text-gray-500 cursor-pointer flex items-center justify-between"
-                      onClick={() => setShowMonthDropdown(!showMonthDropdown)}
-                    >
-                      Select Month
-                      <ChevronDown size={16} />
-                    </div>
-                    {showMonthDropdown && (
-                      <ul className="absolute z-10 w-full border bg-white mt-2 rounded-md">
-                        <li className="p-2 hover:bg-gray-200 cursor-pointer">
-                          January
-                        </li>
-                        <li className="p-2 hover:bg-gray-200 cursor-pointer">
-                          February
-                        </li>
-                        <li className="p-2 hover:bg-gray-200 cursor-pointer">
-                          March
-                        </li>
-                        <li className="p-2 hover:bg-gray-200 cursor-pointer">
-                          April
-                        </li>
-                      </ul>
-                    )}
-                  </div>
-                </div>
-                <div className="w-full md:w-1/3">
-                  <label className="block text-sm text-[13px] mb-2 ml-1 font-medium">
-                    Year
-                  </label>
-                  <div className="relative">
-                    <div
-                      className="w-full text-[15px] px-2 py-1.5 border rounded-full text-gray-500 cursor-pointer flex items-center justify-between"
-                      onClick={() => setShowYearDropdown(!showYearDropdown)}
-                    >
-                      Select Year
-                      <ChevronDown size={16} />
-                    </div>
-                    {showYearDropdown && (
-                      <ul className="absolute z-10 w-full border bg-white mt-2 rounded-md">
-                        <li className="p-2 hover:bg-gray-200 cursor-pointer">
-                          2023
-                        </li>
-                        <li className="p-2 hover:bg-gray-200 cursor-pointer">
-                          2024
-                        </li>
-                        <li className="p-2 hover:bg-gray-200 cursor-pointer">
-                          2025
-                        </li>
-                        <li className="p-2 hover:bg-gray-200 cursor-pointer">
-                          2026
-                        </li>
-                      </ul>
-                    )}
+                  <div className="flex items-center border border-gray-300 rounded-3xl p-2 pl-3 text-sm w-full">
+                    <DatePicker
+                      selected={expiration}
+                      onChange={handleExpirationChange}
+                      dateFormat="MM/yy"
+                      placeholderText="MM/YY"
+                      showMonthYearPicker
+                      minDate={new Date()}
+                      className="w-full outline-none bg-white text-gray-700"
+                      calendarClassName="custom-calendar-size"
+                    />
+                    <Calendar
+                      size={18}
+                      className="text-gray-400 ml-2 left-64 absolute"
+                    />
                   </div>
                 </div>
                 <div className="w-full md:w-1/3">
@@ -285,6 +388,8 @@ export default function PaymentForm() {
                     <input
                       className="w-full px-2 text-[15px] py-1.5 border rounded-full text-gray-500 pl-6 pr-10"
                       placeholder="xxx"
+                      value={cvc}
+                      onChange={handleCVCChange}
                     />
                     <div className="absolute right-3 top-2.5 text-gray-400">
                       <Info size={17} />
@@ -314,12 +419,18 @@ export default function PaymentForm() {
                 </span>
                 {selectedRooms.map((room) => (
                   <p key={room.id} className="flex justify-between">
-                    <span>{room.name}</span> <span>${(room.price / 30 * daysDifferenceTwo).toFixed(2)}</span>
+                    <span>{room.name}</span>{" "}
+                    <span>
+                      ${((room.price / 30) * daysDifferenceTwo).toFixed(2)}
+                    </span>
                   </p>
                 ))}
                 {selectedServices.map((service) => (
                   <p key={service.id} className="flex justify-between">
-                    <span>{service.name}</span> <span>${(service.price / 30 * daysDifferenceTwo).toFixed(2)}</span>
+                    <span>{service.name}</span>{" "}
+                    <span>
+                      ${((service.price / 30) * daysDifferenceTwo).toFixed(2)}
+                    </span>
                   </p>
                 ))}
               </div>
@@ -328,8 +439,10 @@ export default function PaymentForm() {
               <button
                 onClick={handlePayNow}
                 className="w-44 bg-bluebutton text-white py-2 rounded-full flex items-center justify-center gap-2"
+                disabled={loading}
               >
-                Pay Now <ArrowRight className="ml-2" size={18} />
+                {loading ? "Processing..." : "Pay Now"}{" "}
+                <ArrowRight className="ml-2" size={18} />
               </button>
             </div>
           </div>
