@@ -4,7 +4,14 @@ import { ChevronRight, Star, Check } from "lucide-react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { db } from "../../../firebase/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { differenceInDays } from "date-fns";
 
 export default function Context() {
@@ -26,6 +33,43 @@ export default function Context() {
   const [location, setlocation] = useState(null);
   const [daysSelected, setDaysSelected] = useState(0);
   const userType = useSelector((state) => state.auth.userInfo?.userType);
+  const [reviews, setReviews] = useState([]); // State to hold reviews for the property
+  const [avgRating, setAvgRating] = useState(null); // State to hold the average rating
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!propertyId) return;
+
+      try {
+        const reviewsQuery = query(
+          collection(db, "reviews"),
+          where("propertyId", "==", propertyId)
+        );
+
+        const querySnapshot = await getDocs(reviewsQuery);
+        const reviewsList = [];
+        let totalAvgRating = 0;
+
+        querySnapshot.forEach((doc) => {
+          const review = { id: doc.id, ...doc.data() };
+          reviewsList.push(review);
+          totalAvgRating += review.AvgRating || 0; // Ensure `AvgRating` is the correct field name
+        });
+
+        const avgRating =
+          reviewsList.length > 0
+            ? (totalAvgRating / reviewsList.length).toFixed(1)
+            : null;
+
+        setReviews(reviewsList); // Store reviews
+        setAvgRating(avgRating); // Store average rating
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+
+    fetchReviews();
+  }, [propertyId]);
 
   const updateDaysSelected = () => {
     const storedStartDate = localStorage.getItem("startDate");
@@ -281,8 +325,10 @@ export default function Context() {
           </div>
           <div className="flex items-center gap-2 mt-2 md:mt-0">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
-            <span>5.0</span>
-            <span className="text-purple-200">· 7 reviews</span>
+            <span>{avgRating || "No ratings"} </span>
+            <span className="text-purple-200">
+              · {reviews.length} review{reviews.length !== 1 ? "s" : "0"}
+            </span>
           </div>
         </div>
 

@@ -20,6 +20,8 @@ import {
   updateDoc,
   arrayRemove,
   arrayUnion,
+  query,
+  where,
 } from "firebase/firestore";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -36,6 +38,8 @@ export default function Card({ filters = {} }) {
   const [userType, setUserType] = useState("");
   const userInfo = useSelector((state) => state.auth.userInfo);
   const [favorites, setFavorites] = useState([]); // State for user's favorite properties
+  const [reviews, setReviews] = useState({}); // State to hold reviews for each property
+  const [avgRatings, setAvgRatings] = useState({});
 
   // Fetch properties
   useEffect(() => {
@@ -111,6 +115,53 @@ export default function Card({ filters = {} }) {
     return matchesLocation && matchesBudget && matchesAmenities && matchesRooms;
   });
 
+  // Fetch reviews and calculate average ratings for filtered properties
+  useEffect(() => {
+    const fetchReviews = async () => {
+      const reviewsData = {};
+      const avgRatingsData = {};
+
+      for (const property of filteredProperties) {
+        const reviewsQuery = query(
+          collection(db, "reviews"),
+          where("propertyId", "==", property.id)
+        );
+
+        try {
+          const querySnapshot = await getDocs(reviewsQuery);
+          const reviewsList = [];
+          let totalAvgRating = 0;
+
+          querySnapshot.forEach((doc) => {
+            const review = { id: doc.id, ...doc.data() };
+            reviewsList.push(review);
+            totalAvgRating += review.AvgRating || 0;
+          });
+
+          const avgRating =
+            reviewsList.length > 0
+              ? (totalAvgRating / reviewsList.length).toFixed(1)
+              : null;
+
+          reviewsData[property.id] = reviewsList;
+          avgRatingsData[property.id] = avgRating;
+        } catch (error) {
+          console.error(
+            `Error fetching reviews for property ${property.id}: `,
+            error
+          );
+        }
+      }
+
+      setReviews(reviewsData); // Stores all reviews per property
+      setAvgRatings(avgRatingsData); // Stores calculated avgRating per property
+    };
+
+    if (filteredProperties.length > 0) {
+      fetchReviews();
+    }
+  }, [filteredProperties]);
+
   // Pagination logic
   const indexOfLastProperty = currentPage * propertiesPerPage;
   const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
@@ -154,10 +205,11 @@ export default function Card({ filters = {} }) {
         }
 
         // Update local state
-        setFavorites((prevFavorites) =>
-          isFavorited
-            ? prevFavorites.filter((id) => id !== propertyId) // Remove from favorites
-            : [...prevFavorites, propertyId] // Add to favorites
+        setFavorites(
+          (prevFavorites) =>
+            isFavorited
+              ? prevFavorites.filter((id) => id !== propertyId) // Remove from favorites
+              : [...prevFavorites, propertyId] // Add to favorites
         );
       }
     } catch (error) {
@@ -176,7 +228,9 @@ export default function Card({ filters = {} }) {
               localStorage.removeItem("startDate");
               localStorage.removeItem("endDate");
               setTimeout(() => {
-                router.push(`/Landing/Properties/PropertiesDetail?id=${property.id}`);
+                router.push(
+                  `/Landing/Properties/PropertiesDetail?id=${property.id}`
+                );
               }, 100);
             }}
           >
@@ -196,6 +250,11 @@ export default function Card({ filters = {} }) {
                   </SwiperSlide>
                 ))}
               </Swiper>
+              {avgRatings[property.id] > 4 && (
+                <div className="absolute top-2 left-2 text-black bg-white px-2 py-1 text-sm rounded-2xl font-medium text-[14px] z-50">
+                  Guest Favourite
+                </div>
+              )}
               <Heart
                 onClick={(e) => {
                   e.stopPropagation();
@@ -215,10 +274,17 @@ export default function Card({ filters = {} }) {
                 <h2 className="text-[16px] font-medium text-[#222222]">
                   {property.location || property.name}
                 </h2>
-                <div className="flex items-center gap-1 text-sm">
-                  <Star className="h-[15px] w-[15px] text-black fill-black" />
-                  <span>{property.rating || "4.92"}</span>
-                </div>
+                {avgRatings[property.id] ? (
+                  <div className="flex items-center gap-1 text-sm">
+                    <Star className="h-[15px] w-[15px] text-black fill-black" />
+                    <span>{avgRatings[property.id]}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                    <Star className="h-[15px] w-[15px]" />
+                    <span>No rating</span>
+                  </div>
+                )}
               </div>
               <p className="text-sm text-[#6A6A6A]">
                 {property.rooms?.length || 0} rooms

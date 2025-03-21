@@ -10,7 +10,8 @@ import {
   getDocs,
   getDoc,
   doc,
-  setDoc,
+  query,
+  where,
   updateDoc,
   arrayRemove,
   arrayUnion,
@@ -127,6 +128,48 @@ export default function Card({ filters = {} }) {
     return matchesLocation && matchesBudget && matchesAmenities && matchesRooms;
   });
 
+  const [reviews, setReviews] = useState({}); // State to hold reviews for each property
+  const [avgRatings, setAvgRatings] = useState({});
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      const reviewsData = {};
+      const avgRatingsData = {};
+
+      for (const property of filteredProperties) {
+        const reviewsQuery = query(
+          collection(db, "reviews"),
+          where("propertyId", "==", property.id)
+        );
+
+        const querySnapshot = await getDocs(reviewsQuery);
+        const reviewsList = [];
+        let totalAvgRating = 0;
+
+        querySnapshot.forEach((doc) => {
+          const review = { id: doc.id, ...doc.data() };
+          reviewsList.push(review);
+          totalAvgRating += review.AvgRating || 0;
+        });
+
+        const avgRating =
+          reviewsList.length > 0
+            ? (totalAvgRating / reviewsList.length).toFixed(1)
+            : null;
+
+        reviewsData[property.id] = reviewsList;
+        avgRatingsData[property.id] = avgRating;
+      }
+
+      setReviews(reviewsData); // Stores all reviews per property
+      setAvgRatings(avgRatingsData); // Stores calculated avgRating per property
+    };
+
+    if (filteredProperties.length > 0) {
+      fetchReviews();
+    }
+  }, [filteredProperties]);
+
   const toggleFavorite = async (propertyId) => {
     if (!userInfo) {
       toast.error("User not logged in");
@@ -233,8 +276,8 @@ export default function Card({ filters = {} }) {
                 }`}
               />
 
-              {property.isGuestFavorite && (
-                <div className="absolute top-2 left-2 text-black bg-white px-2 py-1 text-sm rounded-2xl font-medium text-[14px]">
+              {avgRatings[property.id] > 4 && (
+                <div className="absolute top-2 left-2 text-black bg-white px-2 py-1 text-sm rounded-2xl font-medium text-[14px] z-50">
                   Guest Favourite
                 </div>
               )}
@@ -245,11 +288,20 @@ export default function Card({ filters = {} }) {
                 <h2 className="text-[16px] font-medium text-[#222222]">
                   {property.location || property.name}
                 </h2>
-                <div className="flex items-center gap-1 text-sm">
-                  <Star className="h-[15px] w-[15px] text-black fill-black" />
-                  <span>4.92</span>
-                </div>
+
+                {avgRatings[property.id] ? (
+                  <div className="flex items-center gap-1 text-sm">
+                    <Star className="h-[15px] w-[15px] text-black fill-black" />
+                    <span>{avgRatings[property.id]}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                    <Star className="h-[15px] w-[15px]" />
+                    <span>No rating</span>
+                  </div>
+                )}
               </div>
+
               <p className="text-sm text-[#6A6A6A]">
                 {property?.rooms?.length} rooms
               </p>

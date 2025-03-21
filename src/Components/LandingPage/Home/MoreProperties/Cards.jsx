@@ -14,13 +14,23 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { db } from "../../../../firebase/firebaseConfig"; // Import Firebase db
-import { arrayRemove, arrayUnion, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore"; // Import Firestore functions
-import { Swiper, SwiperSlide } from "swiper/react";
+import {
+  arrayRemove,
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import "swiper/css"; // Import Swiper styles
 import "swiper/css/pagination";
 import { Pagination } from "swiper/modules";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 export default function Header() {
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -36,6 +46,48 @@ export default function Header() {
   const [tooltipData, setTooltipData] = useState([]);
 
   const [userLocation, setUserLocation] = useState([34.18223, -118.13191]);
+
+  const [reviews, setReviews] = useState({}); // State to hold reviews for each property
+  const [avgRatings, setAvgRatings] = useState({});
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      const reviewsData = {};
+      const avgRatingsData = {};
+
+      for (const property of properties) {
+        const reviewsQuery = query(
+          collection(db, "reviews"),
+          where("propertyId", "==", property.id)
+        );
+
+        const querySnapshot = await getDocs(reviewsQuery);
+        const reviewsList = [];
+        let totalAvgRating = 0;
+
+        querySnapshot.forEach((doc) => {
+          const review = { id: doc.id, ...doc.data() };
+          reviewsList.push(review);
+          totalAvgRating += review.AvgRating || 0;
+        });
+
+        const avgRating =
+          reviewsList.length > 0
+            ? (totalAvgRating / reviewsList.length).toFixed(1)
+            : null;
+
+        reviewsData[property.id] = reviewsList;
+        avgRatingsData[property.id] = avgRating;
+      }
+
+      setReviews(reviewsData); // Stores all reviews per property
+      setAvgRatings(avgRatingsData); // Stores calculated avgRating per property
+    };
+
+    if (properties.length > 0) {
+      fetchReviews();
+    }
+  }, [properties]);
 
   useEffect(() => {
     const getUserLocation = () => {
@@ -377,9 +429,13 @@ export default function Header() {
                   <div className="block border-b border-gray-300 w-10 pt-2"></div>
                   <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-1 text-[13px]">
-                      <span>4.92</span>
                       <Star className="h-[15px] w-[15px] text-[#F5A10F] fill-[#FAC941]" />
-                      (318 reviews)
+                      <span>{avgRatings[property.id]}</span>
+                      <span>(
+                        {reviews[property.id]?.length || "No"}{' '}
+                        reviews
+                      )
+                      </span>
                     </div>
                     <p className="text-sm text-[#222222] -mr-3">
                       <span className="font-medium text-[16px]">
