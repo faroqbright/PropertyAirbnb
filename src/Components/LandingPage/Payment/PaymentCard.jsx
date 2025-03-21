@@ -119,6 +119,10 @@ export default function PaymentForm() {
       toast.error("Please fill in all the required fields.");
       return;
     }
+    if (cardNumber < 16) {
+      toast.error("Please enter correcr card number.");
+      return;
+    }
 
     setLoading(true);
 
@@ -157,9 +161,9 @@ export default function PaymentForm() {
 
     const generateUUID = () => {
       return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0,
+        const r = (Math.random() * 19) | 0,
           v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
+        return v.toString(19);
       });
     };
 
@@ -359,11 +363,11 @@ export default function PaymentForm() {
                 </div>
               </div>
               <div className="flex flex-col md:flex-row gap-4 mb-6 w-full max-w-4xl mx-auto">
-                <div className="w-full md:w-1/3">
+                <div className="w-full md:w-1/2">
                   <label className="block text-sm text-[13px] mb-2 ml-1 font-medium">
                     Expiration Date
                   </label>
-                  <div className="flex items-center border border-gray-300 rounded-3xl p-2 pl-3 text-sm w-full">
+                  <div className="flex justify-between items-center border border-gray-300 rounded-3xl p-2 pl-3 text-sm w-full">
                     <DatePicker
                       selected={expiration}
                       onChange={handleExpirationChange}
@@ -376,11 +380,11 @@ export default function PaymentForm() {
                     />
                     <Calendar
                       size={18}
-                      className="text-gray-400 ml-2 left-64 absolute"
+                      className="right-3 text-gray-400"
                     />
                   </div>
                 </div>
-                <div className="w-full md:w-1/3">
+                <div className="w-full md:w-1/2">
                   <label className="text-sm text-[13px] mb-2 ml-1 font-medium flex items-center gap-1">
                     CVV
                   </label>
