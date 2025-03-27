@@ -198,7 +198,6 @@ const Personal = () => {
         setUserData((prevData) => ({
           ...prevData,
           coLiverPreferences: activecoLiverButtons.map(
-            // Correct field name
             (index) =>
               ["coLivers Men", "coLivers Women", "coLivers LGBT+"][index]
           ),
