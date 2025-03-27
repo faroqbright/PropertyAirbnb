@@ -31,8 +31,9 @@ const Signup = () => {
   const [activeTab, setActiveTab] = useState("LandLord");
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    FullName: "",
+    LegalName: "",
     Email: "",
+    DateOfBirth: "",
     Number: "",
     Password: "",
     ConfirmPassword: "",
@@ -45,7 +46,7 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [defaultCountry, setDefaultCountry] = useState("");
+  const [defaultCountry, setDefaultCountry] = useState("us"); // Changed from "" to "us"
   const [errors, setErrors] = useState({});
 
   const getUserIP = async () => {
@@ -66,7 +67,7 @@ const Signup = () => {
       return data.country_code.toLowerCase();
     } catch (error) {
       console.error("Failed to fetch country code", error);
-      return null;
+      return "us"; // Return default country code if fetch fails
     }
   };
 
@@ -85,20 +86,17 @@ const Signup = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-
     if (!file) {
       console.error("No file selected.");
       return;
     }
-
-    const fileURL = URL.createObjectURL(file);
     setSelectedImage(file);
-    console.log("File URL:", fileURL);
   };
 
   const uploadImage = async (file, folder) => {
@@ -124,7 +122,6 @@ const Signup = () => {
           },
           async () => {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log("File available at", downloadURL);
             resolve(downloadURL);
           }
         );
@@ -137,7 +134,7 @@ const Signup = () => {
 
   const handleSignUpClick = async () => {
     if (
-      !formData.FullName ||
+      !formData.LegalName ||
       !formData.Email ||
       !formData.Number ||
       !formData.Password ||
@@ -190,8 +187,9 @@ const Signup = () => {
 
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
-        FullName: formData.FullName,
+        LegalName: formData.LegalName,
         email: formData.Email,
+        DateOfBirth: activeTab === "LandLord" ? formData.DateOfBirth : null,
         number: formData.Number,
         userType: activeTab,
         role: formData.role,
@@ -207,8 +205,9 @@ const Signup = () => {
       toast.success("Signup successful!");
 
       setFormData({
-        FullName: "",
+        LegalName: "",
         Email: "",
+        DateOfBirth: "",
         Number: "",
         Password: "",
         ConfirmPassword: "",
@@ -259,7 +258,7 @@ const Signup = () => {
       } else {
         await setDoc(userRef, {
           uid: user.uid,
-          FullName: user.displayName || "",
+          LegalName: user.displayName || "",
           email: user.email || "",
           profilePicture: user.photoURL || "",
           userType: activeTab,
@@ -301,7 +300,7 @@ const Signup = () => {
       } else {
         await setDoc(userRef, {
           uid: user.uid,
-          FullName: user.displayName || "",
+          LegalName: user.displayName || "",
           email: user.email || "",
           profilePicture: user.photoURL || "",
           userType: activeTab,
@@ -337,7 +336,7 @@ const Signup = () => {
               onClick={() => {
                 setActiveTab(role);
                 setStep(role === "LandLord" ? 1 : 2);
-                setFormData({ ...formData, role });
+                setFormData((prev) => ({ ...prev, role }));
               }}
               className={`flex-1 py-2 text-sm font-medium transition ${
                 activeTab === role
@@ -353,35 +352,48 @@ const Signup = () => {
           Register Here!
         </h1>
         <div className="mt-10">
-          {["FullName", "Email"].map((field, idx) => (
-            <div key={idx} className="mt-5">
+          {["LegalName", "Email"].map((field) => (
+            <div key={field} className="mt-5">
               <label className="text-gray-700">
                 {field.replace(/([A-Z])/g, " $1").trim()}
               </label>
               <input
-                type="text"
+                type={field === "Email" ? "email" : "text"}
                 name={field}
                 placeholder={`Enter your ${field
                   .replace(/([A-Z])/g, " $1")
                   .trim()}`}
-                value={formData[field]}
+                value={formData[field] || ""}
                 onChange={handleChange}
                 className="border w-full mt-3 py-2 pl-3 rounded-full"
               />
             </div>
           ))}
 
+          {activeTab === "LandLord" && (
+            <div className="mt-5">
+              <label className="text-gray-700">Date of Birth</label>
+              <input
+                type="date"
+                name="DateOfBirth"
+                value={formData.DateOfBirth || ""}
+                onChange={handleChange}
+                className="border w-full mt-3 py-2 pl-3 rounded-full cursor-pointer"
+                onFocus={(e) => e.target.showPicker()}
+              />
+            </div>
+          )}
+
           <div className="flex flex-col w-full mt-4">
             <label className="text-gray-700 mb-2">Phone Number</label>
             <div className="w-full flex items-center border border-gray-300 rounded-full">
               <div className="w-full px-3 flex items-center">
                 <PhoneInput
-                  country={defaultCountry || "us"}
+                  country={defaultCountry}
                   enableSearch={true}
                   disableDropdown={false}
-                  value={formData.Number}
+                  value={formData.Number || ""}
                   onChange={(num) => {
-                    console.log("PhoneInput value:", num);
                     setFormData((prev) => ({ ...prev, Number: num }));
                   }}
                   buttonClass="px-2"
@@ -399,8 +411,8 @@ const Signup = () => {
             </div>
           </div>
 
-          {["Password", "ConfirmPassword"].map((field, idx) => (
-            <div key={idx} className="mt-5 relative">
+          {["Password", "ConfirmPassword"].map((field) => (
+            <div key={field} className="mt-5 relative">
               <label className="text-gray-700">
                 {field.replace(/([A-Z])/g, " $1").trim()}
               </label>
@@ -414,7 +426,7 @@ const Signup = () => {
                 placeholder={`Enter your ${field
                   .replace(/([A-Z])/g, " $1")
                   .trim()}`}
-                value={formData[field]}
+                value={formData[field] || ""}
                 onChange={handleChange}
                 className="border w-full mt-3 py-2 pl-3 rounded-full pr-10"
               />
@@ -459,7 +471,6 @@ const Signup = () => {
                   label="Upload Owner Docs"
                   file={selectedOwnerDoc}
                   setFile={setSelectedOwnerDoc}
-                  handleFileChange={(file) => setSelectedOwnerDoc(file)}
                 />
                 {errors.ownerDoc && (
                   <p className="text-red-500 text-sm">{errors.ownerDoc}</p>

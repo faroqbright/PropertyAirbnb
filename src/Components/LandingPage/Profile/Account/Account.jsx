@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 
 const Account = () => {
   const [transactions, setTransactions] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
+  const userInfo = useSelector((state) => state?.auth?.userInfo?.uid)
   const router = useRouter();
+  console.log(userInfo);
+  
 
   const handleClick = () => {
     router.push("/Landing/Profile/Payment");
@@ -37,7 +41,11 @@ const Account = () => {
 
       console.log("All Accounts:", accountsList);
 
-      const allTransactions = accountsList.map((account) => ({
+      const filteredAccounts = accountsList.filter(
+        (account) => account.userId === userInfo
+      );
+
+      const allTransactions = filteredAccounts.map((account) => ({
         transactionId: account.transactionId || "N/A",
         date: formatDate(account.date) || "N/A",
         bankType: account.bankType || "N/A",
@@ -56,8 +64,10 @@ const Account = () => {
   };
 
   useEffect(() => {
-    fetchAllAccounts();
-  }, []);
+if(userInfo){
+  fetchAllAccounts();
+}  
+}, [userInfo]);
 
   return (
     <div className="w-full bg-white rounded-xl border-[1.5px] min-h-screen border-gray-200 px-6 pt-4 pb-4 mb-4">

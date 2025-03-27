@@ -272,6 +272,7 @@ export default function PaymentForm() {
             type: paymentMethod,
             amount: (totalAmount * selectedMonths).toFixed(2),
             propertyId: propertyId.id,
+            userId: userId, 
           };
 
           await addDoc(collection(db, "accounts"), transactionDetails);
@@ -322,7 +323,7 @@ export default function PaymentForm() {
               >
                 <Banknote size={18} /> Bank Transfer
               </button>
-              <button
+              {/* <button
                 className={`flex items-center justify-center gap-2 w-full md:w-[30%] px-4 py-2 md:px-3 md:py-1.5 rounded-full border ${
                   paymentMethod === "paypal"
                     ? "bg-bluebutton text-white"
@@ -331,7 +332,7 @@ export default function PaymentForm() {
                 onClick={() => setPaymentMethod("paypal")}
               >
                 <Nfc size={18} /> Paypal
-              </button>
+              </button> */}
             </div>
 
             <div className="space-y-4">

@@ -40,6 +40,11 @@ export default function Dashboard() {
           />
         ),
       },
+    );
+  }
+
+  if (role === false) {
+    tabs.push(
       {
         name: "Account",
         icon: <CreditCard size={18} />,

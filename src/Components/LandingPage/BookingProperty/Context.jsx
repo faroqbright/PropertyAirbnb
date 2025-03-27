@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight, Star, Check } from "lucide-react";
 import { useSelector } from "react-redux";
@@ -13,8 +13,12 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { differenceInDays } from "date-fns";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, useStripe } from "@stripe/react-stripe-js";
 
-export default function Context() {
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
+
+const Context = () => {
   const [selectedRooms, setSelectedRooms] = useState([]);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,6 +39,20 @@ export default function Context() {
   const userType = useSelector((state) => state.auth.userInfo?.userType);
   const [reviews, setReviews] = useState([]); // State to hold reviews for the property
   const [avgRating, setAvgRating] = useState(null); // State to hold the average rating
+  const calendarRef = useRef(null); // Add this ref for the calendar section
+
+  const stripe = useStripe();
+  const clientSecret = loadStripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY);
+
+  const handleCheckout = async () => {
+    if (!stripe || !clientSecret) return;
+    const { error } = await stripe.redirectToCheckout({
+      sessionId: clientSecret,
+    });
+    if (error) {
+      console.error("Stripe Checkout error:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -232,6 +250,16 @@ export default function Context() {
 
     if (!startDate || !endDate) {
       toast.error("Please select a start and end date.");
+      const calendarElement = document.getElementById("calendar-section");
+      if (calendarElement) {
+        calendarElement.scrollIntoView({ behavior: "smooth" });
+        // Highlight the calendar section by adding a temporary border
+        calendarElement.style.border = "2px solid #3B82F6";
+        calendarElement.style.borderRadius = "0.5rem";
+        setTimeout(() => {
+          calendarElement.style.border = "none";
+        }, 2000);
+      }
       return;
     }
 
@@ -285,147 +313,161 @@ export default function Context() {
       .filter((service) => selectedServices.includes(service.id))
       .reduce((sum, service) => sum + Number(service.price) * proportion, 0);
 
-    return (roomsTotal + servicesTotal).toFixed(2); // Round to 2 decimal places
+    return (roomsTotal + servicesTotal).toFixed(2);
   };
 
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-10 lg:pr-20 lg:pl-32 min-[450px]:px-8 px-4 sm:px-28 pb-10 md:pb-0 lg:mx-0">
-      <div className="lg:w-[60%] w-full px-3">
-        <h1 className="font-bold text-black text-[24px] sm:text-[26px]">
-          {location}
-        </h1>
-        <div className="mt-2">
-          <p className="font-medium text-gray-600 text-[16px] sm:text-[18px]">
-            {name}
-          </p>
-        </div>
-        <div className="mt-8">
-          <p className="text-gray-600 sm:text-[14px] text-[13px]">
-            {description}
-          </p>
-        </div>
-
-        <div className="mt-5 flex justify-start gap-2 border-gray-400 border-b pb-10">
-          <button className="flex items-center space-x-1 hover:underline text-black font-semibold">
-            <span>Show more</span>
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-
-      <div className="lg:w-[40%] w-full bg-[#B19BD9] text-white rounded-2xl p-6 relative">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-gray-300">
-          <div className="text-2xl font-medium">
-            ${calculateAdjustedPrice(pricePerMonth)}{" "}
-            <span className="text-lg text-gray-200 font-normal">
-              {daysSelected && daysSelected !== 0
-                ? `/ ${daysSelected} Day${daysSelected !== 1 ? "s" : ""}`
-                : "/ 30 Days"}
-            </span>
+    <>
+      <div ref={calendarRef}></div>
+      <div className="w-full flex flex-col lg:flex-row gap-10 lg:pr-20 lg:pl-32 min-[450px]:px-8 px-4 sm:px-28 pb-10 md:pb-0 lg:mx-0">
+        <div className="lg:w-[60%] w-full px-3">
+          <h1 className="font-bold text-black text-[24px] sm:text-[26px]">
+            {location}
+          </h1>
+          <div className="mt-2">
+            <p className="font-medium text-gray-600 text-[16px] sm:text-[18px]">
+              {name}
+            </p>
           </div>
-          <div className="flex items-center gap-2 mt-2 md:mt-0">
-            <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
-            <span>{avgRating || "No ratings"} </span>
-            <span className="text-purple-200">
-              · {reviews.length} review{reviews.length !== 1 ? "s" : "0"}
-            </span>
+          <div className="mt-8">
+            <p className="text-gray-600 sm:text-[14px] text-[13px]">
+              {description}
+            </p>
+          </div>
+
+          <div className="mt-5 flex justify-start gap-2 border-gray-400 border-b pb-10">
+            <button className="flex items-center space-x-1 hover:underline text-black font-semibold">
+              <span>Show more</span>
+              <ChevronRight size={16} />
+            </button>
           </div>
         </div>
 
-        <div className="space-y-3 pt-5">
-          {rooms.map((room) => (
-            <label
-              key={room.id}
-              className="flex items-center justify-between cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedRooms.includes(room.id)}
-                    onChange={(e) => {
-                      setSelectedRooms(
-                        e.target.checked
-                          ? [...selectedRooms, room.id]
-                          : selectedRooms.filter((id) => id !== room.id)
-                      );
-                    }}
-                    className="hidden"
-                  />
-                  <span
-                    className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ease-in-out ${
-                      selectedRooms.includes(room.id)
-                        ? "bg-white text-[#3CD9C8]"
-                        : "bg-[#B19BD9]"
-                    }`}
-                  >
-                    {selectedRooms.includes(room.id) && (
-                      <Check className="w-5 h-5" />
-                    )}
-                  </span>
-                </label>
-                <span className="text-[15px] font-medium">{room.name}</span>
-              </div>
-              <span className="text-[15px] font-medium">
-                ${calculateAdjustedPrice(room.price)}
+        <div className="lg:w-[40%] w-full bg-[#B19BD9] text-white rounded-2xl p-6 relative">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-5 border-gray-300">
+            <div className="text-2xl font-medium">
+              ${calculateAdjustedPrice(pricePerMonth)}{" "}
+              <span className="text-lg text-gray-200 font-normal">
+                {daysSelected && daysSelected !== 0
+                  ? `/ ${daysSelected} Day${daysSelected !== 1 ? "s" : ""}`
+                  : "/ 30 Days"}
               </span>
-            </label>
-          ))}
-        </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2 md:mt-0">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-500" />
+              <span>{avgRating || "No ratings"} </span>
+              <span className="text-purple-200">
+                · {reviews.length} review{reviews.length !== 1 ? "s" : "0"}
+              </span>
+            </div>
+          </div>
 
-        <div className="space-y-2 rounded-lg bg-purple-300 px-4 py-3 my-5">
-          {services.map((service) => (
-            <label
-              key={service.id}
-              className="relative flex items-center cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={selectedServices.includes(service.id)}
-                onChange={(e) => {
-                  setSelectedServices(
-                    e.target.checked
-                      ? [...selectedServices, service.id]
-                      : selectedServices.filter((id) => id !== service.id)
-                  );
-                }}
-                className="hidden"
-              />
-              <span
-                className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ease-in-out ${
-                  selectedServices.includes(service.id)
-                    ? "bg-white text-[#3CD9C8]"
-                    : "bg-[#B19BD9]"
-                }`}
+          <div className="space-y-3 pt-5">
+            {rooms.map((room) => (
+              <label
+                key={room.id}
+                className="flex items-center justify-between cursor-pointer"
               >
-                {selectedServices.includes(service.id) && (
-                  <Check className="w-5 h-5" />
-                )}
-              </span>
-              <div className="flex items-center justify-between ml-3 w-full">
-                <span className="text-[15px] font-medium">{service.name}</span>
+                <div className="flex items-center gap-2">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedRooms.includes(room.id)}
+                      onChange={(e) => {
+                        setSelectedRooms(
+                          e.target.checked
+                            ? [...selectedRooms, room.id]
+                            : selectedRooms.filter((id) => id !== room.id)
+                        );
+                      }}
+                      className="hidden"
+                    />
+                    <span
+                      className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ease-in-out ${
+                        selectedRooms.includes(room.id)
+                          ? "bg-white text-[#3CD9C8]"
+                          : "bg-[#B19BD9]"
+                      }`}
+                    >
+                      {selectedRooms.includes(room.id) && (
+                        <Check className="w-5 h-5" />
+                      )}
+                    </span>
+                  </label>
+                  <span className="text-[15px] font-medium">{room.name}</span>
+                </div>
                 <span className="text-[15px] font-medium">
-                  ${calculateAdjustedPrice(service.price)}
+                  ${calculateAdjustedPrice(room.price)}
                 </span>
-              </div>
-            </label>
-          ))}
-        </div>
+              </label>
+            ))}
+          </div>
 
-        <div className="flex items-center justify-between pt-4 mb-5 border-t border-gray-300">
-          <span className="font-medium text-[16px]">Total</span>
-          <span className="text-xl font-bold">${calculateTotal()}</span>
-        </div>
+          <div className="space-y-2 rounded-lg bg-purple-300 px-4 py-3 my-5">
+            {services.map((service) => (
+              <label
+                key={service.id}
+                className="relative flex items-center cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedServices.includes(service.id)}
+                  onChange={(e) => {
+                    setSelectedServices(
+                      e.target.checked
+                        ? [...selectedServices, service.id]
+                        : selectedServices.filter((id) => id !== service.id)
+                    );
+                  }}
+                  className="hidden"
+                />
+                <span
+                  className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center transition-all duration-200 ease-in-out ${
+                    selectedServices.includes(service.id)
+                      ? "bg-white text-[#3CD9C8]"
+                      : "bg-[#B19BD9]"
+                  }`}
+                >
+                  {selectedServices.includes(service.id) && (
+                    <Check className="w-5 h-5" />
+                  )}
+                </span>
+                <div className="flex items-center justify-between ml-3 w-full">
+                  <span className="text-[15px] font-medium">
+                    {service.name}
+                  </span>
+                  <span className="text-[15px] font-medium">
+                    ${calculateAdjustedPrice(service.price)}
+                  </span>
+                </div>
+              </label>
+            ))}
+          </div>
 
-        {userType !== "LandLord" && (
-          <button
-            onClick={handleButtonClick}
-            className="w-full cursor-pointer bg-bluebutton text-white rounded-full py-2"
-          >
-            {buttonText}
-          </button>
-        )}
+          <div className="flex items-center justify-between pt-4 mb-5 border-t border-gray-300">
+            <span className="font-medium text-[16px]">Total</span>
+            <span className="text-xl font-bold">${calculateTotal()}</span>
+          </div>
+
+          {userType !== "LandLord" && (
+            <button
+              // onClick={handleButtonClick}
+              onClick={handleCheckout}
+              className="w-full cursor-pointer bg-bluebutton text-white rounded-full py-2"
+            >
+              {buttonText}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
+
+const payment = () => (
+  <Elements stripe={stripePromise}>
+  <Context />
+</Elements>
+)
+
+export default payment
