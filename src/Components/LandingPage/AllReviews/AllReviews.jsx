@@ -67,7 +67,7 @@ export default function Reviews() {
                     alt={item.userName}
                     width={56}
                     height={56}
-                    className="rounded-full"
+                    className="w-14 h-14 rounded-full object-cover"
                   />
                 )}
                 <div>

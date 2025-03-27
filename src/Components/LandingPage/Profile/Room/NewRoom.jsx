@@ -1,21 +1,27 @@
 "use client";
+import imageCompression from "browser-image-compression";
 
 import {
   Bath,
   BedDouble,
+  Beef,
   BicepsFlexed,
   Bolt,
   Cat,
   ChartArea,
   CircleParking,
   Dog,
+  Drill,
   Dumbbell,
+  Fence,
   Flower2,
+  Forklift,
   HeartHandshake,
   House,
   Settings,
   Shield,
   Trash2,
+  Warehouse,
   WashingMachine,
   WavesLadder,
 } from "lucide-react";
@@ -106,25 +112,40 @@ const Properties = ({ propertyData: initialPropertyData }) => {
     }
   }, [initialPropertyData]);
 
+  const compressImage = async (file) => {
+    const options = {
+      maxSizeMB: 0.5, // Adjust the max size (e.g., 0.5MB)
+      maxWidthOrHeight: 800, // Adjust width/height
+      useWebWorker: true,
+    };
+    
+    try {
+      return await imageCompression(file, options);
+    } catch (error) {
+      console.error("Image compression error:", error);
+      return file; // Fallback to original if compression fails
+    }
+  };
+
   const uploadImage = async (file) => {
     try {
       if (!file) {
         throw new Error("No image selected");
       }
-
+  
+      const compressedFile = await compressImage(file);
+  
       const storage = getStorage();
-      const fileName = `${Date.now()}_${file.name}`;
+      const fileName = `${Date.now()}_${compressedFile.name}`;
       const storageRef = ref(storage, `property_images/${fileName}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
+      const uploadTask = uploadBytesResumable(storageRef, compressedFile);
+  
       return new Promise((resolve, reject) => {
         uploadTask.on(
           "state_changed",
           (snapshot) => {
             console.log(
-              `Upload is ${
-                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-              }% done`
+              `Upload is ${((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(2)}% done`
             );
           },
           (error) => {
@@ -146,18 +167,18 @@ const Properties = ({ propertyData: initialPropertyData }) => {
     setisLoading(true);
     try {
       const imageUrls = await Promise.all(
-        selectedFiles.map((file) =>
-          file instanceof File ? uploadImage(file) : file
+        selectedFiles.map(async (file) =>
+          file instanceof File ? uploadImage(await compressImage(file)) : file
         )
       );
-
+  
       setSelectedFiles(imageUrls);
-
+  
       const updatedRooms = await Promise.all(
         additionalRoomPrice.map(async (room) => {
           const roomImageUrls = await Promise.all(
-            room.images.map((file) =>
-              file instanceof File ? uploadImage(file) : file
+            room.images.map(async (file) =>
+              file instanceof File ? uploadImage(await compressImage(file)) : file
             )
           );
           return {
@@ -166,9 +187,9 @@ const Properties = ({ propertyData: initialPropertyData }) => {
           };
         })
       );
-
+  
       setSelectedRoomFiles(updatedRooms.flatMap((room) => room.images));
-
+  
       const dataToSave = {
         userId: userId,
         name: propertyData.name,
@@ -184,17 +205,16 @@ const Properties = ({ propertyData: initialPropertyData }) => {
         status: "Approved",
         active: 1,
       };
-
+  
       if (initialPropertyData?.id) {
         const propertyRef = doc(db, "properties", initialPropertyData?.id);
         await updateDoc(propertyRef, dataToSave);
         toast.success("Property Updated Successfully");
-        setisLoading(false);
       } else {
-        const docRef = await addDoc(collection(db, "properties"), dataToSave);
+        await addDoc(collection(db, "properties"), dataToSave);
         toast.success("Property Created Successfully");
-        setisLoading(false);
       }
+      setisLoading(false);
       router.push("/Landing/Home");
     } catch (e) {
       console.error("Error saving document: ", e);
@@ -202,6 +222,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
       setisLoading(false);
     }
   };
+  
 
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files);
@@ -299,41 +320,34 @@ const Properties = ({ propertyData: initialPropertyData }) => {
   };
 
   const namesArray = [
-    "Primary Services",
-    "Swimming Pool",
     "Vigilance",
-    "Maintenance",
-    "House Keeping",
-    "Parking",
-    "Own Bathroom",
+    "Lift",
+    "Swimming Pool",
+    "Fitness area",
     "Roof Garden",
-    "Cat Friendly",
-    "Laundry",
-    "Common Areas",
-    "Gym",
     "Co Working",
-    "Dog",
-    "LGBT+coLivers",
-    "Double Bed",
+    "Laundry Zone",
+    "Storage Room",
+    "Tools Room",
+    "Valet Parking",
+    "Garden for Pets",
+    "BBQ area"
   ];
 
   const iconsArray = [
-    <Settings size={18} />,
-    <WavesLadder size={18} />,
     <Shield size={18} />,
-    <Bolt size={18} />,
-    <House size={18} />,
-    <CircleParking size={18} />,
-    <Bath size={18} />,
+    <Forklift size={18}/>,
+    <WavesLadder size={18} />,
+    <Dumbbell size={18}/>,
     <Flower2 size={18} />,
-    <Cat size={18} />,
+    <Settings size={18} />,
     <WashingMachine size={18} />,
-    <ChartArea size={18} />,
-    <Dumbbell size={18} />,
-    <BicepsFlexed size={18} />,
-    <Dog size={18} />,
-    <HeartHandshake size={18} />,
-    <BedDouble size={18} />,
+    <Warehouse size={18} />,
+    <Drill size={18} />,
+    <CircleParking size={18} />,
+    <Fence size={18} />,
+    <Beef size={18} />,
+
   ];
 
   const handleButtonClick = (index) => {
@@ -666,7 +680,7 @@ const Properties = ({ propertyData: initialPropertyData }) => {
           </div>
         </div>
       ) : step === 3 ? (
-        <div className="overflow-y-auto h-[600px] scrollbar-hide">
+        <div className="overflow-y-auto h-[400px] scrollbar-hide">
           <h1 className="text-textclr font-semibold mb-3">
             Select the Amenities
           </h1>

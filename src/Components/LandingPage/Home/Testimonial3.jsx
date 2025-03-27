@@ -9,10 +9,10 @@ const CustomLayout = () => {
           Find Homes Across the Globe
         </h1>
         <p className="text-[15px] sm:text-[16px] text-gray-500 text-center mb-8">
-          Discover stunning properties in some of the most sought-after
-          locations around the world. Whether you're looking for a cozy retreat
-          or an urban getaway, CoLivers offers options in prime destinations.
-          Start your journey by exploring these regions{" "}
+          If you are moving to another city, CoLivers is designed to create
+          personal experiences. Look at stunning properties in some of the most
+          sought-after locations around the world. Start your journey by
+          exploring these countries.{" "}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:grid-cols-3 mb-6 relative z-10">
@@ -43,7 +43,7 @@ const CustomLayout = () => {
                   : "South America"}
               </p>
               <div
-                className="absolute inset-x-0 bottom-0 h-[100px] w-full rounded-3xl" 
+                className="absolute inset-x-0 bottom-0 h-[100px] w-full rounded-3xl"
                 style={{
                   backgroundImage: `linear-gradient(to top, ${
                     index === 1
@@ -82,7 +82,7 @@ const CustomLayout = () => {
                   : "North America"}
               </p>
               <div
-                className="absolute inset-x-0 bottom-0 h-[100px] w-full rounded-3xl" 
+                className="absolute inset-x-0 bottom-0 h-[100px] w-full rounded-3xl"
                 style={{
                   backgroundImage: `linear-gradient(to top, ${
                     index === 1

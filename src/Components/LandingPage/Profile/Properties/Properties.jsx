@@ -29,7 +29,7 @@ import Image from "next/image";
 export default function Properties({ newRoomOpen, setNewRoomOpen }) {
   const [action, setAction] = useState("View");
   const userInfo = useSelector((state) => state.auth.userInfo);
-  const userid = userInfo.uid;
+  const userid = userInfo?.uid;
 
   const [properties, setProperties] = useState([]);
   const [userType, setUserType] = useState("");

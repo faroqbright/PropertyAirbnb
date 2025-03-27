@@ -19,11 +19,10 @@ export default function Testimonial2() {
             Simple Steps to Your Dream Stay
           </h1>
           <p className="text-gray-700 mb-6 font-medium text-[16px] py-4">
-            At CoLivers, we’ve designed a streamlined process to make finding
-            and renting your perfect property as easy as possible. Whether
-            you're searching for a cozy room, a spacious apartment, or a
-            luxurious house, our platform ensures a smooth and secure experience
-            for both tenants and landlords.
+            We’ve designed a streamlined process to make finding and renting
+            your new home as easy as possible. Whether you're a tenant looking
+            for a cozy room or a landlord ready to list your spacious apartment,
+            our platform ensures a smooth and secure experience for everyone
           </p>
           <button
             className="bg-bluebutton text-white px-6 py-2 rounded-full font-medium shadow-md"

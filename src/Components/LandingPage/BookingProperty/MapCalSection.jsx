@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { Circle } from "react-leaflet";
 import {
   format,
   addMonths,
@@ -142,23 +143,47 @@ export default function Header() {
     const normalizedDay = new Date(day);
     normalizedDay.setHours(0, 0, 0, 0);
 
+    // First check if we're selecting start or end date
     if (!startDate || (startDate && endDate)) {
       setStartDate(normalizedDay);
       setEndDate(null);
       setSelectionMade(true);
-      localStorage.setItem("startDate", format(normalizedDay, "yyyy-MM-dd")); // Store as YYYY-MM-DD
-    } else if (normalizedDay > startDate) {
-      setEndDate(normalizedDay);
-      setSelectionMade(false);
-      localStorage.setItem("endDate", format(normalizedDay, "yyyy-MM-dd")); // Store as YYYY-MM-DD
-      await saveDatesToFirebase();
-    } else {
-      setEndDate(startDate);
-      setStartDate(normalizedDay);
-      localStorage.setItem("startDate", format(normalizedDay, "yyyy-MM-dd")); // Store as YYYY-MM-DD
-      localStorage.setItem("endDate", format(startDate, "yyyy-MM-dd")); // Store as YYYY-MM-DD
-      await saveDatesToFirebase();
+      localStorage.setItem("startDate", format(normalizedDay, "yyyy-MM-dd"));
+      return;
     }
+
+    // Now we're selecting the end date
+    const newEndDate = normalizedDay > startDate ? normalizedDay : startDate;
+    const newStartDate = normalizedDay > startDate ? startDate : normalizedDay;
+
+    // Check for date conflicts with existing bookings
+    const hasConflict = filteredBookings.some((booking) => {
+      if (!booking.startDate || !booking.endDate) return false;
+
+      const bookingStart = new Date(booking.startDate);
+      const bookingEnd = new Date(booking.endDate);
+
+      // Check if the new range overlaps with any existing booking
+      return (
+        (newStartDate <= bookingEnd && newEndDate >= bookingStart) ||
+        (bookingStart <= newEndDate && bookingEnd >= newStartDate)
+      );
+    });
+
+    if (hasConflict) {
+      toast.error(
+        "These dates are already booked. Please select different dates."
+      );
+      return;
+    }
+
+    // No conflict - proceed with date selection
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+    setSelectionMade(false);
+    localStorage.setItem("startDate", format(newStartDate, "yyyy-MM-dd"));
+    localStorage.setItem("endDate", format(newEndDate, "yyyy-MM-dd"));
+    await saveDatesToFirebase();
   };
 
   const saveDatesToFirebase = async () => {
@@ -265,6 +290,49 @@ export default function Header() {
 
     fetchProperty();
   }, [propertyId]);
+
+  const [bookings, setbookings] = useState([]);
+  useEffect(() => {
+    const fetchAllBookings = async () => {
+      try {
+        const bookingRef = collection(db, "bookings"); // Reference to bookings collection
+        const querySnapshot = await getDocs(bookingRef);
+
+        console.log("QuerySnapshot:", querySnapshot);
+
+        if (!querySnapshot.empty) {
+          const allBookings = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setbookings(allBookings);
+          console.log("Fetched bookings:", allBookings);
+        } else {
+          console.error("No bookings found");
+        }
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      }
+    };
+
+    fetchAllBookings();
+  }, []);
+  // Run only when propertyId changes
+
+  console.log("Bokkings are:", bookings);
+
+  const [filteredBookings, setFilteredBookings] = useState([]);
+
+  useEffect(() => {
+    if (bookings?.length > 0) {
+      const filtered = bookings.filter(
+        (booking) => booking?.propertyId?.id === propertyId
+      );
+      setFilteredBookings(filtered);
+    }
+  }, [bookings, propertyId]);
+
+  console.log("Filtered bookings are:", filteredBookings);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -376,7 +444,8 @@ export default function Header() {
   };
 
   return (
-    <div className="bg-white px-2.5 flex flex-col items-center lg:mb-4 lg:ml-16 lg:mr-4 sm:mx-20">
+    <div className="bg-white px-2.5 flex flex-col items-center lg:mb-4 lg:ml-16 lg:mr-4 sm:mx-20"
+    id="calendar-section">
       <div className="flex flex-col lg:flex-row items-center lg:items-start p-4 lg:py-6 lg:pl-16 gap-8 lg:gap-24 w-full max-w-screen-2xl mx-auto">
         <div className="w-full lg:w-[50%] md:space-x-4 lg:space-x-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 mx-auto lg:mr-10 order-2 mt-10 lg:mt-60">
           {fromProfile === true ? (
@@ -530,18 +599,21 @@ export default function Header() {
               zoomControl={false}
             >
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-              <Marker
-                position={[property.latitude, property.longitude]}
-                icon={customIcon}
+              <Circle
+                center={[property.latitude, property.longitude]}
+                radius={3500} // 500 meters radius
+                color="#B19BD9" // Purple color
+                fillColor="#B19BD9"
+                fillOpacity={0.4}
               >
                 <Popup>
                   <div className="rounded-lg flex items-center gap-2">
                     <span className="text-sm font-medium">
-                      Exact location provided after booking
+                      Approximate location (within 500m radius)
                     </span>
                   </div>
                 </Popup>
-              </Marker>
+              </Circle>
               <AddZoomControl />
             </MapContainer>
           ) : (
@@ -565,7 +637,7 @@ export default function Header() {
                 alt="Host Profile"
                 width={56}
                 height={56}
-                className="rounded-full"
+                className="w-14 h-14 object-cover rounded-full"
               />
             </div>
             <div className="flex-1">
@@ -620,18 +692,21 @@ export default function Header() {
                 zoomControl={false}
               >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <Marker
-                  position={[property.latitude, property.longitude]}
-                  icon={customIcon}
+                <Circle
+                  center={[property.latitude, property.longitude]}
+                  radius={3500} // 500 meters radius
+                  color="#B19BD9" // Purple color
+                  fillColor="#B19BD9"
+                  fillOpacity={0.4}
                 >
                   <Popup>
                     <div className="rounded-lg flex items-center gap-2">
                       <span className="text-sm font-medium">
-                        Exact location provided after booking
+                        Approximate location (within 500m radius)
                       </span>
                     </div>
                   </Popup>
-                </Marker>
+                </Circle>
                 <AddZoomControl />
               </MapContainer>
             ) : (

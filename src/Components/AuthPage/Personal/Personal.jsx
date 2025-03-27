@@ -23,6 +23,7 @@ const Personal = () => {
   const [activeSmokeButtons, setActiveSmokeButtons] = useState([]);
   const [activeDrinkButtons, setActiveDrinkButtons] = useState([]);
   const [activeDietButtons, setActiveDietButtons] = useState([]);
+  const [activecoLiverButtons, setActivecoLiverButtons] = useState([]);
   const [userUID, setUserUID] = useState(null);
   const inputRef = useRef(null);
   const [image, setImage] = useState(null);
@@ -132,7 +133,13 @@ const Personal = () => {
         setUserData((prevData) => ({
           ...prevData,
           petFriendly: activePetButtons.map(
-            (index) => ["Cat", "Dog", "Allergic to Pets"][index]
+            (index) =>
+              [
+                "Cat Friendly",
+                "Dog Friendly",
+                "Pet Friendly",
+                "Allergic to Pets",
+              ][index]
           ),
         }));
       }
@@ -144,7 +151,14 @@ const Personal = () => {
         setUserData((prevData) => ({
           ...prevData,
           drinkingHabits: activeDrinkButtons.map(
-            (index) => ["Outsides", "InHouse", "No"][index]
+            (index) =>
+              [
+                "Beer in Bar",
+                "InHouse Parties",
+                "Small Meetings",
+                "Popcorns & Movies",
+                "No",
+              ][index]
           ),
         }));
       }
@@ -156,7 +170,7 @@ const Personal = () => {
         setUserData((prevData) => ({
           ...prevData,
           smokingHabits: activeSmokeButtons.map(
-            (index) => ["Outside", "InHouses", "No"][index]
+            (index) => ["Smoker", "Non Smoker", "No"][index]
           ),
         }));
       }
@@ -174,10 +188,26 @@ const Personal = () => {
           ),
         }));
       }
+    } else if (step === 7) {
+      if (activecoLiverButtons.length === 0) {
+        isValid = false;
+        toast.error(
+          "Please select at least one option for CoLiver preferences."
+        );
+      } else {
+        setUserData((prevData) => ({
+          ...prevData,
+          coLiverPreferences: activecoLiverButtons.map(
+            // Correct field name
+            (index) =>
+              ["coLivers Men", "coLivers Women", "coLivers LGBT+"][index]
+          ),
+        }));
+      }
     }
 
     if (isValid) {
-      if (step === 6) {
+      if (step === 7) {
         if (!userUID) {
           toast.error("User not found. Please sign up first.");
           return;
@@ -264,6 +294,13 @@ const Personal = () => {
     }
   };
 
+  const handleTogglecoLiverButton = (index) => {
+    if (activecoLiverButtons.includes(index)) {
+      setActivecoLiverButtons(activecoLiverButtons.filter((i) => i !== index));
+    } else {
+      setActivecoLiverButtons([...activecoLiverButtons, index]);
+    }
+  };
   return (
     <div className="flex items-center justify-center w-full mb-10 mt-10">
       {step === 1 ? (
@@ -406,7 +443,12 @@ const Personal = () => {
             </h1>
           </div>
           <div className="space-y-4 mb-10">
-            {["Cat", "Dog", "Allergic to Pets"].map((label, index) => (
+            {[
+              "Cat Friendly",
+              "Dog Friendly",
+              "Pet Friendly",
+              "Allergic to Pets",
+            ].map((label, index) => (
               <button
                 key={index}
                 onClick={() => handleToggleButton(index)}
@@ -445,7 +487,12 @@ const Personal = () => {
             </h1>
           </div>
           <div className="space-y-4 mb-10">
-            {["Outside", "InHouse"].map((label, index) => (
+            {[
+              "Beer in Bar",
+              "InHouse Parties",
+              "Small Meetings",
+              "Popcorns & Movies",
+            ].map((label, index) => (
               <button
                 key={index}
                 onClick={() => handleToggleDrinkButton(index)}
@@ -484,7 +531,7 @@ const Personal = () => {
             </h1>
           </div>
           <div className="space-y-4 mb-10">
-            {["Outside", "InHouse"].map((label, index) => (
+            {["Smoker", "Non Smoker"].map((label, index) => (
               <button
                 key={index}
                 onClick={() => handleToggleSmokeButton(index)}
@@ -555,6 +602,47 @@ const Personal = () => {
           </div>
         </div>
       ) : step === 7 ? (
+        <div className="bg-white rounded-xl border-[1.5px] border-gray-200 w-3/4 lg:w-1/2 py-14 lg:px-14 px-5 flex flex-col">
+          <div className="mb-14 mt-10">
+            <h1 className="text-center text-textclr font-bold text-xl">
+              coLiver Prefrences
+            </h1>
+          </div>
+          <div className="space-y-4 mb-10">
+            {["coLivers Men", "coLivers Women", "coLivers LGBT+"].map(
+              (label, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleTogglecoLiverButton(index)}
+                  className={`w-full flex items-center justify-between rounded-full border-[1.5px] px-4 py-2 ${
+                    activecoLiverButtons.includes(index)
+                      ? "bg-purplebutton text-white"
+                      : "border-gray-200 text-[#737373]"
+                  }`}
+                >
+                  <span>{label}</span>
+                  <span className="ml-2">
+                    {activecoLiverButtons.includes(index) ? (
+                      <Check />
+                    ) : (
+                      <Plus size={16} className="mb-0.5" />
+                    )}
+                  </span>
+                </button>
+              )
+            )}
+          </div>
+
+          <div className="mt-10 mb-10">
+            <button
+              className="w-full text-center mt-5 border-[1.5px] py-2 text-white bg-bluebutton rounded-full"
+              onClick={handleNext}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      ) : step === 8 ? (
         <div className="w-full max-w-lg bg-purplebutton rounded-3xl shadow-lg mx-auto p-8">
           <div className="text-center text-white">
             <p className="text-lg font-medium">

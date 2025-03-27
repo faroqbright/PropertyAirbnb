@@ -57,6 +57,11 @@ export default function Bookings() {
 
         console.log("All Bookings Fetched:", bookingsList);
 
+        // Sort bookings by startDate (newest first)
+        bookingsList.sort(
+          (a, b) => new Date(b.startDate) - new Date(a.startDate)
+        );
+
         if (isAdmin) {
           bookingsList = bookingsList.filter((booking) => {
             try {
@@ -77,9 +82,14 @@ export default function Bookings() {
               return false;
             }
           });
+        } else {
+          // For regular users, show their own bookings
+          bookingsList = bookingsList.filter(
+            (booking) => booking.userId === userInfo?.uid
+          );
         }
 
-        console.log("Filtered Bookings:", bookingsList);
+        console.log("Filtered and Sorted Bookings:", bookingsList);
         setBookings(bookingsList);
       } catch (error) {
         console.error("Error fetching bookings:", error);
@@ -341,9 +351,7 @@ export default function Bookings() {
                     OnGoing
                   </button>
                 ) : !isAdmin && bookings.status === "pending" ? (
-                  <button
-                    className="px-4 py-2 md:w-44 w-44 text-sm font-medium rounded-full bg-purplebutton text-white"
-                  >
+                  <button className="px-4 py-2 md:w-44 w-44 text-sm font-medium rounded-full bg-purplebutton text-white">
                     Requested
                   </button>
                 ) : (

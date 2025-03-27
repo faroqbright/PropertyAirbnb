@@ -8,15 +8,15 @@ export default function Testimonial() {
     <div className="flex flex-col min-[990px]:flex-row items-center justify-between px-6 min-[990px]:px-16 py-16">
       <div className="min-[990px]:w-1/2 text-center min-[990px]:text-left">
         <h1 className="font-bold sm:text-5xl text-4xl text-textclr">
-          Find Your Perfect <br /> Home with CoLivers
+        Find Your Perfect Home
         </h1>
       </div>
       <div className="min-[990px]:w-1/2 mt-6 min-[990px]:mt-0 text-center min-[990px]:text-left">
         <p className="text-gray-600 lg:pr-28 pb-4 min-[450px]:px-10 lg:px-0">
-          Discover a seamless way to rent properties. Browse a wide range of
-          rooms, apartments, and houses tailored to your needs. Whether you're a
-          tenant looking for a cozy stay or a landlord ready to list your
-          property, CoLivers makes the process easy, secure, and efficient.
+          At CoLivers, discover a unique way to rent properties. We prioritize
+          the authentic relationships to deliver an unmatched renting experience
+          and foster genuine connections through your individual lifestyle and
+          shared passions like never before.
         </p>
         <div className="mt-6 flex flex-col sm:flex-row min-[450px]:px-14 sm:px-0 justify-center gap-4">
           <button
