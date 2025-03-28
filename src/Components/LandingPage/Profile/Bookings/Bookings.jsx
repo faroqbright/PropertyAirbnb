@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { collection, query, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, query, getDocs, updateDoc, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -114,12 +114,20 @@ export default function Bookings() {
       router.push(`/Landing/Profile/Details/Reviews?propertyId=${propertyId}`);
     } else if (btntext === "Reject") {
       try {
+        const rejectedBookingRef = doc(collection(db, "rejectedBookings"));
+        await setDoc(rejectedBookingRef, {
+          ...bookings.find(b => b.id === bookingId),
+          rejectedAt: new Date().toISOString(),
+          rejectedBy: userInfo?.uid
+        });
+    
         await deleteDoc(doc(db, "bookings", bookingId));
         setBookings(bookings.filter((booking) => booking.id !== bookingId));
-        console.log("Booking deleted successfully");
+        console.log("Booking rejected and moved to rejectedBookings");
       } catch (error) {
-        console.error("Error deleting booking:", error);
+        console.error("Error rejecting booking:", error);
       }
+    
     } else if (btntext === "Accept") {
       try {
         await updateDoc(doc(db, "bookings", bookingId), {

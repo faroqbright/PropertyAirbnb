@@ -16,9 +16,9 @@ import { differenceInDays } from "date-fns";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, useStripe } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
+// const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
 
-const Context = () => {
+export default function Context () {
   const [selectedRooms, setSelectedRooms] = useState([]);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,21 +39,9 @@ const Context = () => {
   const userType = useSelector((state) => state.auth.userInfo?.userType);
   const [reviews, setReviews] = useState([]); // State to hold reviews for the property
   const [avgRating, setAvgRating] = useState(null); // State to hold the average rating
-  const calendarRef = useRef(null); // Add this ref for the calendar section
-
-  const stripe = useStripe();
-  const clientSecret = loadStripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY);
-
-  const handleCheckout = async () => {
-    if (!stripe || !clientSecret) return;
-    const { error } = await stripe.redirectToCheckout({
-      sessionId: clientSecret,
-    });
-    if (error) {
-      console.error("Stripe Checkout error:", error);
-    }
-  };
-
+  const [platformFee, setPlatformFee] = useState(0);
+  const calendarRef = useRef(null);
+  
   useEffect(() => {
     const fetchReviews = async () => {
       if (!propertyId) return;
@@ -233,27 +221,96 @@ const Context = () => {
     return adjustedPrice;
   };
 
+  // const handleButtonClick = () => {
+  //   if (!userType) {
+  //     toast.error("Please login first.");
+  //     router.push("/Auth/Login");
+  //     return;
+  //   }
+
+  //   if (selectedRooms.length === 0 && selectedServices.length === 0) {
+  //     toast.error("Please select at least one room.");
+  //     return;
+  //   }
+
+  //   const startDate = localStorage.getItem("startDate");
+  //   const endDate = localStorage.getItem("endDate");
+
+  //   if (!startDate || !endDate) {
+  //     toast.error("Please select a start and end date.");
+  //     const calendarElement = document.getElementById("calendar-section");
+  //     if (calendarElement) {
+  //       calendarElement.scrollIntoView({ behavior: "smooth" });
+  //       // Highlight the calendar section by adding a temporary border
+  //       calendarElement.style.border = "2px solid #3B82F6";
+  //       calendarElement.style.borderRadius = "0.5rem";
+  //       setTimeout(() => {
+  //         calendarElement.style.border = "none";
+  //       }, 2000);
+  //     }
+  //     return;
+  //   }
+
+  //   const storedRooms = localStorage.getItem("selectedRooms");
+  //   const storedServices = localStorage.getItem("selectedServices");
+
+  //   if (storedRooms) {
+  //     localStorage.removeItem("selectedRooms");
+  //   }
+  //   if (storedServices) {
+  //     localStorage.removeItem("selectedServices");
+  //   }
+  //   localStorage.setItem("platformFee", platformFee); // Store platform fee
+
+  //   const selectedRoomsDetails = rooms.filter((room) =>
+  //     selectedRooms.includes(room.id)
+  //   );
+  //   const selectedServicesDetails = services.filter((service) =>
+  //     selectedServices.includes(service.id)
+  //   );
+
+  //   const total = calculateTotal();
+  //   const platformFee = calculateFivePercent().fivePercent;
+
+  //   console.log(selectedRoomsDetails);
+
+  //   localStorage.setItem("selectedRooms", JSON.stringify(selectedRoomsDetails));
+  //   localStorage.setItem(
+  //     "selectedServices",
+  //     JSON.stringify(selectedServicesDetails)
+  //   );
+
+  //   const propertyDetails = {
+  //     name: name,
+  //     location: location,
+  //     description: description,
+  //     price: pricePerMonth,
+  //   };
+  //   localStorage.setItem("propertyDetails", JSON.stringify(propertyDetails));
+  //   localStorage.setItem("selectedProperty", JSON.stringify(property));
+
+  //   router.push("/Landing/Properties/PropertiesDetail/Payment");
+  // };
   const handleButtonClick = () => {
     if (!userType) {
       toast.error("Please login first.");
       router.push("/Auth/Login");
       return;
     }
-
+  
     if (selectedRooms.length === 0 && selectedServices.length === 0) {
       toast.error("Please select at least one room.");
       return;
     }
-
+  
     const startDate = localStorage.getItem("startDate");
     const endDate = localStorage.getItem("endDate");
-
+  
     if (!startDate || !endDate) {
       toast.error("Please select a start and end date.");
       const calendarElement = document.getElementById("calendar-section");
       if (calendarElement) {
         calendarElement.scrollIntoView({ behavior: "smooth" });
-        // Highlight the calendar section by adding a temporary border
         calendarElement.style.border = "2px solid #3B82F6";
         calendarElement.style.borderRadius = "0.5rem";
         setTimeout(() => {
@@ -262,6 +319,7 @@ const Context = () => {
       }
       return;
     }
+      calculateFivePercent();
 
     const storedRooms = localStorage.getItem("selectedRooms");
     const storedServices = localStorage.getItem("selectedServices");
@@ -272,50 +330,73 @@ const Context = () => {
     if (storedServices) {
       localStorage.removeItem("selectedServices");
     }
-
+  
     const selectedRoomsDetails = rooms.filter((room) =>
       selectedRooms.includes(room.id)
     );
     const selectedServicesDetails = services.filter((service) =>
       selectedServices.includes(service.id)
     );
-
-    const total = calculateTotal();
-
-    console.log(selectedRoomsDetails);
-
+  
     localStorage.setItem("selectedRooms", JSON.stringify(selectedRoomsDetails));
     localStorage.setItem(
       "selectedServices",
       JSON.stringify(selectedServicesDetails)
     );
-
+    
     const propertyDetails = {
       name: name,
       location: location,
       description: description,
       price: pricePerMonth,
     };
+    localStorage.setItem("platformFee", platformFee);
     localStorage.setItem("propertyDetails", JSON.stringify(propertyDetails));
     localStorage.setItem("selectedProperty", JSON.stringify(property));
-
+  
     router.push("/Landing/Properties/PropertiesDetail/Payment");
   };
 
-  const calculateTotal = () => {
-    const proportion = calculateProportion();
+    const calculateTotal = () => {
+      const proportion = calculateProportion();
 
-    const roomsTotal = rooms
-      .filter((room) => selectedRooms.includes(room.id))
-      .reduce((sum, room) => sum + Number(room.price) * proportion, 0);
+      const roomsTotal = rooms
+        .filter((room) => selectedRooms.includes(room.id))
+        .reduce((sum, room) => sum + Number(room.price) * proportion, 0);
 
-    const servicesTotal = services
-      .filter((service) => selectedServices.includes(service.id))
-      .reduce((sum, service) => sum + Number(service.price) * proportion, 0);
+      const servicesTotal = services
+        .filter((service) => selectedServices.includes(service.id))
+        .reduce((sum, service) => sum + Number(service.price) * proportion, 0);
 
-    return (roomsTotal + servicesTotal).toFixed(2);
-  };
+      return (roomsTotal + servicesTotal).toFixed(2);
+    };
 
+    const calculateFivePercent = () => {
+      const proportion = calculateProportion();
+      
+      const roomsTotal = rooms
+        .filter((room) => selectedRooms.includes(room.id))
+        .reduce((sum, room) => sum + Number(room.price) * proportion, 0);
+      
+      const servicesTotal = services
+        .filter((service) => selectedServices.includes(service.id))
+        .reduce((sum, service) => sum + Number(service.price) * proportion, 0);
+      
+      const total = roomsTotal + servicesTotal;
+      const fivePercent = total * 0.05;
+      
+      setPlatformFee(fivePercent.toFixed(2)); // Update platform fee state
+      
+      return {
+        total: total.toFixed(2),
+        fivePercent: fivePercent.toFixed(2),
+      };
+    };
+
+    useEffect(() => {
+      calculateFivePercent();
+    }, [selectedRooms, selectedServices]);
+    
   return (
     <>
       <div ref={calendarRef}></div>
@@ -449,10 +530,14 @@ const Context = () => {
             <span className="text-xl font-bold">${calculateTotal()}</span>
           </div>
 
+          <div className="flex items-center justify-between pt-4 mb-5 border-t border-gray-300">
+            <span className="font-medium text-[16px]">Platform Fee</span>
+            <span className="text-xl font-bold">${platformFee}</span>
+          </div>
+
           {userType !== "LandLord" && (
             <button
-              // onClick={handleButtonClick}
-              onClick={handleCheckout}
+              onClick={handleButtonClick}
               className="w-full cursor-pointer bg-bluebutton text-white rounded-full py-2"
             >
               {buttonText}
@@ -462,12 +547,4 @@ const Context = () => {
       </div>
     </>
   );
-}
-
-const payment = () => (
-  <Elements stripe={stripePromise}>
-  <Context />
-</Elements>
-)
-
-export default payment
+};

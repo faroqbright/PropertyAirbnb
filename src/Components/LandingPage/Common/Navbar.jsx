@@ -13,11 +13,14 @@ export default function Navbar() {
   const router = useRouter();
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state?.auth?.userInfo);
+  console.log(userInfo);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const isAuthenticated = !!userInfo?.FullName || !!userInfo?.displayName;
+  const isAuthenticated =
+    !!userInfo?.FullName || !!userInfo?.displayName || !!userInfo?.LegalName;
 
   const handleNavigate = () => {
     router.push("/Auth/Login");
@@ -56,50 +59,47 @@ export default function Navbar() {
     { name: "Contact", href: "/Landing/Contact" },
   ];
 
-  // const fullName = userInfo?.FullName ? String(userInfo.FullName) : "";
-  // const displayName = userInfo?.displayName ? String(userInfo.displayName) : "";
-
-  // const getShortName = (name) => (name ? name.split(" ").slice(0, 2).join(" ") : ""); 
-  
-  // const shortName = getShortName(fullName) || getShortName(displayName);
-  
-  // console.log("Short Name:", shortName);
-
-  const useResponsiveName = (fullName, displayName) => {
+  const useResponsiveName = (fullName, displayName, LegalName) => {
     const [shortName, setShortName] = useState("");
-  
+
     useEffect(() => {
       const handleResize = () => {
         const screenWidth = window.innerWidth;
-  
+
         const getShortName = (name) =>
           name ? name.split(" ").slice(0, 2).join(" ") : "";
-  
+
         const getInitials = (name) => {
           if (!name) return "";
           const words = name.split(" ");
-          return words.length >= 2
-            ? words[0][0] + words[1][0] // First letter of first & second words
-            : words[0][0]; // If only one word, show its first letter
+          return words.length >= 2 ? words[0][0] + words[1][0] : words[0][0];
         };
-  
+
         const fullNameStr = fullName ? String(fullName) : "";
         const displayNameStr = displayName ? String(displayName) : "";
-        const name = getShortName(fullNameStr) || getShortName(displayNameStr);
-  
+        const LegalNameNameStr = LegalName ? String(LegalName) : "";
+        const name =
+          getShortName(fullNameStr) ||
+          getShortName(displayNameStr) ||
+          getShortName(LegalNameNameStr);
+
         setShortName(screenWidth <= 640 ? getInitials(name) : name);
       };
-  
-      handleResize(); // Run on mount
+
+      handleResize();
       window.addEventListener("resize", handleResize);
-  
+
       return () => window.removeEventListener("resize", handleResize);
-    }, [fullName, displayName]);
-  
+    }, [fullName, displayName, LegalName]);
+
     return shortName;
   };
 
-  const shortName = useResponsiveName(userInfo?.FullName, userInfo?.displayName);
+  const shortName = useResponsiveName(
+    userInfo?.FullName,
+    userInfo?.displayName,
+    userInfo?.LegalName
+  );
 
   return (
     <nav className="w-full p-6 bg-white border-b">
@@ -158,9 +158,7 @@ export default function Navbar() {
                 <div className="bg-slate-100 rounded-full text-sm p-1 mr-2 mt-1">
                   <User size={17} className="text-bluebutton" />
                 </div>
-                <span className="-mb-[3px]">
-                  {shortName}
-                </span>
+                <span className="-mb-[3px]">{shortName}</span>
               </button>
             </div>
 

@@ -36,13 +36,20 @@ export default function PaymentForm() {
   const [cvc, setCvc] = useState("");
   const [nameOnCard, setNameOnCard] = useState("");
   const [loading, setLoading] = useState(false);
+  const [platformFee, setPlatformFee] = useState(0);
+
+  useEffect(() => {
+    const storedPlatformFee =
+      parseFloat(localStorage.getItem("platformFee")) || 0;
+    setPlatformFee(storedPlatformFee);
+  }, []);
 
   const userId = useSelector((state) => state.auth.userInfo?.uid);
   const userPersonalInfo = useSelector(
     (state) => state?.auth?.userInfo?.personalInfo
   );
   const Email = useSelector((state) => state.auth.userInfo?.email);
-  const FullName = useSelector((state) => state.auth.userInfo?.FullName);
+  const LegalName = useSelector((state) => state.auth.userInfo?.LegalName);
 
   const startDate = localStorage.getItem("startDate");
   const endDate = localStorage.getItem("endDate");
@@ -97,6 +104,7 @@ export default function PaymentForm() {
       0
     );
     return roomsTotal + servicesTotal;
+
   };
 
   const handleCardNumberChange = (e) => {
@@ -224,7 +232,7 @@ export default function PaymentForm() {
       const paymentIntentResponse = await axios.post(
         "https://api.stripe.com/v1/payment_intents",
         new URLSearchParams({
-          amount: totalAmount * 100,
+          amount: platformFee * 100,
           currency: "usd",
           payment_method: paymentMethodId,
           confirm: "true",
@@ -241,7 +249,7 @@ export default function PaymentForm() {
 
       if (paymentIntentResponse.data.status === "succeeded") {
         const transactionId = paymentIntentResponse.data.id;
-        const currentDate = new Date().toISOString().split('T')[0];
+        const currentDate = new Date().toISOString().split("T")[0];
         const bookingDetails = {
           propertyId,
           userId,
@@ -251,17 +259,17 @@ export default function PaymentForm() {
           selectedRooms: updatedSelectedRooms,
           selectedServices: updatedSelectedServices,
           totalAmount: (totalAmount * selectedMonths).toFixed(2),
+          platformFee: platformFee.toFixed(2), 
           selectedMonths,
           paymentMethod,
           timestamp: new Date(),
           status: "pending",
-          FullName: FullName,
+          LegalName: LegalName,
           propertyPrice: price,
           numberOfDays: daysDifferenceTwo,
           startDate,
           endDate,
         };
-        
 
         try {
           await addDoc(collection(db, "bookings"), bookingDetails);
@@ -272,7 +280,8 @@ export default function PaymentForm() {
             type: paymentMethod,
             amount: (totalAmount * selectedMonths).toFixed(2),
             propertyId: propertyId.id,
-            userId: userId, 
+            userId: userId,
+            platformFee: platformFee.toFixed(2), 
           };
 
           await addDoc(collection(db, "accounts"), transactionDetails);
@@ -380,10 +389,7 @@ export default function PaymentForm() {
                       className="w-full outline-none bg-white text-gray-700"
                       calendarClassName="custom-calendar-size"
                     />
-                    <Calendar
-                      size={18}
-                      className="right-3 text-gray-400"
-                    />
+                    <Calendar size={18} className="right-3 text-gray-400" />
                   </div>
                 </div>
                 <div className="w-full md:w-1/2">
@@ -414,7 +420,7 @@ export default function PaymentForm() {
               <div className="flex justify-between text-[17px] font-medium">
                 <p>{location}</p>
                 <span className="text-2xl mb-1 -mt-1">
-                  ${(totalAmount * selectedMonths).toFixed(2)}
+                ${(totalAmount * selectedMonths).toFixed(2)}
                 </span>
               </div>
               <p className="text-[13px] mt-2 opacity-80 pb-1">{name}</p>
@@ -439,6 +445,10 @@ export default function PaymentForm() {
                     </span>
                   </p>
                 ))}
+                <p className="flex justify-between border-t border-white/30 pt-2">
+                  <span>Platform Fee</span>
+                  <span>${platformFee.toFixed(2)}</span>
+                </p>
               </div>
             </div>
             <div className="flex justify-center ">
