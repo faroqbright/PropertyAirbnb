@@ -270,7 +270,6 @@ export default function PaymentForm() {
           startDate,
           endDate,
         };
-
         try {
           await addDoc(collection(db, "bookings"), bookingDetails);
           const transactionDetails = {
