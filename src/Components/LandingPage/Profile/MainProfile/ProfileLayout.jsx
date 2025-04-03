@@ -78,7 +78,7 @@ export default function Dashboard() {
       <div className="flex w-full h-[380px] flex-col lg:flex-row sm:p-5 lg:px-20 lg:py-10">
         <div
           className={`w-full lg:w-[25%] rounded-xl bg-purplebutton px-6 py-5 hidden lg:block 
-    ${tabs.length === 3 ? "h-[185px]" : "h-[280px]"}`}
+    ${tabs.length === 3 ? "h-[185px]" : "h-[235px]"}`}
         >
           {tabs.map((tab) => (
             <div

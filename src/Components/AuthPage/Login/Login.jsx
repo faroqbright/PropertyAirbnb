@@ -99,7 +99,7 @@ const Login = () => {
       } else {
         await setDoc(userRef, {
           uid: user.uid,
-          FullName: user.displayName || "",
+          LegalName: user.displayName || "",
           email: user.email || "",
           profilePicture: user.photoURL || "",
           userType: activeTab,
@@ -140,7 +140,7 @@ const Login = () => {
       } else {
         await setDoc(userRef, {
           uid: user.uid,
-          FullName: user.displayName || "",
+          LegalName: user.displayName || "",
           email: user.email || "",
           profilePicture: user.photoURL || "",
           userType: activeTab,

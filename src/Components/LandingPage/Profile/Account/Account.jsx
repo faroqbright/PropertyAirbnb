@@ -1,27 +1,43 @@
 "use client";
+
 import { Layers, Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  doc,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 
 const Account = () => {
   const [transactions, setTransactions] = useState([]);
   const [rejectedBookings, setRejectedBookings] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
-  const [rejectedBookingsTotal, setRejectedBookingsTotal] = useState(0); 
+  const [rejectedBookingsTotal, setRejectedBookingsTotal] = useState(0);
   const [activeTab, setActiveTab] = useState("transactions");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(11);
+  const [walletTotal, setWalletTotal] = useState(0);
   const userInfo = useSelector((state) => state?.auth?.userInfo?.uid);
+  const userId = useSelector((state) => state.auth.userInfo?.uid);
   const router = useRouter();
-  console.log(rejectedBookings);
 
   const handleClick = () => {
     router.push("/Landing/Profile/Payment");
   };
 
-  // ✅ Function to format date (from "YYYY-MM-DD" to "DD-Month-YYYY")
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const months = [
@@ -54,6 +70,25 @@ const Account = () => {
     });
   };
 
+  const updateWalletSum = async (rejectedTotal) => {
+    try {
+      if (!userInfo) return;
+
+      const walletSumRef = doc(db, "WalletSum", userInfo);
+      await setDoc(
+        walletSumRef,
+        {
+          rejectedBookingsTotal: rejectedTotal,
+          lastUpdated: new Date(),
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      console.error("Error updating WalletSum:", error);
+      toast.error("Error updating wallet total.");
+    }
+  };
+
   const fetchAllAccounts = async () => {
     try {
       const accountsCollection = collection(db, "accounts");
@@ -62,8 +97,6 @@ const Account = () => {
         id: doc.id,
         ...doc.data(),
       }));
-
-      console.log("All Accounts:", accountsList);
 
       const filteredAccounts = accountsList.filter(
         (account) => account.userId === userInfo
@@ -78,26 +111,19 @@ const Account = () => {
       }));
 
       setTransactions(allTransactions);
-
-      const total = allTransactions.reduce((sum, txn) => sum + txn.amount, 0);
-      setTotalAmount(total);
+      setTotalAmount(allTransactions.reduce((sum, txn) => sum + txn.amount, 0));
     } catch (error) {
       console.error("Error fetching accounts:", error);
       toast.error("Error fetching accounts.");
     }
   };
 
-  useEffect(() => {
-    if (userInfo) {
-      fetchAllAccounts();
-    }
-  }, [userInfo]);
-
-  // Fetch rejected bookings
-
   const fetchRejectedBookings = async () => {
     try {
-      const rejectedBookingsCollection = collection(db, "rejectedBookings");
+      const rejectedBookingsCollection = query(
+        collection(db, "rejectedBookings"),
+        orderBy("timestamp", "desc")
+      );
       const snapshot = await getDocs(rejectedBookingsCollection);
       const allRejectedBookings = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -108,184 +134,314 @@ const Account = () => {
         (booking) => booking.userId === userInfo
       );
 
-      setRejectedBookings(userRejectedBookings);
-      
-      // Calculate total of rejected bookings
-      const rejectedTotal = userRejectedBookings.reduce(
+      const newRejectedTotal = userRejectedBookings.reduce(
         (sum, booking) => sum + (Number(booking.platformFee) || 0),
         0
       );
-      setRejectedBookingsTotal(rejectedTotal);
+      setRejectedBookings(userRejectedBookings);
+      setRejectedBookingsTotal(newRejectedTotal);
+
+      await updateWalletSum(newRejectedTotal);
     } catch (error) {
       console.error("Error fetching rejected bookings:", error);
       toast.error("Error fetching rejected bookings.");
     }
   };
+  console.log(rejectedBookings, "RejectedBookings");
 
   useEffect(() => {
     if (userInfo) {
       fetchAllAccounts();
-      fetchRejectedBookings(); // Call this to fetch rejected bookings
+      fetchRejectedBookings();
     }
   }, [userInfo]);
 
-  const displayTotal = activeTab === "transactions" 
-  ? totalAmount 
-  : rejectedBookingsTotal;
+  useEffect(() => {
+    const fetchWalletTotal = async () => {
+      try {
+        const rejectedBookingsCollection = query(
+          collection(db, "rejectedBookings"),
+          orderBy("timestamp", "desc")
+        );
+        const snapshot = await getDocs(rejectedBookingsCollection);
+        const allRejectedBookings = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        const userRejectedBookings = allRejectedBookings.filter(
+          (booking) => booking.userId === userId
+        );
+
+        const total = userRejectedBookings.reduce(
+          (sum, booking) => sum + (Number(booking.platformFee) || 0),
+          0
+        );
+        setWalletTotal(total);
+      } catch (error) {
+        console.error("Error fetching wallet total:", error);
+      }
+    };
+
+    if (userId) {
+      fetchWalletTotal();
+    }
+  }, [userId]);
+
+  const currentItems =
+    activeTab === "transactions"
+      ? transactions.slice(
+          (currentPage - 1) * itemsPerPage,
+          currentPage * itemsPerPage
+        )
+      : rejectedBookings.slice(
+          (currentPage - 1) * itemsPerPage,
+          currentPage * itemsPerPage
+        );
+
+  const totalPages = Math.ceil(
+    (activeTab === "transactions"
+      ? transactions.length
+      : rejectedBookings.length) / itemsPerPage
+  );
+
+  const goToPage = (page) => {
+    setCurrentPage(page);
+  };
+
+  const displayTotal =
+    activeTab === "transactions" ? totalAmount : rejectedBookingsTotal;
 
   return (
-    <div className="w-full bg-white rounded-xl border-[1.5px] min-h-screen border-gray-200 px-6 pt-4 pb-4 mb-4">
-      <div className="mb-8 flex justify-between items-center">
-        <div className="flex gap-4 items-center">
-          <div>
-            <p className="text-slate-400">Total Wallet Value:</p>
-            <h1 className="text-textclr text-xl font-semibold">
-              ${displayTotal.toFixed(2)}
-            </h1>
+    <>
+      <div className="w-full bg-white rounded-xl border-[1.5px] h-[600px] border-gray-200 px-6 pt-4 pb-4 mb-4 overflow-hidden">
+        <div className="mb-8 flex justify-between items-center">
+          <div className="flex gap-4 items-center">
+            <div>
+              <p className="text-slate-400">
+                {activeTab === "transactions"
+                  ? "Total Transactions:"
+                  : "Total Wallet Value:"}
+              </p>
+              <h1 className="text-textclr text-xl font-semibold">
+                ${displayTotal.toFixed(2)}
+              </h1>
+            </div>
+            <div className="bg-purplebutton px-2 py-2 rounded-full text-white">
+              <Layers className="text-lg" />
+            </div>
           </div>
-          <div className="bg-purplebutton px-2 py-2 rounded-full text-white">
-            <Layers className="text-lg" />
+
+          <div className="flex justify-between gap-2">
+            <button
+              className={`px-10 py-2 rounded-3xl text-black ${
+                activeTab === "transactions"
+                  ? "bg-purplebutton text-white"
+                  : "bg-gray-200"
+              }`}
+              onClick={() => {
+                setActiveTab("transactions");
+                setCurrentPage(1);
+              }}
+            >
+              Transactions
+            </button>
+
+            <button
+              className={`px-10 py-2 rounded-3xl text-black ${
+                activeTab === "wallet"
+                  ? "bg-purplebutton text-white"
+                  : "bg-gray-200 text-black"
+              }`}
+              onClick={() => {
+                setActiveTab("wallet");
+                setCurrentPage(1);
+              }}
+            >
+              Wallet
+            </button>
           </div>
         </div>
 
-        {/* <button
-          className="px-10 bg-bluebutton py-2 rounded-3xl text-white"
-          onClick={handleClick}
-        >
-          Withdraw
-        </button> */}
+        {activeTab === "transactions" && (
+          <div className="max-h-80">
+            <div className="overflow-x-auto max-w-full">
+              <table className="w-full table-auto border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="text-textclr px-4 py-2 text-left">
+                      Transaction ID
+                    </th>
+                    <th className="text-textclr px-4 py-2 text-left">Date</th>
+                    <th className="text-textclr px-4 py-2 text-left">
+                      Bank Type
+                    </th>
+                    <th className="text-textclr px-4 py-2 text-left">Type</th>
+                    <th className="text-textclr px-4 py-2 text-left rounded-tr-2xl rounded-br-2xl">
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentItems.length > 0 ? (
+                    currentItems.map((transaction) => (
+                      <tr key={transaction.transactionId}>
+                        <td className="text-gray-500 px-4 py-2">
+                          {transaction.transactionId}
+                        </td>
+                        <td className="text-gray-500 px-4 py-2">
+                          {transaction.date}
+                        </td>
+                        <td className="text-gray-500 px-4 py-2">
+                          {transaction.bankType}
+                        </td>
+                        <td className="text-gray-500 px-4 py-2">
+                          {transaction.type}
+                        </td>
+                        <td className="text-gray-500 px-4 py-2">
+                          ${walletTotal.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="text-center py-4 text-gray-500"
+                      >
+                        No transactions found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-        <div className="flex justify-between gap-2">
-          <button
-            className={`px-10 py-2 rounded-3xl text-black ${
-              activeTab === "transactions"
-                ? "bg-purplebutton text-white"
-                : "bg-gray-200"
-            }`}
-            onClick={() => setActiveTab("transactions")}
-          >
-            Transactions
-          </button>
-
-          <button
-            className={`px-10 py-2 rounded-3xl text-black ${
-              activeTab === "wallet"
-                ? "bg-purplebutton text-white"
-                : "bg-gray-200 text-black"
-            }`}
-            onClick={() => setActiveTab("wallet")}
-          >
-            Wallet
-          </button>
-        </div>
+        {activeTab === "wallet" && (
+          <div className="max-h-80">
+            <div className="overflow-x-auto max-w-full">
+              <table className="w-full table-auto border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="text-textclr px-4 py-2 text-left w-1/5">
+                      Property ID
+                    </th>
+                    <th className="text-textclr px-4 py-2 text-left w-1/5">
+                      Property Name
+                    </th>
+                    <th className="text-textclr px-4 py-2 text-left w-1/5">
+                      Location
+                    </th>
+                    <th className="text-textclr px-4 py-2 text-left w-1/5">
+                      Date
+                    </th>
+                    <th className="text-textclr px-4 py-2 text-left w-1/5 rounded-tr-2xl rounded-br-2xl">
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentItems.length > 0 ? (
+                    currentItems.map((booking, index) => (
+                      <tr key={`${booking.id}-${index}`}>
+                        {" "}
+                        <td className="text-gray-500 px-4 py-2 truncate max-w-[200px]">
+                          {booking.id}
+                        </td>
+                        <td className="text-gray-500 px-4 py-2 truncate max-w-[200px]">
+                          {booking.propertyName || "N/A"}
+                        </td>
+                        <td className="text-gray-500 px-4 py-2 truncate max-w-[200px]">
+                          {booking.propertyLocation || "N/A"}
+                        </td>
+                        <td className="text-gray-500 px-4 py-2 truncate max-w-[200px]">
+                          {formatTimestamp(booking.timestamp)}
+                        </td>
+                        <td className="text-gray-500 px-4 py-2">
+                          ${booking.platformFee || "0.00"}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="text-center py-4 text-gray-500"
+                      >
+                        No rejected bookings found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
-      {activeTab === "transactions" && (
-        <div className="max-h-80">
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="text-textclr px-4 py-2 text-left">
-                    Transaction ID
-                  </th>
-                  <th className="text-textclr px-4 py-2 text-left">Date</th>
-                  <th className="text-textclr px-4 py-2 text-left">
-                    Bank Type
-                  </th>
-                  <th className="text-textclr px-4 py-2 text-left">Type</th>
-                  <th className="text-textclr px-4 py-2 text-left rounded-tr-2xl rounded-br-2xl">
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.length > 0 ? (
-                  transactions.map((transaction) => (
-                    <tr key={transaction.transactionId}>
-                      <td className="text-gray-500 px-4 py-2">
-                        {transaction.transactionId}
-                      </td>
-                      <td className="text-gray-500 px-4 py-2">
-                        {transaction.date}
-                      </td>
-                      <td className="text-gray-500 px-4 py-2">
-                        {transaction.bankType}
-                      </td>
-                      <td className="text-gray-500 px-4 py-2">
-                        {transaction.type}
-                      </td>
-                      <td className="text-gray-500 px-4 py-2">
-                        ${transaction.amount.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center py-4 text-gray-500">
-                      No transactions found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {(transactions.length > itemsPerPage ||
+        rejectedBookings.length > itemsPerPage) && (
+        <div className="flex items-center justify-end space-x-1 sm:space-x-2 mt-4 mb-4">
+          <button
+            className={`p-2 rounded-full border border-gray-300 ${
+              currentPage === 1 ? "bg-gray-100" : "bg-white hover:bg-gray-100"
+            }`}
+            onClick={() => goToPage(1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronsLeft size={18} />
+          </button>
+          <button
+            className={`p-2 rounded-full border border-gray-300 ${
+              currentPage === 1 ? "bg-gray-100" : "bg-white hover:bg-gray-100"
+            }`}
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft size={18} />
+          </button>
 
-      {activeTab === "wallet" && (
-        <div className="max-h-80">
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="text-textclr px-4 py-2 text-left">
-                    Property ID
-                  </th>
-                  <th className="text-textclr px-4 py-2 text-left">
-                    Property Name
-                  </th>
-                  <th className="text-textclr px-4 py-2 text-left">Location</th>
-                  <th className="text-textclr px-4 py-2 text-left">
-                    Date
-                  </th>
-                  <th className="text-textclr px-4 py-2 text-left rounded-tr-2xl rounded-br-2xl">
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rejectedBookings.length > 0 ? (
-                  rejectedBookings.map((booking) => (
-                    <tr key={booking.id}>
-                      <td className="text-gray-500 px-4 py-2">{booking.id}</td>
-                      <td className="text-gray-500 px-4 py-2">
-                        {booking.propertyName || "N/A"}
-                      </td>
-                      <td className="text-gray-500 px-4 py-2">
-                        {booking.propertyLocation || "N/A"}
-                      </td>
-                      <td className="text-gray-500 px-4 py-2">
-                      {formatTimestamp(booking.timestamp)}
-                      </td>
-                      <td className="text-gray-500 px-4 py-2">
-                        ${booking.platformFee || "0.00"}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center py-4 text-gray-500">
-                      No rejected bookings found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              className={`w-8 h-8 rounded-full ${
+                currentPage === page
+                  ? "bg-purplebutton text-white"
+                  : "border border-gray-300 bg-white hover:bg-gray-100"
+              }`}
+              onClick={() => goToPage(page)}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            className={`p-2 rounded-full border border-gray-300 ${
+              currentPage === totalPages
+                ? "bg-gray-100"
+                : "bg-white hover:bg-gray-100"
+            }`}
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight size={18} />
+          </button>
+          <button
+            className={`p-2 rounded-full border border-gray-300 ${
+              currentPage === totalPages
+                ? "bg-gray-100"
+                : "bg-white hover:bg-gray-100"
+            }`}
+            onClick={() => goToPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronsRight size={18} />
+          </button>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

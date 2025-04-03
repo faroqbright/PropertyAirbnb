@@ -37,8 +37,8 @@ export default function Context () {
   const [location, setlocation] = useState(null);
   const [daysSelected, setDaysSelected] = useState(0);
   const userType = useSelector((state) => state.auth.userInfo?.userType);
-  const [reviews, setReviews] = useState([]); // State to hold reviews for the property
-  const [avgRating, setAvgRating] = useState(null); // State to hold the average rating
+  const [reviews, setReviews] = useState([]); 
+  const [avgRating, setAvgRating] = useState(null);
   const [platformFee, setPlatformFee] = useState(0);
   const calendarRef = useRef(null);
   
@@ -221,76 +221,6 @@ export default function Context () {
     return adjustedPrice;
   };
 
-  // const handleButtonClick = () => {
-  //   if (!userType) {
-  //     toast.error("Please login first.");
-  //     router.push("/Auth/Login");
-  //     return;
-  //   }
-
-  //   if (selectedRooms.length === 0 && selectedServices.length === 0) {
-  //     toast.error("Please select at least one room.");
-  //     return;
-  //   }
-
-  //   const startDate = localStorage.getItem("startDate");
-  //   const endDate = localStorage.getItem("endDate");
-
-  //   if (!startDate || !endDate) {
-  //     toast.error("Please select a start and end date.");
-  //     const calendarElement = document.getElementById("calendar-section");
-  //     if (calendarElement) {
-  //       calendarElement.scrollIntoView({ behavior: "smooth" });
-  //       // Highlight the calendar section by adding a temporary border
-  //       calendarElement.style.border = "2px solid #3B82F6";
-  //       calendarElement.style.borderRadius = "0.5rem";
-  //       setTimeout(() => {
-  //         calendarElement.style.border = "none";
-  //       }, 2000);
-  //     }
-  //     return;
-  //   }
-
-  //   const storedRooms = localStorage.getItem("selectedRooms");
-  //   const storedServices = localStorage.getItem("selectedServices");
-
-  //   if (storedRooms) {
-  //     localStorage.removeItem("selectedRooms");
-  //   }
-  //   if (storedServices) {
-  //     localStorage.removeItem("selectedServices");
-  //   }
-  //   localStorage.setItem("platformFee", platformFee); // Store platform fee
-
-  //   const selectedRoomsDetails = rooms.filter((room) =>
-  //     selectedRooms.includes(room.id)
-  //   );
-  //   const selectedServicesDetails = services.filter((service) =>
-  //     selectedServices.includes(service.id)
-  //   );
-
-  //   const total = calculateTotal();
-  //   const platformFee = calculateFivePercent().fivePercent;
-
-  //   console.log(selectedRoomsDetails);
-
-  //   localStorage.setItem("selectedRooms", JSON.stringify(selectedRoomsDetails));
-  //   localStorage.setItem(
-  //     "selectedServices",
-  //     JSON.stringify(selectedServicesDetails)
-  //   );
-
-  //   const propertyDetails = {
-  //     name: name,
-  //     location: location,
-  //     description: description,
-  //     price: pricePerMonth,
-  //   };
-  //   localStorage.setItem("propertyDetails", JSON.stringify(propertyDetails));
-  //   localStorage.setItem("selectedProperty", JSON.stringify(property));
-
-  //   router.push("/Landing/Properties/PropertiesDetail/Payment");
-  // };
   const handleButtonClick = () => {
     if (!userType) {
       toast.error("Please login first.");
