@@ -10,6 +10,8 @@ import {
   query,
   doc,
   setDoc,
+  onSnapshot,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase/firebaseConfig";
 import { toast } from "react-toastify";
@@ -25,11 +27,11 @@ const Account = () => {
   const [transactions, setTransactions] = useState([]);
   const [rejectedBookings, setRejectedBookings] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
-  const [rejectedBookingsTotal, setRejectedBookingsTotal] = useState(0);
   const [activeTab, setActiveTab] = useState("transactions");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(11);
   const [walletTotal, setWalletTotal] = useState(0);
+  const [lastProcessedBookingId, setLastProcessedBookingId] = useState(null);
   const userInfo = useSelector((state) => state?.auth?.userInfo?.uid);
   const userId = useSelector((state) => state.auth.userInfo?.uid);
   const router = useRouter();
@@ -70,19 +72,52 @@ const Account = () => {
     });
   };
 
-  const updateWalletSum = async (rejectedTotal) => {
+  useEffect(() => {
+    if (!userId) return;
+
+    const unsubscribe = onSnapshot(doc(db, "WalletSum", userId), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // Check if remainingBalance exists and is greater than 0
+        const balance =
+          data.remainingBalance > 0
+            ? data.remainingBalance
+            : data.rejectedBookingsTotal || 0;
+        const lastId = data.lastProcessedBookingId || null;
+
+        setWalletTotal(balance);
+        setLastProcessedBookingId(lastId);
+        localStorage.setItem("walletBalance", balance.toString());
+      } else {
+        // Initialize with localStorage if exists
+        const localBalance =
+          parseFloat(localStorage.getItem("walletBalance")) || 0;
+        setWalletTotal(localBalance);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  const updateWalletSum = async (newTotal, lastBookingId = null) => {
     try {
       if (!userInfo) return;
 
       const walletSumRef = doc(db, "WalletSum", userInfo);
-      await setDoc(
-        walletSumRef,
-        {
-          rejectedBookingsTotal: rejectedTotal,
-          lastUpdated: new Date(),
-        },
-        { merge: true }
-      );
+      const walletData = {
+        rejectedBookingsTotal: newTotal,
+        lastProcessedBookingId: lastBookingId,
+        lastUpdated: new Date(),
+      };
+
+      // Check if we should update remainingBalance instead
+      const walletSnap = await getDoc(walletSumRef);
+      if (walletSnap.exists() && walletSnap.data().remainingBalance > 0) {
+        walletData.remainingBalance = newTotal;
+      }
+
+      await setDoc(walletSumRef, walletData, { merge: true });
+      localStorage.setItem("walletBalance", newTotal.toString());
     } catch (error) {
       console.error("Error updating WalletSum:", error);
       toast.error("Error updating wallet total.");
@@ -134,59 +169,50 @@ const Account = () => {
         (booking) => booking.userId === userInfo
       );
 
-      const newRejectedTotal = userRejectedBookings.reduce(
-        (sum, booking) => sum + (Number(booking.platformFee) || 0),
-        0
-      );
       setRejectedBookings(userRejectedBookings);
-      setRejectedBookingsTotal(newRejectedTotal);
 
-      await updateWalletSum(newRejectedTotal);
+      // Check if we have remainingBalance - if yes, skip processing new bookings
+      const walletSumRef = doc(db, "WalletSum", userInfo);
+      const walletSnap = await getDoc(walletSumRef);
+      if (walletSnap.exists() && walletSnap.data().remainingBalance > 0) {
+        return; // Skip processing if remainingBalance exists
+      }
+
+      // Only process new bookings that haven't been processed before
+      let newBookings = userRejectedBookings;
+      if (lastProcessedBookingId) {
+        const lastProcessedIndex = userRejectedBookings.findIndex(
+          (booking) => booking.id === lastProcessedBookingId
+        );
+        if (lastProcessedIndex !== -1) {
+          newBookings = userRejectedBookings.slice(0, lastProcessedIndex);
+        }
+      }
+
+      if (newBookings.length > 0) {
+        const newAmount = newBookings.reduce(
+          (sum, booking) => sum + (Number(booking.platformFee) || 0),
+          0
+        );
+
+        const updatedTotal = walletTotal + newAmount;
+        const newestBookingId = userRejectedBookings[0]?.id;
+
+        setWalletTotal(updatedTotal);
+        await updateWalletSum(updatedTotal, newestBookingId);
+      }
     } catch (error) {
       console.error("Error fetching rejected bookings:", error);
       toast.error("Error fetching rejected bookings.");
     }
   };
-  console.log(rejectedBookings, "RejectedBookings");
 
   useEffect(() => {
     if (userInfo) {
       fetchAllAccounts();
       fetchRejectedBookings();
     }
-  }, [userInfo]);
-
-  useEffect(() => {
-    const fetchWalletTotal = async () => {
-      try {
-        const rejectedBookingsCollection = query(
-          collection(db, "rejectedBookings"),
-          orderBy("timestamp", "desc")
-        );
-        const snapshot = await getDocs(rejectedBookingsCollection);
-        const allRejectedBookings = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        const userRejectedBookings = allRejectedBookings.filter(
-          (booking) => booking.userId === userId
-        );
-
-        const total = userRejectedBookings.reduce(
-          (sum, booking) => sum + (Number(booking.platformFee) || 0),
-          0
-        );
-        setWalletTotal(total);
-      } catch (error) {
-        console.error("Error fetching wallet total:", error);
-      }
-    };
-
-    if (userId) {
-      fetchWalletTotal();
-    }
-  }, [userId]);
+  }, [userInfo, lastProcessedBookingId]);
 
   const currentItems =
     activeTab === "transactions"
@@ -209,8 +235,7 @@ const Account = () => {
     setCurrentPage(page);
   };
 
-  const displayTotal =
-    activeTab === "transactions" ? totalAmount : rejectedBookingsTotal;
+  const displayTotal = activeTab === "transactions" ? totalAmount : walletTotal;
 
   return (
     <>
@@ -284,8 +309,8 @@ const Account = () => {
                 </thead>
                 <tbody>
                   {currentItems.length > 0 ? (
-                    currentItems.map((transaction) => (
-                      <tr key={transaction.transactionId}>
+                    currentItems.map((transaction, index) => (
+                      <tr key={`${transaction.transactionId}-${index}`}>
                         <td className="text-gray-500 px-4 py-2">
                           {transaction.transactionId}
                         </td>
@@ -299,7 +324,7 @@ const Account = () => {
                           {transaction.type}
                         </td>
                         <td className="text-gray-500 px-4 py-2">
-                          ${walletTotal.toFixed(2)}
+                          ${transaction.amount.toFixed(2)}
                         </td>
                       </tr>
                     ))
@@ -346,7 +371,6 @@ const Account = () => {
                   {currentItems.length > 0 ? (
                     currentItems.map((booking, index) => (
                       <tr key={`${booking.id}-${index}`}>
-                        {" "}
                         <td className="text-gray-500 px-4 py-2 truncate max-w-[200px]">
                           {booking.id}
                         </td>

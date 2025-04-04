@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   addDoc,
   collection,
@@ -51,6 +51,7 @@ export default function PaymentForm() {
   const [walletTotal, setWalletTotal] = useState(0);
   const [rejectedBookingsTotal, setRejectedBookingsTotal] = useState(0);
   const userInfo = useSelector((state) => state?.auth?.userInfo?.uid);
+  const [isBalanceUpdated, setIsBalanceUpdated] = useState(false);
 
   useEffect(() => {
     const storedPlatformFee =
@@ -78,6 +79,33 @@ export default function PaymentForm() {
   const differenceInTime = endDateObj - startDateObj;
   const daysDifference = differenceInTime / (1000 * 60 * 60 * 24);
   const daysDifferenceTwo = daysDifference + 1;
+
+  const fetchWalletBalance = useCallback(async () => {
+    try {
+      if (!userId) return;
+
+      const walletSumRef = doc(db, "WalletSum", userId);
+      const docSnap = await getDoc(walletSumRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // Check if remainingBalance exists and is greater than 0
+        const balance =
+          data.remainingBalance > 0
+            ? data.remainingBalance
+            : data.rejectedBookingsTotal || 0;
+
+        setWalletTotal(balance);
+        localStorage.setItem("walletBalance", balance.toString());
+      } else {
+        const localBalance =
+          parseFloat(localStorage.getItem("walletBalance")) || 0;
+        setWalletTotal(localBalance);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet balance:", error);
+    }
+  }, [userId]);
 
   useEffect(() => {
     const storedRooms = JSON.parse(localStorage.getItem("selectedRooms")) || [];
@@ -138,122 +166,115 @@ export default function PaymentForm() {
 
   const handlePayNow = async () => {
     if (paymentMethod === "wallet") {
-      if (walletTotal < platformFee) {
-        toast.error("Insufficient wallet balance");
-        return;
-      }
-
-      setLoading(true);
-
-      const updatedSelectedRooms = selectedRooms.map((room) => ({
-        ...room,
-        price: ((room.price / 30) * daysDifferenceTwo).toFixed(2),
-      }));
-
-      const updatedSelectedServices = selectedServices.map((service) => ({
-        ...service,
-        price: ((parseFloat(service.cost) / 30) * daysDifferenceTwo).toFixed(2),
-        cost: ((parseFloat(service.cost) / 30) * daysDifferenceTwo).toFixed(2),
-      }));
-
       try {
-        console.log("User ID for wallet payment:", userInfo); // Log userInfo
+        if (!userInfo) {
+          toast.error("Authentication error. Please login again.");
+          return;
+        }
 
-        // Fetch current wallet balance from Firebase
+        if (platformFee <= 0) {
+          toast.error("Invalid payment amount");
+          return;
+        }
+
+        if (!propertyId?.id) {
+          toast.error("Property information missing");
+          return;
+        }
+
+        setLoading(true);
+
         const walletSumRef = doc(db, "WalletSum", userInfo);
-        const walletSnapshot = await getDoc(walletSumRef);
-        const currentWalletBalance = walletSnapshot.exists()
-          ? walletSnapshot.data()?.rejectedBookingsTotal || 0
-          : 0;
+        const walletSnap = await getDoc(walletSumRef);
 
-        console.log("Current wallet balance:", currentWalletBalance);
-        console.log("Platform fee:", platformFee);
+        if (!walletSnap.exists()) {
+          toast.error("Wallet account not found");
+          return;
+        }
 
-        // Calculate new wallet balance
-        const newWalletBalance = currentWalletBalance - platformFee;
+        const walletData = walletSnap.data();
+        // Use remainingBalance if it exists, otherwise fall back to rejectedBookingsTotal
+        const currentBalance =
+          walletData.remainingBalance > 0
+            ? walletData.remainingBalance
+            : walletData.rejectedBookingsTotal || 0;
 
-        console.log("New wallet balance:", newWalletBalance);
+        if (currentBalance < platformFee) {
+          toast.error("Insufficient wallet balance");
+          return;
+        }
 
-        // Update Firebase WalletSum
+        const newBalance = currentBalance - platformFee;
+
+        // Update both remainingBalance and rejectedBookingsTotal
         await setDoc(
           walletSumRef,
           {
-            rejectedBookingsTotal: newWalletBalance,
+            rejectedBookingsTotal: newBalance,
+            remainingBalance: newBalance,
             lastUpdated: new Date(),
           },
           { merge: true }
-        )
-          .then(() => {
-            console.log("Firebase wallet balance updated successfully.");
-            // Update local state
-            setWalletTotal(newWalletBalance);
+        );
 
-            // Create booking record
-            const bookingDetails = {
-              propertyId,
-              userId,
-              userPersonalInfo,
-              propertyName: name,
-              propertyLocation: location,
-              selectedRooms: updatedSelectedRooms,
-              selectedServices: updatedSelectedServices,
-              totalAmount: (totalAmount * selectedMonths).toFixed(2),
-              platformFee: platformFee.toFixed(2),
-              selectedMonths,
-              paymentMethod: "wallet",
-              walletDeduction: platformFee.toFixed(2),
-              remainingBalance: newWalletBalance.toFixed(2),
-              timestamp: new Date(),
-              status: "pending",
-              LegalName: LegalName || FullName,
-              propertyPrice: price,
-              numberOfDays: daysDifferenceTwo,
-              startDate,
-              endDate,
-            };
+        const bookingDetails = {
+          propertyId,
+          userId,
+          userPersonalInfo,
+          propertyName: name,
+          propertyLocation: location,
+          selectedRooms: selectedRooms.map((room) => ({
+            ...room,
+            price: ((room.price / 30) * daysDifferenceTwo).toFixed(2),
+          })),
+          selectedServices: selectedServices.map((service) => ({
+            ...service,
+            price: (
+              (parseFloat(service.cost) / 30) *
+              daysDifferenceTwo
+            ).toFixed(2),
+            cost: ((parseFloat(service.cost) / 30) * daysDifferenceTwo).toFixed(
+              2
+            ),
+          })),
+          totalAmount: (totalAmount * selectedMonths).toFixed(2),
+          platformFee: platformFee.toFixed(2),
+          selectedMonths,
+          paymentMethod: "wallet",
+          walletDeduction: platformFee.toFixed(2),
+          remainingMoney: newBalance.toFixed(2),
+          remainingBalance: newBalance.toFixed(2),
+          timestamp: new Date(),
+          status: "completed",
+          LegalName: LegalName || FullName,
+          propertyPrice: price,
+          numberOfDays: daysDifferenceTwo,
+          startDate,
+          endDate,
+        };
 
-            addDoc(collection(db, "bookings"), bookingDetails);
+        await addDoc(collection(db, "bookings"), bookingDetails);
+        setPaymentSubmitted(true);
 
-            // Create transaction record
-            const currentDate = new Date().toISOString().split("T")[0];
-            const transactionDetails = {
-              date: currentDate,
-              bankType: "Wallet",
-              type: "wallet-payment",
-              amount: (totalAmount * selectedMonths).toFixed(2),
-              propertyId: propertyId.id,
-              userId: userId,
-              platformFee: platformFee.toFixed(2),
-              remainingBalance: newWalletBalance.toFixed(2),
-              timestamp: new Date(),
-            };
+        localStorage.removeItem("startDate");
+        localStorage.removeItem("endDate");
 
-            addDoc(collection(db, "accounts"), transactionDetails);
-
-            setPaymentSubmitted(true);
-            localStorage.removeItem("startDate");
-            localStorage.removeItem("endDate");
-            setTimeout(() => {
-              router.push("/Landing/Home");
-            }, 3000);
-          })
-          .catch((error) => {
-            console.error("Error updating Firebase wallet balance:", error);
-            toast.error("Failed to update wallet balance in Firebase.");
-          });
+        toast.success("Payment processed successfully!");
+        setTimeout(() => router.push("/Landing/Home"), 3000);
       } catch (error) {
         console.error("Payment failed:", error);
-        toast.error("Payment failed. Please try again.");
+        toast.error(`Payment failed: ${error.message}`);
       } finally {
         setLoading(false);
       }
     } else {
+      // Credit card payment logic remains the same
       if (!cardNumber || !expiration || !cvc || !nameOnCard) {
         toast.error("Please fill in all the required fields.");
         return;
       }
       if (cardNumber < 16) {
-        toast.error("Please enter correcr card number.");
+        toast.error("Please enter correct card number.");
         return;
       }
 
@@ -428,7 +449,7 @@ export default function PaymentForm() {
     }
   };
 
-  const fetchRejectedBookings = async () => {
+  const fetchRejectedBookings = useCallback(async () => {
     try {
       const rejectedBookingsCollection = query(
         collection(db, "rejectedBookings"),
@@ -452,20 +473,44 @@ export default function PaymentForm() {
       setRejectedBookings(userRejectedBookings);
       setRejectedBookingsTotal(calculatedTotal);
 
+      // Get current wallet balance first
       const walletSumRef = doc(db, "WalletSum", userInfo);
-      await setDoc(
-        walletSumRef,
-        {
-          rejectedBookingsTotal: calculatedTotal,
-          lastUpdated: new Date(),
-        },
-        { merge: true }
-      );
+      const walletSnap = await getDoc(walletSumRef);
+
+      // Skip update if remainingBalance exists and is > 0
+      if (walletSnap.exists() && walletSnap.data().remainingBalance > 0) {
+        return;
+      }
+
+      // Only update if calculated total is different
+      const currentBalance = walletSnap.exists()
+        ? walletSnap.data().rejectedBookingsTotal || 0
+        : 0;
+
+      if (calculatedTotal !== currentBalance) {
+        await setDoc(
+          walletSumRef,
+          {
+            rejectedBookingsTotal: calculatedTotal,
+            lastUpdated: new Date(),
+          },
+          { merge: true }
+        );
+        setWalletTotal(calculatedTotal);
+        localStorage.setItem("walletBalance", calculatedTotal.toString());
+      }
     } catch (error) {
       console.error("Error fetching rejected bookings:", error);
       toast.error("Error fetching rejected bookings.");
     }
-  };
+  }, [userInfo]);
+
+  // Simplified useEffect hooks
+  useEffect(() => {
+    if (userId) {
+      fetchWalletBalance();
+    }
+  }, [userId, fetchWalletBalance]);
 
   useEffect(() => {
     if (userInfo) {
@@ -473,25 +518,36 @@ export default function PaymentForm() {
     }
   }, [userInfo]);
 
-  useEffect(() => {
-    const fetchWalletTotal = async () => {
-      try {
-        const walletSumRef = doc(db, "WalletSum", userId);
-        const docSnap = await getDoc(walletSumRef);
-        if (docSnap.exists()) {
-          setWalletTotal(docSnap.data()?.rejectedBookingsTotal || 0);
-        } else {
-          setWalletTotal(0);
-        }
-      } catch (error) {
-        console.error("Error fetching wallet total:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchWalletTotal = async () => {
+  //     try {
+  //       // First check local storage for the most recent balance
+  //       const cachedBalance = localStorage.getItem("walletBalance");
+  //       if (cachedBalance) {
+  //         setWalletTotal(parseFloat(cachedBalance));
+  //       }
 
-    if (userId) {
-      fetchWalletTotal();
-    }
-  }, [userId]);
+  //       // Then verify with Firestore
+  //       const walletSumRef = doc(db, "WalletSum", userId);
+  //       const docSnap = await getDoc(walletSumRef);
+  //       if (docSnap.exists()) {
+  //         const firestoreBalance = docSnap.data()?.rejectedBookingsTotal || 0;
+  //         setWalletTotal(firestoreBalance);
+  //         // Update local storage with the Firestore value
+  //         localStorage.setItem("walletBalance", firestoreBalance.toString());
+  //       } else {
+  //         setWalletTotal(0);
+  //         localStorage.setItem("walletBalance", "0");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching wallet total:", error);
+  //     }
+  //   };
+
+  //   if (userId) {
+  //     fetchWalletTotal();
+  //   }
+  // }, [userId]);
 
   return (
     <>
