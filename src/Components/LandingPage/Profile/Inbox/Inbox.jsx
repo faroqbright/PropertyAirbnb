@@ -289,6 +289,7 @@ export default function Inbox() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
             />
+            
             <div className="flex items-center gap-2">
               <button className="p-2 hover:bg-gray-100 rounded-full">
                 <Mic className="w-5 h-5 text-gray-500" />
