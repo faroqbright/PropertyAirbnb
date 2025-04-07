@@ -78,7 +78,6 @@ const Account = () => {
     const unsubscribe = onSnapshot(doc(db, "WalletSum", userId), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // Check if remainingBalance exists and is greater than 0
         const balance =
           data.remainingBalance > 0
             ? data.remainingBalance
@@ -89,7 +88,6 @@ const Account = () => {
         setLastProcessedBookingId(lastId);
         localStorage.setItem("walletBalance", balance.toString());
       } else {
-        // Initialize with localStorage if exists
         const localBalance =
           parseFloat(localStorage.getItem("walletBalance")) || 0;
         setWalletTotal(localBalance);
@@ -110,7 +108,6 @@ const Account = () => {
         lastUpdated: new Date(),
       };
 
-      // Check if we should update remainingBalance instead
       const walletSnap = await getDoc(walletSumRef);
       if (walletSnap.exists() && walletSnap.data().remainingBalance > 0) {
         walletData.remainingBalance = newTotal;
@@ -171,14 +168,12 @@ const Account = () => {
 
       setRejectedBookings(userRejectedBookings);
 
-      // Check if we have remainingBalance - if yes, skip processing new bookings
       const walletSumRef = doc(db, "WalletSum", userInfo);
       const walletSnap = await getDoc(walletSumRef);
       if (walletSnap.exists() && walletSnap.data().remainingBalance > 0) {
-        return; // Skip processing if remainingBalance exists
+        return; 
       }
 
-      // Only process new bookings that haven't been processed before
       let newBookings = userRejectedBookings;
       if (lastProcessedBookingId) {
         const lastProcessedIndex = userRejectedBookings.findIndex(

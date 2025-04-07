@@ -89,7 +89,6 @@ export default function PaymentForm() {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // Check if remainingBalance exists and is greater than 0
         const balance =
           data.remainingBalance > 0
             ? data.remainingBalance
@@ -193,7 +192,6 @@ export default function PaymentForm() {
         }
 
         const walletData = walletSnap.data();
-        // Use remainingBalance if it exists, otherwise fall back to rejectedBookingsTotal
         const currentBalance =
           walletData.remainingBalance > 0
             ? walletData.remainingBalance
@@ -206,7 +204,6 @@ export default function PaymentForm() {
 
         const newBalance = currentBalance - platformFee;
 
-        // Update both remainingBalance and rejectedBookingsTotal
         await setDoc(
           walletSumRef,
           {
@@ -268,7 +265,6 @@ export default function PaymentForm() {
         setLoading(false);
       }
     } else {
-      // Credit card payment logic remains the same
       if (!cardNumber || !expiration || !cvc || !nameOnCard) {
         toast.error("Please fill in all the required fields.");
         return;
@@ -473,16 +469,13 @@ export default function PaymentForm() {
       setRejectedBookings(userRejectedBookings);
       setRejectedBookingsTotal(calculatedTotal);
 
-      // Get current wallet balance first
       const walletSumRef = doc(db, "WalletSum", userInfo);
       const walletSnap = await getDoc(walletSumRef);
 
-      // Skip update if remainingBalance exists and is > 0
       if (walletSnap.exists() && walletSnap.data().remainingBalance > 0) {
         return;
       }
 
-      // Only update if calculated total is different
       const currentBalance = walletSnap.exists()
         ? walletSnap.data().rejectedBookingsTotal || 0
         : 0;
@@ -505,7 +498,6 @@ export default function PaymentForm() {
     }
   }, [userInfo]);
 
-  // Simplified useEffect hooks
   useEffect(() => {
     if (userId) {
       fetchWalletBalance();
@@ -517,37 +509,6 @@ export default function PaymentForm() {
       fetchRejectedBookings();
     }
   }, [userInfo]);
-
-  // useEffect(() => {
-  //   const fetchWalletTotal = async () => {
-  //     try {
-  //       // First check local storage for the most recent balance
-  //       const cachedBalance = localStorage.getItem("walletBalance");
-  //       if (cachedBalance) {
-  //         setWalletTotal(parseFloat(cachedBalance));
-  //       }
-
-  //       // Then verify with Firestore
-  //       const walletSumRef = doc(db, "WalletSum", userId);
-  //       const docSnap = await getDoc(walletSumRef);
-  //       if (docSnap.exists()) {
-  //         const firestoreBalance = docSnap.data()?.rejectedBookingsTotal || 0;
-  //         setWalletTotal(firestoreBalance);
-  //         // Update local storage with the Firestore value
-  //         localStorage.setItem("walletBalance", firestoreBalance.toString());
-  //       } else {
-  //         setWalletTotal(0);
-  //         localStorage.setItem("walletBalance", "0");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching wallet total:", error);
-  //     }
-  //   };
-
-  //   if (userId) {
-  //     fetchWalletTotal();
-  //   }
-  // }, [userId]);
 
   return (
     <>

@@ -57,7 +57,6 @@ export default function Bookings() {
 
         console.log("All Bookings Fetched:", bookingsList);
 
-        // Sort bookings by startDate (newest first)
         bookingsList.sort(
           (a, b) => new Date(b.startDate) - new Date(a.startDate)
         );
@@ -83,7 +82,6 @@ export default function Bookings() {
             }
           });
         } else {
-          // For regular users, show their own bookings
           bookingsList = bookingsList.filter(
             (booking) => booking.userId === userInfo?.uid
           );

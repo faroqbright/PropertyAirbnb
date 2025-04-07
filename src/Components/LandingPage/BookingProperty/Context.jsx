@@ -59,7 +59,7 @@ export default function Context () {
         querySnapshot.forEach((doc) => {
           const review = { id: doc.id, ...doc.data() };
           reviewsList.push(review);
-          totalAvgRating += review.AvgRating || 0; // Ensure `AvgRating` is the correct field name
+          totalAvgRating += review.AvgRating || 0; 
         });
 
         const avgRating =
@@ -67,8 +67,8 @@ export default function Context () {
             ? (totalAvgRating / reviewsList.length).toFixed(1)
             : null;
 
-        setReviews(reviewsList); // Store reviews
-        setAvgRating(avgRating); // Store average rating
+        setReviews(reviewsList); 
+        setAvgRating(avgRating); 
       } catch (error) {
         console.error("Error fetching reviews:", error);
       }
@@ -90,9 +90,8 @@ export default function Context () {
   };
 
   useEffect(() => {
-    updateDaysSelected(); // Initial call
+    updateDaysSelected(); 
 
-    // Listen for storage changes in other tabs
     const handleStorageChange = (event) => {
       if (event.key === "startDate" || event.key === "endDate") {
         updateDaysSelected();
@@ -106,11 +105,10 @@ export default function Context () {
     };
   }, []);
 
-  // Detect changes within the same tab
   useEffect(() => {
     const interval = setInterval(() => {
       updateDaysSelected();
-    }, 500); // Check every 500ms
+    }, 500); 
 
     return () => clearInterval(interval);
   }, []);
@@ -207,17 +205,17 @@ export default function Context () {
   }, [router]);
 
   const calculateProportion = () => {
-    if (daysSelected <= 0) return 1; // Default to full month if no dates are selected
+    if (daysSelected <= 0) return 1; 
 
-    const daysInMonth = 30; // Assuming a month has 30 days for calculation
+    const daysInMonth = 30; 
     const proportion = daysSelected / daysInMonth;
 
-    return proportion; // Always return the calculated proportion
+    return proportion; 
   };
 
   const calculateAdjustedPrice = (basePrice) => {
     const proportion = calculateProportion();
-    const adjustedPrice = (basePrice * proportion).toFixed(2); // Round to 2 decimal places
+    const adjustedPrice = (basePrice * proportion).toFixed(2); 
     return adjustedPrice;
   };
 
@@ -315,7 +313,7 @@ export default function Context () {
       const total = roomsTotal + servicesTotal;
       const fivePercent = total * 0.05;
       
-      setPlatformFee(fivePercent.toFixed(2)); // Update platform fee state
+      setPlatformFee(fivePercent.toFixed(2)); 
       
       return {
         total: total.toFixed(2),
